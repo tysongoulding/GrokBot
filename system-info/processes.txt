@@ -1,0 +1,187 @@
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.0   1156   752 ?        Ss   Sep05   0:01 /tini -- /pod-daemon --ssh-auth-sock-path /run/host-services/ssh-auth.sock --ssh-auth-vsock-port 52
+root           7  0.0  0.0  27732  5124 ?        Sl   Sep05   0:30 /pod-daemon --ssh-auth-sock-path /run/host-services/ssh-auth.sock --ssh-auth-vsock-port 52
+root          53  0.0  0.0  16544 11684 ?        Ss   Sep05   0:03 /usr/bin/python3 /usr/local/bin/sand-exit-watch --telemetry-log /tmp/sand-box-telemetry.log --exec-owner 262 --supervise-owner 480
+box          139  0.0  0.2  63564 37376 ?        S    Sep05   0:13 /usr/bin/python3 /usr/bin/websockify --web=/usr/share/novnc --heartbeat=30 --token-plugin TokenFile --token-source /tmp/sand-novnc-tokens.d 0.0.0.0:6081
+box          144  0.0  0.0   4488  2088 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/novnc-forks.log -- websockify --web=/usr/share/novnc --heartbeat=30 --token-plugin TokenFile --token-source /tmp/sand-novnc-tokens.d 0.0.0.0:6081
+box          145  0.0  0.0   3004  1828 ?        S    Sep05   0:00 flock -n /tmp/novnc-forks.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/novnc-forks.log 139
+box          146  0.0  0.3 1043656 56048 ?       Sl   Sep05   0:12 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/novnc-forks.log 139
+box          167  0.0  0.3 11530568 61592 ?      Ssl  Sep05   0:00 /exec-daemon/node /usr/local/bin/sand-window-router.mjs 1339 1337 14000
+box          187  0.1  0.4 11539160 73788 ?      Ssl  Sep05   0:47 /exec-daemon/node /usr/local/bin/sand-session-sync.mjs
+box          188  2.6  0.7 11836444 116332 ?     Sl   Sep05  19:19 /exec-daemon/node /usr/local/bin/sand-web-bot-auth.mjs
+box          194  0.0  0.0   4488  2076 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/sand-web-bot-auth.log -- /exec-daemon/node /usr/local/bin/sand-web-bot-auth.mjs
+box          196  0.0  0.0   3004  1840 ?        S    Sep05   0:00 flock -n /tmp/sand-web-bot-auth.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-web-bot-auth.log 188
+box          199  0.0  0.3 1043232 55444 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-web-bot-auth.log 188
+box          222  0.9  0.4 11608216 76552 ?      Sl   Sep05   7:14 /exec-daemon/node /usr/local/bin/sand-ua-governor.mjs
+box          228  0.0  0.0   4488  1992 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/sand-ua-governor.log -- /exec-daemon/node /usr/local/bin/sand-ua-governor.mjs
+box          229  0.0  0.0   3004  1896 ?        S    Sep05   0:00 flock -n /tmp/sand-ua-governor.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-ua-governor.log 222
+box          233  0.0  0.3 1043488 55376 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-ua-governor.log 222
+box          261  0.0  0.4 11793432 67124 ?      Ssl  Sep05   0:14 /exec-daemon/node /usr/local/bin/sand-cookie-persist.mjs
+box          262  0.0  0.0   5268  4168 ?        S    Sep05   0:18 bash /usr/local/bin/supervise-exec-daemon 1337 /usr/local/bin/start-exec-daemon
+box          298  0.0  0.0   4488  3484 ?        Ss   Sep05   0:00 bash /usr/local/bin/start-exec-daemon
+box          302  0.0  0.9 22350284 151312 ?     Sl   Sep05   0:16 /exec-daemon/node /exec-daemon/index.js serve --port 1337 --pty-websocket-port 1338 --auth-token local --rg-path /exec-daemon/rg --pty-auth-token local-pty --computer-use-enabled --computer-use-lazy-init --mcp-meta-tool-enabled --origin-cli-enabled
+box          480  0.0  0.0   5136  4224 ?        Ss   Sep05   0:07 bash /usr/local/bin/supervise-sand-supervisor /tmp/sand-supervisor/status.json /tmp/sand-supervisor.log /exec-daemon/node /usr/local/bin/sand-supervisor.mjs
+box          488  0.1  0.5 11607192 91100 ?      Ssl  Sep05   0:44 /exec-daemon/node /usr/local/bin/sand-supervisor.mjs
+box          504  0.0  0.0   4752  3800 ?        S    Sep05   0:00 bash /usr/local/bin/start-desktop.sh
+box          509  0.0  0.0   4488  1980 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/start-desktop.log -- /usr/local/bin/start-desktop.sh
+box          510  0.0  0.0   3004  1900 ?        S    Sep05   0:00 flock -n /tmp/start-desktop.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/start-desktop.log 504
+box          511  0.0  0.3 1043232 55080 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/start-desktop.log 504
+box          557  0.0  0.0   7776  2468 ?        Ss   Sep05   0:00 /usr/bin/dbus-daemon --syslog --fork --print-pid 4 --print-address 6 --session
+box          563  0.0  0.2  51108 40268 ?        S    Sep05   0:03 Xvfb :1 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box          568  0.0  0.0   4488  2052 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xvfb:1.log -- /usr/local/bin/box-xvfb :1 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box          570  0.0  0.0   3004  1876 ?        S    Sep05   0:00 flock -n /tmp/xvfb:1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:1.log 563
+box          571  0.0  0.3 1043232 55248 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:1.log 563
+box          576  0.0  0.0      0     0 ?        Z    Sep05   0:00 [bash] <defunct>
+box          608  1.0  3.3 14305504 548976 ?     Ssl  Sep05   7:30 /exec-daemon/node --disable-warning=ExperimentalWarning /home/box/sand-host/host-main.cjs
+box          689  0.0  0.0  42532 15868 ?        S    Sep05   0:21 x11vnc -skip_lockkeys -display :1 -localhost -nopw -shared -forever -noxdamage -rfbport 5900 -quiet
+box          696  0.0  0.0   4488  1936 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/x11vnc:1.log -- /usr/local/bin/box-x11vnc -display :1 -localhost -nopw -shared -forever -noxdamage -rfbport 5900 -quiet
+box          698  0.0  0.0   3004  1860 ?        S    Sep05   0:00 flock -n /tmp/x11vnc:1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:1.log 689
+box          703  0.0  0.3 1043744 55260 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:1.log 689
+box          733  0.0  0.2  63416 37504 ?        S    Sep05   0:03 /usr/bin/python3 /usr/bin/websockify --web=/usr/share/novnc --heartbeat=30 0.0.0.0:6080 localhost:5900
+box          745  0.0  0.0   4488  2008 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/novnc:1.log -- websockify --web=/usr/share/novnc --heartbeat=30 0.0.0.0:6080 localhost:5900
+box          748  0.0  0.0   3004  1852 ?        S    Sep05   0:00 flock -n /tmp/novnc:1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/novnc:1.log 733
+box          751  0.0  0.3 1043488 55076 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/novnc:1.log 733
+box          776  0.0  0.5 474960 83432 ?        Sl   Sep05   0:00 xfwm4 --compositor=off
+box          783  0.0  0.0   4488  1992 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xfwm4:1.log -- /usr/local/bin/box-xfwm4 --compositor=off
+box          785  0.0  0.0   3004  1832 ?        S    Sep05   0:00 flock -n /tmp/xfwm4:1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:1.log 776
+box          788  0.0  0.3 1043744 56664 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:1.log 776
+box          853  0.0  0.0  11244  6564 ?        S    Sep05   0:00 picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box          862  0.0  0.0   4488  2016 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/picom:1.log -- /usr/local/bin/box-picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box          864  0.0  0.0   3004  1904 ?        S    Sep05   0:00 flock -n /tmp/picom:1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:1.log 853
+box          868  0.0  0.3 1043744 55260 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:1.log 853
+box          929  0.0  0.0 165232  6176 ?        Sl   Sep05   0:00 /usr/libexec/dconf-service
+box         1066  0.0  0.4 623964 81976 ?        Ssl  Sep05   0:00 plank --name dock1
+box         1073  0.0  0.0   4488  2048 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/plank:1-dock1.log -- /usr/local/bin/box-plank --name dock1
+box         1074  0.0  0.0   3004  1848 ?        S    Sep05   0:00 flock -n /tmp/plank:1-dock1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:1-dock1.log 1066
+box         1075  0.0  0.3 1043744 55136 ?       Sl   Sep05   0:10 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:1-dock1.log 1066
+box         1089  0.0  0.0   3048  2000 ?        S    Sep05   0:01 tail -f /dev/null
+box         1101  0.0  0.0   4488  3508 ?        S    Sep05   0:00 /bin/bash /usr/libexec/bamf/bamfdaemon-dbus-runner
+box         1102  0.0  0.1 328624 17668 ?        Sl   Sep05   0:00 /usr/libexec/bamf/bamfdaemon
+box         1219  0.0  0.0   4752  3760 ?        Ss   Sep05   0:00 bash /usr/local/bin/start-desktop.sh
+box         1222  0.0  0.0   4488  2072 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/sand-window-6/start-desktop.log -- /usr/local/bin/start-desktop.sh
+box         1224  0.0  0.0   3004  1856 ?        S    Sep05   0:00 flock -n /tmp/sand-window-6/start-desktop.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-6/start-desktop.log 1219
+box         1225  0.0  0.3 1043744 55568 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-6/start-desktop.log 1219
+box         1263  0.0  0.0   7780  2520 ?        Ss   Sep05   0:00 /usr/bin/dbus-daemon --syslog --fork --print-pid 6 --print-address 8 --session
+box         1267  0.0  0.2  50748 40020 ?        S    Sep05   0:06 Xvfb :6 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box         1272  0.0  0.0   4488  1912 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xvfb:6.log -- /usr/local/bin/box-xvfb :6 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box         1273  0.0  0.0   3004  1860 ?        S    Sep05   0:00 flock -n /tmp/xvfb:6.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:6.log 1267
+box         1275  0.0  0.3 1043744 55572 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:6.log 1267
+box         1924  0.0  0.0      0     0 ?        Z    Sep05   0:00 [bash] <defunct>
+box         1949  0.0  0.7 22340044 126704 ?     Ssl  Sep05   0:01 /exec-daemon/node /exec-daemon/index.js serve --port 14006 --pty-websocket-port 13606 --auth-token local --rg-path /exec-daemon/rg --computer-use-enabled --origin-cli-enabled
+box         2019  0.5  0.1  42532 19904 ?        S    Sep05   3:40 x11vnc -skip_lockkeys -display :6 -localhost -nopw -shared -forever -noxdamage -rfbport 5906 -quiet
+box         2024  0.0  0.0   4488  1988 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/x11vnc:6.log -- /usr/local/bin/box-x11vnc -display :6 -localhost -nopw -shared -forever -noxdamage -rfbport 5906 -quiet
+box         2026  0.0  0.0   3004  1832 ?        S    Sep05   0:00 flock -n /tmp/x11vnc:6.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:6.log 2019
+box         2028  0.0  0.3 1043232 56316 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:6.log 2019
+box         2044  0.0  0.1 267924 27548 ?        Sl   Sep05   0:00 xfwm4 --compositor=off
+box         2052  0.0  0.0   4488  2032 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xfwm4:6.log -- /usr/local/bin/box-xfwm4 --compositor=off
+box         2053  0.0  0.0   3004  1928 ?        S    Sep05   0:00 flock -n /tmp/xfwm4:6.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:6.log 2044
+box         2056  0.0  0.3 1043232 55100 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:6.log 2044
+box         2087  0.0  0.0  11244  6424 ?        S    Sep05   0:00 picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box         2094  0.0  0.0   4488  1968 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/picom:6.log -- /usr/local/bin/box-picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box         2096  0.0  0.0   3004  1900 ?        S    Sep05   0:00 flock -n /tmp/picom:6.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:6.log 2087
+box         2099  0.0  0.3 1043744 55320 ?       Sl   Sep05   0:10 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:6.log 2087
+box         2166  0.0  0.0 165232  6236 ?        Sl   Sep05   0:00 /usr/libexec/dconf-service
+box         2306  0.0  0.5 623968 82124 ?        Ssl  Sep05   0:00 plank --name dock1
+box         2314  0.0  0.0   4488  1996 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/plank:6-dock1.log -- /usr/local/bin/box-plank --name dock1
+box         2316  0.0  0.0   3004  1944 ?        S    Sep05   0:00 flock -n /tmp/plank:6-dock1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:6-dock1.log 2306
+box         2317  0.0  0.3 1043232 55056 ?       Sl   Sep05   0:11 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:6-dock1.log 2306
+box         2344  0.0  0.0   3048  1948 ?        S    Sep05   0:01 tail -f /dev/null
+box         2440  0.0  0.0   4488  3468 ?        S    Sep05   0:00 /bin/bash /usr/libexec/bamf/bamfdaemon-dbus-runner
+box         2441  0.0  0.1 328624 17712 ?        Sl   Sep05   0:00 /usr/libexec/bamf/bamfdaemon
+box         2729  0.0  0.7 1356772 127372 ?      Sl   Sep05   0:05 npm exec context-mode
+box         2733  0.0  0.4 4543000 67476 ?       Sl   Sep05   0:01 /usr/local/bin/uv tool uvx mcp-proxy-for-aws@1.6.0 https://aws-mcp.us-east-1.api.aws/mcp --skip-auth --metadata INSTALL_SOURCE=agent-toolkit
+box         2900  0.0  0.6 332988 101864 ?       Sl   Sep05   0:02 /home/box/.cache/uv/archive-v0/gyEMha2S0gr870sz/bin/python /home/box/.cache/uv/archive-v0/gyEMha2S0gr870sz/bin/mcp-proxy-for-aws https://aws-mcp.us-east-1.api.aws/mcp --skip-auth --metadata INSTALL_SOURCE=agent-toolkit
+box         2961  0.0  0.0   2672  1796 ?        S    Sep05   0:00 sh -c context-mode
+box         2962  0.0  0.4 1319724 78748 ?       Sl   Sep05   0:03 node /home/box/.npm/_npx/16b0a7c005a6df70/node_modules/.bin/context-mode
+box        32870  0.0  0.0   4752  3812 ?        Ss   Sep05   0:00 bash /usr/local/bin/start-desktop.sh
+box        32874  0.0  0.0   4488  2076 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/sand-window-4/start-desktop.log -- /usr/local/bin/start-desktop.sh
+box        32875  0.0  0.0   3004  1872 ?        S    Sep05   0:00 flock -n /tmp/sand-window-4/start-desktop.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-4/start-desktop.log 32870
+box        32876  0.0  0.3 1043232 55180 ?       Sl   Sep05   0:09 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-4/start-desktop.log 32870
+box        32914  0.0  0.0   7780  2456 ?        Ss   Sep05   0:00 /usr/bin/dbus-daemon --syslog --fork --print-pid 6 --print-address 8 --session
+box        32918  0.0  0.2  46748 35892 ?        S    Sep05   0:04 Xvfb :4 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box        32923  0.0  0.0   4488  1940 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xvfb:4.log -- /usr/local/bin/box-xvfb :4 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box        32924  0.0  0.0   3004  1860 ?        S    Sep05   0:00 flock -n /tmp/xvfb:4.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:4.log 32918
+box        32925  0.0  0.3 1043232 55380 ?       Sl   Sep05   0:08 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:4.log 32918
+box        33863  0.0  0.0      0     0 ?        Z    Sep05   0:00 [bash] <defunct>
+box        33901  0.0  0.8 22342604 132244 ?     Ssl  Sep05   0:01 /exec-daemon/node /exec-daemon/index.js serve --port 14004 --pty-websocket-port 13604 --auth-token local --rg-path /exec-daemon/rg --computer-use-enabled --origin-cli-enabled
+box        33924  0.4  0.1  42532 19924 ?        S    Sep05   2:39 x11vnc -skip_lockkeys -display :4 -localhost -nopw -shared -forever -noxdamage -rfbport 5904 -quiet
+box        33929  0.0  0.0   4488  2040 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/x11vnc:4.log -- /usr/local/bin/box-x11vnc -display :4 -localhost -nopw -shared -forever -noxdamage -rfbport 5904 -quiet
+box        33931  0.0  0.0   3004  1912 ?        S    Sep05   0:00 flock -n /tmp/x11vnc:4.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:4.log 33924
+box        33933  0.0  0.3 1043744 55332 ?       Sl   Sep05   0:08 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:4.log 33924
+box        33949  0.0  0.4 475256 81428 ?        Sl   Sep05   0:00 xfwm4 --compositor=off
+box        33957  0.0  0.0   4488  2012 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xfwm4:4.log -- /usr/local/bin/box-xfwm4 --compositor=off
+box        33959  0.0  0.0   3004  1832 ?        S    Sep05   0:00 flock -n /tmp/xfwm4:4.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:4.log 33949
+box        33962  0.0  0.3 1043744 55348 ?       Sl   Sep05   0:08 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:4.log 33949
+box        33996  0.0  0.0  11244  6436 ?        S    Sep05   0:00 picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box        34005  0.0  0.0   4488  1988 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/picom:4.log -- /usr/local/bin/box-picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box        34007  0.0  0.0   3004  1848 ?        S    Sep05   0:00 flock -n /tmp/picom:4.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:4.log 33996
+box        34009  0.0  0.3 1043744 55280 ?       Sl   Sep05   0:08 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:4.log 33996
+box        34082  0.0  0.0 165232  6236 ?        Sl   Sep05   0:00 /usr/libexec/dconf-service
+box        34231  0.0  0.5 623964 82048 ?        Ssl  Sep05   0:00 plank --name dock1
+box        34242  0.0  0.0   4488  1912 ?        S    Sep05   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/plank:4-dock1.log -- /usr/local/bin/box-plank --name dock1
+box        34243  0.0  0.0   3004  1840 ?        S    Sep05   0:00 flock -n /tmp/plank:4-dock1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:4-dock1.log 34231
+box        34247  0.0  0.3 1043744 55172 ?       Sl   Sep05   0:09 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:4-dock1.log 34231
+box        34270  0.0  0.0   3048  1888 ?        S    Sep05   0:01 tail -f /dev/null
+box        34426  0.0  0.0   4488  3512 ?        S    Sep05   0:00 /bin/bash /usr/libexec/bamf/bamfdaemon-dbus-runner
+box        34427  0.0  0.1 328624 17672 ?        Sl   Sep05   0:00 /usr/libexec/bamf/bamfdaemon
+box       170665  0.0  0.0   4752  3792 ?        Ss   02:02   0:00 bash /usr/local/bin/start-desktop.sh
+box       170669  0.0  0.0   4488  2068 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/sand-window-7/start-desktop.log -- /usr/local/bin/start-desktop.sh
+box       170670  0.0  0.0   3004  1940 ?        S    02:02   0:00 flock -n /tmp/sand-window-7/start-desktop.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-7/start-desktop.log 170665
+box       170672  0.0  0.3 1042720 53808 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/sand-window-7/start-desktop.log 170665
+box       170709  0.0  0.0   7928  2592 ?        Ss   02:02   0:00 /usr/bin/dbus-daemon --syslog --fork --print-pid 6 --print-address 8 --session
+box       170713  7.0  0.3  70236 58312 ?        S    02:02   1:28 Xvfb :7 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box       170718  0.0  0.0   4488  2076 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xvfb:7.log -- /usr/local/bin/box-xvfb :7 -screen 0 1280x800x24 -ac +extension GLX +render -noreset
+box       170719  0.0  0.0   3004  1936 ?        S    02:02   0:00 flock -n /tmp/xvfb:7.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:7.log 170713
+box       170721  0.0  0.3 1042208 53776 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xvfb:7.log 170713
+box       171908  0.0  0.0      0     0 ?        Z    02:02   0:00 [bash] <defunct>
+box       171954  0.0  0.7 22342092 130524 ?     Ssl  02:02   0:00 /exec-daemon/node /exec-daemon/index.js serve --port 14007 --pty-websocket-port 13607 --auth-token local --rg-path /exec-daemon/rg --computer-use-enabled --origin-cli-enabled
+box       171966  2.8  0.1  45320 25904 ?        R    02:02   0:35 x11vnc -skip_lockkeys -display :7 -localhost -nopw -shared -forever -noxdamage -rfbport 5907 -quiet
+box       171971  0.0  0.0   4488  2040 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/x11vnc:7.log -- /usr/local/bin/box-x11vnc -display :7 -localhost -nopw -shared -forever -noxdamage -rfbport 5907 -quiet
+box       171973  0.0  0.0   3004  1944 ?        S    02:02   0:00 flock -n /tmp/x11vnc:7.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:7.log 171966
+box       171974  0.0  0.3 1042208 54092 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/x11vnc:7.log 171966
+box       171993  0.0  0.4 477040 81888 ?        Sl   02:02   0:01 xfwm4 --compositor=off
+box       171998  0.0  0.0   4488  2020 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/xfwm4:7.log -- /usr/local/bin/box-xfwm4 --compositor=off
+box       172000  0.0  0.0   3004  1860 ?        S    02:02   0:00 flock -n /tmp/xfwm4:7.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:7.log 171993
+box       172002  0.0  0.3 1042208 53940 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/xfwm4:7.log 171993
+box       172042  0.2  0.0  11244  6388 ?        S    02:02   0:03 picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box       172049  0.0  0.0   4488  1928 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/picom:7.log -- /usr/local/bin/box-picom --backend xrender --no-vsync --no-frame-pacing --no-use-damage
+box       172051  0.0  0.0   3004  1880 ?        S    02:02   0:00 flock -n /tmp/picom:7.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:7.log 172042
+box       172054  0.0  0.3 1042720 53900 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/picom:7.log 172042
+box       172128  0.0  0.0 165232  6252 ?        Sl   02:02   0:00 /usr/libexec/dconf-service
+box       172312  0.0  0.5 765044 85720 ?        Ssl  02:02   0:01 plank --name dock1
+box       172320  0.0  0.0   4488  2040 ?        S    02:02   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/plank:7-dock1.log -- /usr/local/bin/box-plank --name dock1
+box       172322  0.0  0.0   3004  1856 ?        S    02:02   0:00 flock -n /tmp/plank:7-dock1.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:7-dock1.log 172312
+box       172327  0.0  0.3 1044364 56480 ?       Sl   02:02   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/plank:7-dock1.log 172312
+box       172353  0.0  0.0   3048  1912 ?        S    02:02   0:00 tail -f /dev/null
+box       172570  0.0  0.0   4488  3580 ?        S    02:02   0:00 /bin/bash /usr/libexec/bamf/bamfdaemon-dbus-runner
+box       172571  0.0  0.1 331460 23776 ?        Sl   02:02   0:00 /usr/libexec/bamf/bamfdaemon
+box       172637  0.3  0.2  68860 33704 ?        S    02:02   0:04 /usr/bin/python3 /usr/bin/websockify --web=/usr/share/novnc --heartbeat=30 --token-plugin TokenFile --token-source /tmp/sand-novnc-tokens.d 0.0.0.0:6081
+box       172642  0.0  0.1  64588 25872 ?        S    02:02   0:00 /usr/bin/python3 /usr/bin/websockify --web=/usr/share/novnc --heartbeat=30 --token-plugin TokenFile --token-source /tmp/sand-novnc-tokens.d 0.0.0.0:6081
+box       172643  0.0  0.1  64588 25872 ?        S    02:02   0:00 /usr/bin/python3 /usr/bin/websockify --web=/usr/share/novnc --heartbeat=30 --token-plugin TokenFile --token-source /tmp/sand-novnc-tokens.d 0.0.0.0:6081
+box       173118  0.8  0.3 724384 50340 ?        Sl   02:03   0:09 /usr/bin/xfce4-terminal
+box       173124  0.0  0.0   4888  4180 pts/0    Ss   02:03   0:00 bash
+box       174221  0.7  0.2 632672 33732 ?        Sl   02:08   0:06 /usr/bin/thunar
+box       177292  0.0  0.0  13620  6464 pts/0    S+   02:19   0:00 tmate
+box       177294  0.0  0.0  14056  6676 ?        Ss   02:19   0:00 tmate
+box       177295  0.0  0.0   4872  4196 pts/1    Ss   02:19   0:00 -bash
+box       177762  3.7  1.8 55419464 296292 ?     SNsl 02:20   0:05 /opt/google/chrome/chrome --no-sandbox --disable-dev-shm-usage --password-store=basic --no-first-run --no-default-browser-check --hide-crash-restore-bubble --start-maximized --class=box-chrome --user-data-dir=/home/box/chrome-profile-7 --enable-unsafe-swiftshader --remote-debugging-port=9229 --remote-debugging-address=127.0.0.1 https://github.com/login/device
+box       177765  0.0  0.0   4492  2064 ?        S    02:20   0:00 bash /usr/local/bin/box-bounded-log --run /tmp/chrome:7.log -- env DISPLAY=:7 HOME=/home/box TZ=America/Los_Angeles XDG_RUNTIME_DIR=/tmp/xdg-runtime-box-7 DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/dbus-bu4Sr4Y38n,guid=1100a9b254411de80bfc54c36a9cc9b9 SAND_GATEWAY_TOKEN=PM5hgn8PVsmo4aDQy5Xnba69UHfM2q5K5N1mT1yS3fY SAND_HOST_PORT=1340 nice -n 10 google-chrome-stable --no-sandbox --disable-dev-shm-usage --password-store=basic --no-first-run --no-default-browser-check --hide-crash-restore-bubble --start-maximized --class=box-chrome --user-data-dir=/home/box/chrome-profile-7 --enable-unsafe-swiftshader --remote-debugging-port=9229 --remote-debugging-address=127.0.0.1 https://github.com/login/device
+box       177766  0.0  0.0   3004  1824 ?        S    02:20   0:00 flock -n /tmp/chrome:7.log.lock /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/chrome:7.log 177762
+box       177767  0.0  0.2 912160 47548 ?        Sl   02:20   0:00 /exec-daemon/node /usr/local/bin/box-bounded-log.mjs /tmp/chrome:7.log 177762
+box       177772  0.0  0.0   3284  1856 ?        SN   02:20   0:00 cat
+box       177773  0.0  0.0   3284  1860 ?        SN   02:20   0:00 cat
+box       177785  0.0  0.0 54548884 3848 ?       SNl  02:20   0:00 /opt/google/chrome/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --database=/home/box/.config/google-chrome/Crash Reports --url=https://clients2.google.com/cr/report --annotation=channel= --annotation=lsb-release=Debian GNU/Linux 13 (trixie) --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=151.0.7922.169 --initial-client-fd=5 --shared-client-connection
+box       177787  0.0  0.0 54540672 3568 ?       SNl  02:20   0:00 /opt/google/chrome/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/home/box/.config/google-chrome/Crash Reports --url=https://clients2.google.com/cr/report --annotation=channel= --annotation=lsb-release=Debian GNU/Linux 13 (trixie) --annotation=plat=Linux --annotation=prod=Chrome_Linux --annotation=ver=151.0.7922.169 --initial-client-fd=4 --shared-client-connection
+box       177792  0.0  0.4 55229224 68612 ?      SN   02:20   0:00 /opt/google/chrome/chrome --type=zygote --no-zygote-sandbox --no-sandbox --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable
+box       177793  0.0  0.4 55229228 68840 ?      SN   02:20   0:00 /opt/google/chrome/chrome --type=zygote --no-sandbox --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable
+box       177823  1.0  0.7 54985616 129240 ?     SNl  02:20   0:01 /opt/google/chrome/chrome --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,16064280998458450055,15248662985268273001,524288 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190708989122997041
+box       177825  0.0  0.3 55287648 56772 ?      SNl  02:20   0:00 /opt/google/chrome/chrome --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=utility --no-sandbox --disable-dev-shm-usage --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,12417631480030974051,9075598100520847911,524288 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190708990060038890
+box       177877  0.7  1.3 1518664188 228516 ?   SNl  02:20   0:01 /opt/google/chrome/chrome --type=renderer --top-chrome-webui --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --no-sandbox --disable-dev-shm-usage --remote-debugging-port=9229 --ozone-platform=x11 --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1788617442553272 --launch-time-ticks=43812412523 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,5398828821737695708,3086427043251616792,2097152 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190708990997080739
+box       177931  1.1  0.6 55432012 99372 ?      SNl  02:20   0:01 /opt/google/chrome/chrome --type=gpu-process --no-sandbox --disable-dev-shm-usage --ozone-platform=x11 --enable-unsafe-swiftshader --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --gpu-preferences=YAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAASAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAwAAAAAAAAAAEAAAAAAAAACAAAAAAAAAAMAAAAAQAAAAAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --use-gl=angle --use-angle=swiftshader-webgl --shared-files --metrics-shmem-handle=4,i,4891855481339610768,3747404583603888521,262144 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190708995682289984
+box       178179  0.0  0.5 54942700 86736 ?      SNl  02:21   0:00 /opt/google/chrome/chrome --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US --service-sandbox-type=none --no-sandbox --disable-dev-shm-usage --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,11364160637275214859,247054762626731823,524288 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190709016297210662
+box       178463  1.5  1.1 1520642096 184964 ?   SNl  02:21   0:01 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --no-sandbox --disable-dev-shm-usage --remote-debugging-port=9229 --ozone-platform=x11 --disable-gpu-compositing --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=49 --time-ticks-at-unix-epoch=-1788617442553272 --launch-time-ticks=43860119530 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,11037766535383837784,17047556331558605937,2097152 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190709032226922095
+box       178475  0.0  0.4 1518588692 76544 ?    SNl  02:21   0:00 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=0 --enable-crash-reporter=, --user-data-dir=/home/box/chrome-profile-7 --change-stack-guard-on-fork=enable --no-sandbox --disable-dev-shm-usage --remote-debugging-port=9229 --ozone-platform=x11 --disable-gpu-compositing --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=50 --time-ticks-at-unix-epoch=-1788617442553272 --launch-time-ticks=43862015909 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,17449930883982756052,9507600250081144192,2097152 --field-trial-handle=3,i,12696804297988485673,12645096889237134009,262144 --variations-seed-version --pseudonymization-salt-handle=7,i,11564910067854415966,16201759811545248914,4 --trace-process-track-uuid=3190709033163963944
+box       179073  0.0  0.0   4488  3332 pts/1    S+   02:23   0:00 bash /tmp/scrape_and_push.sh
+box       179080  0.0  0.0   3012  2020 ?        S    02:23   0:00 sleep 2
+box       179085  0.0  0.0   3012  1944 ?        S    02:23   0:00 sleep 5
+box       179100  0.0  0.0   7112  4488 pts/1    R+   02:23   0:00 ps auxww

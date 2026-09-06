@@ -1,0 +1,25 @@
+Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                                                                                                                          
+tcp   LISTEN 0      5            0.0.0.0:2375       0.0.0.0:*                                                                                                                                    
+tcp   LISTEN 0      128          0.0.0.0:50052      0.0.0.0:*                                                                                                                                    
+tcp   LISTEN 0      511          0.0.0.0:1340       0.0.0.0:*    users:(("node",pid=608,fd=45))                                                                                                  
+tcp   LISTEN 0      511          0.0.0.0:1339       0.0.0.0:*    users:(("node",pid=167,fd=21))                                                                                                  
+tcp   LISTEN 0      128          0.0.0.0:26500      0.0.0.0:*                                                                                                                                    
+tcp   LISTEN 0      32         127.0.0.1:5900       0.0.0.0:*    users:(("x11vnc",pid=689,fd=8))                                                                                                 
+tcp   LISTEN 0      32         127.0.0.1:5904       0.0.0.0:*    users:(("x11vnc",pid=33924,fd=10))                                                                                              
+tcp   LISTEN 0      32         127.0.0.1:5907       0.0.0.0:*    users:(("x11vnc",pid=171966,fd=10))                                                                                             
+tcp   LISTEN 0      32         127.0.0.1:5906       0.0.0.0:*    users:(("x11vnc",pid=2019,fd=10))                                                                                               
+tcp   LISTEN 0      10         127.0.0.1:9229       0.0.0.0:*    users:(("chrome",pid=177762,fd=86))                                                                                             
+tcp   LISTEN 0      100          0.0.0.0:6081       0.0.0.0:*    users:(("websockify",pid=172643,fd=3),("websockify",pid=172642,fd=3),("websockify",pid=172637,fd=3),("websockify",pid=139,fd=3))
+tcp   LISTEN 0      100          0.0.0.0:6080       0.0.0.0:*    users:(("websockify",pid=733,fd=3))                                                                                             
+tcp   LISTEN 0      511                *:1337             *:*    users:(("node",pid=302,fd=21))                                                                                                  
+tcp   LISTEN 0      511                *:1338             *:*    users:(("node",pid=302,fd=22))                                                                                                  
+tcp   LISTEN 0      32             [::1]:5904          [::]:*    users:(("x11vnc",pid=33924,fd=11))                                                                                              
+tcp   LISTEN 0      32             [::1]:5906          [::]:*    users:(("x11vnc",pid=2019,fd=11))                                                                                               
+tcp   LISTEN 0      32             [::1]:5907          [::]:*    users:(("x11vnc",pid=171966,fd=11))                                                                                             
+tcp   LISTEN 0      32             [::1]:5900          [::]:*    users:(("x11vnc",pid=689,fd=9))                                                                                                 
+tcp   LISTEN 0      511                *:13604            *:*    users:(("node",pid=33901,fd=24))                                                                                                
+tcp   LISTEN 0      511                *:13607            *:*    users:(("node",pid=171954,fd=24))                                                                                               
+tcp   LISTEN 0      511                *:13606            *:*    users:(("node",pid=1949,fd=24))                                                                                                 
+tcp   LISTEN 0      511                *:14004            *:*    users:(("node",pid=33901,fd=23))                                                                                                
+tcp   LISTEN 0      511                *:14007            *:*    users:(("node",pid=171954,fd=23))                                                                                               
+tcp   LISTEN 0      511                *:14006            *:*    users:(("node",pid=1949,fd=23))                                                                                                 
