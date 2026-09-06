@@ -4,86 +4,100 @@ Complete reverse-engineered replication archive for the autonomous cloud agent m
 
 ---
 
-## 🖥️ Live MicroVM Filesystem Map (`box@cursor:/workspace`)
+## 🌳 Full MicroVM Root Filesystem Map (`/`)
 
-This map illustrates where every runtime daemon, IPC token, supervisor script, and profile lives on the actual microVM:
+This diagram shows the complete Linux root filesystem hierarchy (`/`) of the microVM running on `/dev/vda`:
 
 ```text
-/ (Root OverlayFS Mount on /dev/vda)
-├── workspace/                               # Primary Agent Working Directory ($CWD)
-│   └── [Active Git Workspaces & Projects]
+/ (MicroVM Root Filesystem - OverlayFS on /dev/vda)
+├── bin -> usr/bin                          # Core user binaries symlink
 │
-├── exec-daemon/                             # Root-Owned Agent Execution Runtime
-│   ├── exec-daemon                          # Shell launcher wrapper
-│   ├── index.js                             # Core agent server bundle (14.3 MB)
-│   ├── cursorsandbox                         # Sandbox execution binary (4.7 MB)
-│   ├── node                                 # Standalone Node.js runtime (120 MB)
-│   ├── pty.node                             # Native node-pty terminal binding
-│   ├── polished-renderer.node               # Native WebP/frame compression addon
-│   ├── agent-sdk/                           # Canvas UI SDK (React types, DAG layout, diffs)
-│   ├── canvas-runtime/                      # Canvas execution runtime (canvas-runtime.esm.js)
-│   ├── tools/                               # Pre-installed agent CLI tools
-│   │   ├── origin                           # Origin CLI binary (104 MB)
-│   │   ├── rg                               # Ripgrep search binary
-│   │   ├── gh                               # GitHub CLI binary (41 MB)
-│   │   └── tmux                             # Custom tmux binary & tmux.portal.conf
-│   └── node_modules/                        # esbuild-wasm, tree-sitter, etc.
+├── boot/                                   # Kernel boot files (MicroVM boots host vmlinux-6.12 directly)
 │
-├── usr/
-│   ├── local/
-│   │   ├── bin/                             # Custom Process Supervisors & Launchers (40+ scripts)
-│   │   │   ├── sand-exit-watch              # PID 53 root subreaper (crash logging & liveness)
-│   │   │   ├── sand-window-router.mjs       # Port 1339 multi-screen HTTP/WS router
-│   │   │   ├── start-desktop.sh             # Turnkey headless desktop bringup
-│   │   │   ├── box-chrome                   # Managed Chrome launcher (CDP port, WebGL stubs)
-│   │   │   ├── box-chrome-policy            # ExtensionSettings policy generator
-│   │   │   ├── box-cgroups.sh               # Cgroups v2 scheduler (interactive vs agent)
-│   │   │   ├── box-doctor                   # 10-point health, skew & fd check
-│   │   │   ├── box-bounded-log / .mjs       # Circular in-memory RAM log ring (1MB limit)
-│   │   │   ├── link-chrome-session          # Multi-screen SQLite cookie/session linker
-│   │   │   ├── box-xvfb / box-x11vnc        # X11 virtual framebuffers with orphan reaping
-│   │   │   ├── box-xfwm4 / box-picom        # WM & compositor crash-loop defenses
-│   │   │   ├── box-plank                    # Dock launcher synchronized to _NET_WM_CM_S0
-│   │   │   ├── sand-webauthn-proxy-host     # Native messaging bridge for remote WebAuthn
-│   │   │   ├── sand-ua-governor.mjs         # User-Agent & fingerprint manager
-│   │   │   ├── sand-web-bot-auth.mjs        # Bot authentication coordinator
-│   │   │   └── sand-wallpaper               # Adaptive desktop wallpaper renderer
-│   │   └── share/
-│   │       ├── sand-webauthn-proxy/         # Inverted WebAuthn Chrome extension source
-│   │       │   ├── manifest.json
-│   │       │   └── background.js
-│   │       ├── sand-webauthn-proxy.crx      # Packed extension archive
-│   │       ├── sand-webauthn-proxy.id       # Extension ID (pkjakndclmokfbgfnpgjieoebnbghhgb)
-│   │       └── sand-webauthn-proxy.pem      # Extension signing private key
-│   └── share/
-│       └── backgrounds/                     # cursor-box-wallpaper.jpg, sand-wallpaper-*.png
+├── dev/                                    # Device nodes
+│   ├── vda                                 # VirtIO block device (rootfs disk)
+│   ├── ttyS0                               # Primary serial console (console=ttyS0 earlyprintk=ttyS0)
+│   ├── shm/                                # Shared memory (POSIX shm)
+│   └── pts/                                # Virtual pseudo-terminal slave multiplexer
 │
-├── etc/
-│   ├── machine-id                           # 32-char device ID (synced with chrome profile)
-│   ├── opt/chrome/policies/managed/         # sand.json, sand-webauthn.json, sand-webrtc.json
-│   └── opt/chrome/native-messaging-hosts/   # co.anysphere.sand.webauthn_proxy.json
+├── etc/                                    # System configuration
+│   ├── machine-id                          # 32-char hardware UUID (synced to Chrome profile)
+│   ├── sudoers.d/box                       # Passwordless sudo configuration for 'box' user
+│   ├── opt/chrome/policies/managed/        # Managed Chrome policies (sand-webauthn, webrtc, efficiency)
+│   └── opt/chrome/native-messaging-hosts/  # WebAuthn native proxy bridge registration
 │
-├── home/box/                                # Non-Root User Workspace (UID 1000)
-│   ├── chrome-profile/                      # Master Chrome Profile (Screen 1)
-│   │   ├── Default/                         # Cookies, Login Data (Canonical SQLite stores)
-│   │   └── machine-id                       # Persisted device ID copy
-│   ├── chrome-profile-N/                    # Per-Screen Chrome Profiles (Screen :4, :6, :7)
-│   │   └── Default/                         # Cookies -> symlinked to master Default/
-│   ├── sand-data/                           # Persistent agent settings (settings.json)
-│   └── .config/                             # plank/, xfce4/, dconf/
+├── exec-daemon/                            # Root-Owned Agent Execution Runtime (@anysphere)
+│   ├── exec-daemon                         # Daemon entrypoint script
+│   ├── index.js                            # Core agent server bundle (14.3 MB)
+│   ├── cursorsandbox                        # Sandbox supervisor binary (4.7 MB)
+│   ├── node                                # Standalone Node.js binary (120 MB)
+│   ├── pty.node / polished-renderer.node   # Native terminal & WebP rendering C++ addons
+│   ├── agent-sdk/                          # Canvas UI SDK (React types, DAG layout, diffs)
+│   ├── canvas-runtime/                     # Canvas execution runtime (canvas-runtime.esm.js)
+│   └── tools/                              # origin (104 MB), rg, gh, tmux
 │
-├── tmp/                                     # Volatile Inter-Process IPC & Token Routing
-│   ├── .X11-unix/                           # X11 Display Sockets (X1, X4, X6, X7)
-│   ├── sand-novnc-tokens.d/                 # noVNC dynamic tokens (4 -> 5904, 7 -> 5907)
-│   ├── sand-window-tokens.d/                # Window router auth tokens per display
-│   ├── xdg-runtime-box/                     # Primary XDG runtime dir & DBus session bus
-│   ├── xdg-runtime-box-N/                   # Per-screen XDG runtime dirs
-│   ├── *.log & *.lock                       # Bounded RAM logs (xvfb, x11vnc, novnc)
-│   └── sand-box-telemetry.log               # Fault signal & crash telemetry ring
+├── home/
+│   └── box/                                # Default unprivileged agent user (UID 1000, GID 1000)
+│       ├── chrome-profile/                 # Primary Chrome profile (Screen :1, port 9223)
+│       │   └── Default/                    # Cookies & Login Data (canonical SQLite store)
+│       ├── chrome-profile-N/               # Per-display profiles (Screen :N, port 9222+N)
+│       │   └── Default/                    # Symlinked Cookies & Login Data -> primary
+│       ├── sand-data/                      # Persistent agent state & settings (settings.json)
+│       └── .config/                        # Plank dock items, XFCE4 XML channels, dconf DB
 │
-└── sys/fs/cgroup/                           # Cgroups v2 Dual Scheduling Slices
-    ├── interactive/                         # High-priority slice: Xvfb, VNC, WM, Compositor
-    └── agent/                               # Lower-priority slice: Compilers, agent workers
+├── lib -> usr/lib                          # Shared system libraries symlink
+├── lib64 -> usr/lib64                      # 64-bit dynamic linker & libraries
+├── media/                                  # Mount points for removable media
+├── mnt/                                    # Temporary host filesystem mount points
+├── opt/                                    # Optional third-party software packages
+│
+├── proc/                                   # Kernel process & hardware state
+│   ├── 1/environ                           # Hypervisor boot environment variables
+│   ├── 53/environ                          # sand-exit-watch environment
+│   ├── cmdline                             # Boot parameters (console=ttyS0 root=/dev/vda ...)
+│   └── cpuinfo / meminfo / mounts          # Hardware topology & active mount table
+│
+├── root/                                   # Root user home directory
+│
+├── run/                                    # Ephemeral system runtime state
+│   ├── dbus/                               # D-Bus system daemon socket
+│   └── sshd/                               # SSH daemon runtime directory
+│
+├── sbin -> usr/sbin                        # System administration binaries symlink
+├── srv/                                    # Service data directory
+│
+├── sys/                                    # Kernel sysfs & hardware control
+│   └── fs/cgroup/                          # Unified cgroup v2 hierarchy
+│       ├── interactive/                    # High-priority slice (Xvfb, VNC, WM, Compositor)
+│       └── agent/                          # Background slice (compilers, runners, subagents)
+│
+├── tmp/                                    # Ephemeral IPC, locks & dynamic routing
+│   ├── .X11-unix/                          # Headless X11 sockets (X1, X4, X6, X7)
+│   ├── sand-novnc-tokens.d/                # noVNC dynamic routing tokens (4 -> 5904, 7 -> 5907)
+│   ├── sand-window-tokens.d/               # Window router authorization tokens
+│   ├── xdg-runtime-box/                    # Primary user XDG runtime & DBus session bus
+│   ├── xdg-runtime-box-N/                  # Per-screen XDG runtime directories
+│   ├── *.log & *.lock                      # Circular RAM logs (bounded to 1 MB)
+│   └── sand-box-telemetry.log              # Crash and fault telemetry ring buffer
+│
+├── usr/                                    # Secondary hierarchy for system packages
+│   ├── bin/                                # System binaries (Xvfb, x11vnc, websockify, chrome)
+│   ├── local/bin/                          # 40+ custom Grokbot / sand supervisor scripts
+│   │   ├── sand-exit-watch                 # PID 53 root subreaper (crash logging & liveness)
+│   │   ├── sand-window-router.mjs          # Port 1339 multi-screen HTTP/WS router
+│   │   ├── start-desktop.sh                # Turnkey headless desktop supervisor
+│   │   ├── box-chrome / box-chrome-policy  # Chrome launcher & managed policy generator
+│   │   ├── box-cgroups.sh                  # Cgroup v2 scheduler configuration
+│   │   ├── box-doctor                      # 10-point system diagnostic checker
+│   │   ├── box-bounded-log / .mjs          # Bounded in-memory RAM log ring
+│   │   ├── link-chrome-session             # Multi-screen SQLite cookie/session linker
+│   │   └── box-xvfb / box-x11vnc / etc.    # Collision & crash-loop prevention wrappers
+│   ├── local/share/sand-webauthn-proxy/    # Inverted WebAuthn Chrome extension source & CRX
+│   └── share/backgrounds/                  # Cursor wallpapers (cursor-box-wallpaper.jpg)
+│
+├── var/                                    # Variable data (system logs, package caches)
+│
+└── workspace/                              # Active project working tree & user repositories
 ```
 
 ---
