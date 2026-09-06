@@ -1,0 +1,12 @@
+NAME  FSTYPE FSVER LABEL UUID FSAVAIL FSUSE% MOUNTPOINTS       SIZE OWNER GROUP MODE
+loop0                                                            0B root  disk  brw-rw----
+loop1                                                            0B root  disk  brw-rw----
+loop2                                                            0B root  disk  brw-rw----
+loop3                                                            0B root  disk  brw-rw----
+loop4                                                            0B root  disk  brw-rw----
+loop5                                                            0B root  disk  brw-rw----
+loop6                                                            0B root  disk  brw-rw----
+loop7                                                            0B root  disk  brw-rw----
+vda                              113G     5% /etc/hosts        128G root  disk  brw-rw----
+                                             /etc/hostname                      
+                                             /etc/resolv.conf                   

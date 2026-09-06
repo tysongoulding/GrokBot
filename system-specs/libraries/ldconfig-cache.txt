@@ -1,0 +1,1 @@
+/tmp/collect_specs.sh: line 44: ldconfig: command not found

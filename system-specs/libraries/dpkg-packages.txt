@@ -1,0 +1,939 @@
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name                                             Version                                   Architecture Description
++++-================================================-=========================================-============-================================================================================
+ii  adduser                                          3.152                                     all          add and remove users and groups
+ii  adwaita-icon-theme                               48.1-1                                    all          default icon theme of GNOME
+ii  apt                                              3.0.3                                     amd64        commandline package manager
+ii  at-spi2-common                                   2.56.2-1+deb13u1                          all          Assistive Technology Service Provider Interface (common files)
+ii  bamfdaemon                                       0.5.6+repack-1.1+b2                       amd64        Window matching library - daemon
+ii  base-files                                       13.8+deb13u6                              amd64        Debian base system miscellaneous files
+ii  base-passwd                                      3.6.7                                     amd64        Debian base system master password and group files
+ii  bash                                             5.2.37-2+b9                               amd64        GNU Bourne Again SHell
+ii  binutils                                         2.44-3                                    amd64        GNU assembler, linker and binary utilities
+ii  binutils-common:amd64                            2.44-3                                    amd64        Common files for the GNU assembler, linker and binary utilities
+ii  binutils-x86-64-linux-gnu                        2.44-3                                    amd64        GNU binary utilities, for x86-64-linux-gnu target
+ii  bsdutils                                         1:2.41.5-0+deb13u1                        amd64        basic utilities from 4.4BSD-Lite
+ii  ca-certificates                                  20250419                                  all          Common CA certificates
+ii  cargo                                            1.85.0+dfsg3-1                            amd64        Rust package manager
+ii  coreutils                                        9.7-3                                     amd64        GNU core utilities
+ii  cpp                                              4:14.2.0-1                                amd64        GNU C preprocessor (cpp)
+ii  cpp-14                                           14.2.0-19                                 amd64        GNU C preprocessor
+ii  cpp-14-x86-64-linux-gnu                          14.2.0-19                                 amd64        GNU C preprocessor for x86_64-linux-gnu
+ii  cpp-x86-64-linux-gnu                             4:14.2.0-1                                amd64        GNU C preprocessor (cpp) for the amd64 architecture
+ii  curl                                             8.14.1-2+deb13u4                          amd64        command line tool for transferring data with URL syntax
+ii  dash                                             0.5.12-12                                 amd64        POSIX-compliant shell
+ii  dbus-bin                                         1.16.2-2                                  amd64        simple interprocess messaging system (command line utilities)
+ii  dbus-daemon                                      1.16.2-2                                  amd64        simple interprocess messaging system (reference message bus)
+ii  dbus-session-bus-common                          1.16.2-2                                  all          simple interprocess messaging system (session bus configuration)
+ii  dbus-x11                                         1.16.2-2                                  amd64        simple interprocess messaging system (X11 deps)
+ii  dconf-cli                                        0.40.0-5                                  amd64        simple configuration storage system - utilities
+ii  dconf-gsettings-backend:amd64                    0.40.0-5                                  amd64        simple configuration storage system - GSettings back-end
+ii  dconf-service                                    0.40.0-5                                  amd64        simple configuration storage system - D-Bus service
+ii  debconf                                          1.5.91                                    all          Debian configuration management system
+ii  debian-archive-keyring                           2025.1                                    all          OpenPGP archive certificates of the Debian archive
+ii  debianutils                                      5.23.2                                    amd64        Miscellaneous utilities specific to Debian
+ii  desktop-file-utils                               0.28-1                                    amd64        Utilities for .desktop files
+ii  diffutils                                        1:3.10-4                                  amd64        File comparison utilities
+ii  dirmngr                                          2.4.7-21+deb13u1+b4                       amd64        GNU privacy guard - network certificate management service
+ii  dpkg                                             1.22.22                                   amd64        Debian package management system
+ii  eslint                                           6.4.0~dfsg+~6.1.9-12                      all          AST-based pattern checker for JavaScript
+ii  exo-utils                                        4.20.0-1                                  amd64        Utility files for libexo
+ii  ffmpeg                                           7:7.1.5-0+deb13u1                         amd64        Tools for transcoding, streaming and playing of multimedia files
+ii  findutils                                        4.10.0-3                                  amd64        utilities for finding files--find, xargs
+ii  fontconfig                                       2.15.0-2.3                                amd64        generic font configuration library - support binaries
+ii  fontconfig-config                                2.15.0-2.3                                amd64        generic font configuration library - configuration
+ii  fonts-dejavu-core                                2.37-8                                    all          Vera font family derivate with additional characters
+ii  fonts-dejavu-mono                                2.37-8                                    all          Vera font family derivate with additional characters
+ii  fonts-liberation                                 1:2.1.5-3                                 all          fonts with the same metrics as Times, Arial and Courier
+ii  fonts-noto-cjk                                   1:20240730+repack1-1                      all          "No Tofu" font families with large Unicode coverage (CJK regular and bold)
+ii  fonts-noto-color-emoji                           2.051-0+deb13u1                           all          color emoji font from Google
+ii  fonts-urw-base35                                 20200910-8                                all          font set metric-compatible with the 35 PostScript Level 2 Base Fonts
+ii  gcc                                              4:14.2.0-1                                amd64        GNU C compiler
+ii  gcc-14                                           14.2.0-19                                 amd64        GNU C compiler
+ii  gcc-14-base:amd64                                14.2.0-19                                 amd64        GCC, the GNU Compiler Collection (base package)
+ii  gcc-14-x86-64-linux-gnu                          14.2.0-19                                 amd64        GNU C compiler for the x86_64-linux-gnu architecture
+ii  gcc-x86-64-linux-gnu                             4:14.2.0-1                                amd64        GNU C compiler for the amd64 architecture
+ii  gh                                               2.46.0-3                                  amd64        GitHub CLI, GitHub’s official command line tool
+ii  git                                              1:2.47.3-0+deb13u1                        amd64        fast, scalable, distributed revision control system
+ii  git-man                                          1:2.47.3-0+deb13u1                        all          fast, scalable, distributed revision control system (manual pages)
+ii  gnome-themes-extra:amd64                         3.28-4                                    amd64        Adwaita GTK 2 theme — engine
+ii  gnome-themes-extra-data                          3.28-4                                    all          Adwaita GTK 2 theme and Adwaita-dark GTK 3 theme — common files
+ii  gnupg                                            2.4.7-21+deb13u1                          all          GNU privacy guard - a free PGP replacement
+ii  gnupg-l10n                                       2.4.7-21+deb13u1                          all          GNU privacy guard - localization files
+ii  golang-1.24-go                                   1.24.4-1                                  amd64        Go programming language compiler, linker, compiled stdlib
+ii  golang-1.24-src                                  1.24.4-1                                  all          Go programming language - source files
+ii  golang-go:amd64                                  2:1.24~2                                  amd64        Go programming language compiler, linker, compiled stdlib
+ii  golang-src                                       2:1.24~2                                  all          Go programming language - source files
+hi  google-chrome-stable                             151.0.7922.169-1                          amd64        The web browser from Google
+ii  gpg                                              2.4.7-21+deb13u1+b4                       amd64        GNU Privacy Guard -- minimalist public key operations
+ii  gpg-agent                                        2.4.7-21+deb13u1+b4                       amd64        GNU privacy guard - cryptographic agent
+ii  gpgconf                                          2.4.7-21+deb13u1+b4                       amd64        GNU privacy guard - core configuration utilities
+ii  gpgsm                                            2.4.7-21+deb13u1+b4                       amd64        GNU privacy guard - S/MIME version
+ii  grep                                             3.11-4                                    amd64        GNU grep, egrep and fgrep
+ii  gtk-update-icon-cache                            4.18.6+ds-2                               amd64        icon theme caching utility
+ii  gtk2-engines-pixbuf:amd64                        2.24.33-7                                 amd64        pixbuf-based theme for GTK 2
+ii  gyp                                              0.16.2-2                                  all          Cross-platform build script generator
+ii  gzip                                             1.13-1                                    amd64        GNU compression utilities
+ii  handlebars                                       3:4.7.7+~4.1.0-1                          all          build semantic templates effectively with no frustration
+ii  hicolor-icon-theme                               0.18-2                                    all          default fallback theme for FreeDesktop.org icon themes
+ii  hostname                                         3.25                                      amd64        utility to set/show the host name or domain name
+ii  hsetroot                                         1.0.5-1+b1                                amd64        tool for composing root-pixmaps for X11
+ii  init-system-helpers                              1.69~deb13u1                              all          helper tools for all init systems
+ii  iproute2                                         6.15.0-1                                  amd64        networking and traffic control tools
+ii  jq                                               1.7.1-6+deb13u3                           amd64        lightweight and flexible command-line JSON processor
+ii  libacl1:amd64                                    2.3.2-2+b1                                amd64        access control list - shared library
+ii  libaom3:amd64                                    3.12.1-1+deb13u1                          amd64        AV1 Video Codec Library
+ii  libapparmor1:amd64                               4.1.0-1                                   amd64        changehat AppArmor library
+ii  libapt-pkg7.0:amd64                              3.0.3                                     amd64        package management runtime library
+ii  libasan8:amd64                                   14.2.0-19                                 amd64        AddressSanitizer -- a fast memory error detector
+ii  libasound2-data                                  1.2.14-1                                  all          Configuration files and profiles for ALSA drivers
+ii  libasound2t64:amd64                              1.2.14-1                                  amd64        shared library for ALSA applications
+ii  libass9:amd64                                    1:0.17.3-1+deb13u1                        amd64        library for SSA/ASS subtitles rendering
+ii  libassuan9:amd64                                 3.0.2-2                                   amd64        IPC library for the GnuPG components
+ii  libasyncns0:amd64                                0.8-6+b5                                  amd64        Asynchronous name service query library
+ii  libatk-bridge2.0-0t64:amd64                      2.56.2-1+deb13u1                          amd64        AT-SPI 2 toolkit bridge - shared library
+ii  libatk1.0-0t64:amd64                             2.56.2-1+deb13u1                          amd64        ATK accessibility toolkit
+ii  libatomic1:amd64                                 14.2.0-19                                 amd64        support library providing __atomic built-in functions
+ii  libatspi2.0-0t64:amd64                           2.56.2-1+deb13u1                          amd64        Assistive Technology Service Provider Interface - shared library
+ii  libattr1:amd64                                   1:2.5.2-3                                 amd64        extended attribute handling - shared library
+ii  libaudit-common                                  1:4.0.2-2                                 all          Dynamic library for security auditing - common files
+ii  libaudit1:amd64                                  1:4.0.2-2+b2                              amd64        Dynamic library for security auditing
+ii  libavahi-client3:amd64                           0.8-16                                    amd64        Avahi client library
+ii  libavahi-common-data:amd64                       0.8-16                                    amd64        Avahi common data files
+ii  libavahi-common3:amd64                           0.8-16                                    amd64        Avahi common library
+ii  libavc1394-0:amd64                               0.5.4-5+b2                                amd64        control IEEE 1394 audio/video devices
+ii  libavcodec61:amd64                               7:7.1.5-0+deb13u1                         amd64        FFmpeg library with de/encoders for audio/video codecs - runtime files
+ii  libavdevice61:amd64                              7:7.1.5-0+deb13u1                         amd64        FFmpeg library for handling input and output devices - runtime files
+ii  libavfilter10:amd64                              7:7.1.5-0+deb13u1                         amd64        FFmpeg library containing media filters - runtime files
+ii  libavformat61:amd64                              7:7.1.5-0+deb13u1                         amd64        FFmpeg library with (de)muxers for multimedia containers - runtime files
+ii  libavutil59:amd64                                7:7.1.5-0+deb13u1                         amd64        FFmpeg library with functions for simplifying programming - runtime files
+ii  libbamf3-2t64:amd64                              0.5.6+repack-1.1+b2                       amd64        Window matching library - shared library
+ii  libbinutils:amd64                                2.44-3                                    amd64        GNU binary utilities (private shared library)
+ii  libblas3:amd64                                   3.12.1-6                                  amd64        Basic Linear Algebra Reference implementations, shared library
+ii  libblkid1:amd64                                  2.41.5-0+deb13u1                          amd64        block device ID library
+ii  libbluray2:amd64                                 1:1.3.4-1+b2                              amd64        Blu-ray disc playback support library (shared library)
+ii  libbpf1:amd64                                    1:1.5.0-3                                 amd64        eBPF helper library (shared library)
+ii  libbrotli1:amd64                                 1.1.0-2+b7                                amd64        library implementing brotli encoder and decoder (shared libraries)
+ii  libbs2b0:amd64                                   3.1.0+dfsg-8+b1                           amd64        Bauer stereophonic-to-binaural DSP library
+ii  libbsd0:amd64                                    0.12.2-2                                  amd64        utility functions from BSD systems - shared library
+ii  libbz2-1.0:amd64                                 1.0.8-6                                   amd64        high-quality block-sorting file compressor library - runtime
+ii  libc-bin                                         2.41-12+deb13u3                           amd64        GNU C Library: Binaries
+ii  libc-dev-bin                                     2.41-12+deb13u3                           amd64        GNU C Library: Development binaries
+ii  libc6:amd64                                      2.41-12+deb13u3                           amd64        GNU C Library: Shared libraries
+ii  libc6-dev:amd64                                  2.41-12+deb13u3                           amd64        GNU C Library: Development Libraries and Header Files
+ii  libcaca0:amd64                                   0.99.beta20-5+deb13u1                     amd64        colour ASCII art library
+ii  libcairo-gobject2:amd64                          1.18.4-1+b1                               amd64        Cairo 2D vector graphics library (GObject library)
+ii  libcairo2:amd64                                  1.18.4-1+b1                               amd64        Cairo 2D vector graphics library
+ii  libcap-ng0:amd64                                 0.8.5-4+b1                                amd64        alternate POSIX capabilities library
+ii  libcap2:amd64                                    1:2.75-10+deb13u1+b1                      amd64        POSIX 1003.1e capabilities (library)
+ii  libcap2-bin                                      1:2.75-10+deb13u1+b1                      amd64        POSIX 1003.1e capabilities (utilities)
+ii  libcares2:amd64                                  1.34.5-1+deb13u1                          amd64        asynchronous name resolver
+ii  libcc1-0:amd64                                   14.2.0-19                                 amd64        GCC cc1 plugin for GDB
+ii  libcdio-cdda2t64:amd64                           10.2+2.0.2-1+b1                           amd64        library to read and control digital audio CDs
+ii  libcdio-paranoia2t64:amd64                       10.2+2.0.2-1+b1                           amd64        library to read digital audio CDs with error correction
+ii  libcdio19t64:amd64                               2.2.0-4.1~deb13u1                         amd64        library to read and control CD-ROM
+ii  libchromaprint1:amd64                            1.5.1-7                                   amd64        audio fingerprint library
+ii  libcjson1:amd64                                  1.7.18-3.1+deb13u1                        amd64        Ultralightweight JSON parser in ANSI C
+ii  libcloudproviders0:amd64                         0.3.6-2                                   amd64        cloud provider library
+ii  libcodec2-1.2:amd64                              1.2.0-3                                   amd64        Codec2 runtime library
+ii  libcolord2:amd64                                 1.4.7-3                                   amd64        system service to manage device colour profiles -- runtime
+ii  libcom-err2:amd64                                1.47.2-3+b11                              amd64        common error description library
+ii  libconfig11:amd64                                1.7.3-2                                   amd64        parsing/manipulation of structured configuration files
+ii  libcrypt-dev:amd64                               1:4.4.38-1                                amd64        libcrypt development files
+ii  libcrypt1:amd64                                  1:4.4.38-1                                amd64        libcrypt shared library
+ii  libctf-nobfd0:amd64                              2.44-3                                    amd64        Compact C Type Format library (runtime, no BFD dependency)
+ii  libctf0:amd64                                    2.44-3                                    amd64        Compact C Type Format library (runtime, BFD dependency)
+ii  libcups2t64:amd64                                2.4.10-3+deb13u2                          amd64        Common UNIX Printing System(tm) - Core library
+ii  libcurl3t64-gnutls:amd64                         8.14.1-2+deb13u4                          amd64        easy-to-use client-side URL transfer library (GnuTLS flavour)
+ii  libcurl4t64:amd64                                8.14.1-2+deb13u4                          amd64        easy-to-use client-side URL transfer library (OpenSSL flavour)
+ii  libdatrie1:amd64                                 0.2.13-3+b1                               amd64        Double-array trie library
+ii  libdav1d7:amd64                                  1.5.1-1                                   amd64        fast and small AV1 video stream decoder (shared library)
+ii  libdb5.3t64:amd64                                5.3.28+dfsg2-9                            amd64        Berkeley v5.3 Database Libraries [runtime]
+ii  libdbus-1-3:amd64                                1.16.2-2                                  amd64        simple interprocess messaging system (library)
+ii  libdbusmenu-glib4:amd64                          18.10.20180917~bzr492+repack1-4           amd64        library for passing menus over DBus
+ii  libdbusmenu-gtk3-4:amd64                         18.10.20180917~bzr492+repack1-4           amd64        library for passing menus over DBus - GTK-3+ version
+ii  libdc1394-25:amd64                               2.2.6-5                                   amd64        high level programming interface for IEEE 1394 digital cameras
+ii  libdconf1:amd64                                  0.40.0-5                                  amd64        simple configuration storage system - runtime library
+ii  libde265-0:amd64                                 1.0.15-1+deb13u1                          amd64        Open H.265 video codec implementation
+ii  libdebconfclient0:amd64                          0.280                                     amd64        Debian Configuration Management System (C-implementation library)
+ii  libdecor-0-0:amd64                               0.2.2-2                                   amd64        client-side window decoration library
+ii  libdeflate0:amd64                                1.23-2                                    amd64        fast, whole-buffer DEFLATE-based compression and decompression
+ii  libdrm-amdgpu1:amd64                             2.4.124-2                                 amd64        Userspace interface to amdgpu-specific kernel DRM services -- runtime
+ii  libdrm-common                                    2.4.124-2                                 all          Userspace interface to kernel DRM services -- common files
+ii  libdrm-intel1:amd64                              2.4.124-2                                 amd64        Userspace interface to intel-specific kernel DRM services -- runtime
+ii  libdrm2:amd64                                    2.4.124-2                                 amd64        Userspace interface to kernel DRM services -- runtime
+ii  libdvdnav4:amd64                                 6.1.1-3+b1                                amd64        DVD navigation library
+ii  libdvdread8t64:amd64                             6.1.3-2                                   amd64        library for reading DVDs
+ii  libedit2:amd64                                   3.1-20250104-1                            amd64        BSD editline and history libraries
+ii  libelf1t64:amd64                                 0.192-4                                   amd64        library to read and write ELF files
+ii  libepoxy0:amd64                                  1.5.10-2                                  amd64        OpenGL function pointer management library
+ii  liberror-perl                                    0.17030-1                                 all          Perl module for error/exception handling in an OO-ish way
+ii  libev4t64:amd64                                  1:4.33-2.1+b1                             amd64        high-performance event loop library modelled after libevent
+ii  libevent-2.1-7t64:amd64                          2.1.12-stable-10+b1                       amd64        Asynchronous event notification library
+ii  libevent-core-2.1-7t64:amd64                     2.1.12-stable-10+b1                       amd64        Asynchronous event notification library (core)
+ii  libexif12:amd64                                  0.6.25-1+deb13u1                          amd64        library to parse EXIF files
+ii  libexo-2-0:amd64                                 4.20.0-1                                  amd64        Library with extensions for Xfce (GTK-3 version)
+ii  libexo-common                                    4.20.0-1                                  all          libexo common files
+ii  libexpat1:amd64                                  2.8.3-1~deb13u1                           amd64        XML parsing C library - runtime library
+ii  libffi8:amd64                                    3.4.8-2                                   amd64        Foreign Function Interface library runtime
+ii  libfftw3-double3:amd64                           3.3.10-2+b1                               amd64        Library for computing Fast Fourier Transforms - Double precision
+ii  libflac14:amd64                                  1.5.0+ds-2                                amd64        Free Lossless Audio Codec - runtime C library
+ii  libflite1:amd64                                  2.2-7                                     amd64        Small run-time speech synthesis engine - shared libraries
+ii  libfontconfig1:amd64                             2.15.0-2.3                                amd64        generic font configuration library - runtime
+ii  libfontenc1:amd64                                1:1.1.8-1+b2                              amd64        X11 font encoding library
+ii  libfreetype6:amd64                               2.13.3+dfsg-1+deb13u1                     amd64        FreeType 2 font engine, shared library files
+ii  libfribidi0:amd64                                1.0.16-1                                  amd64        Free Implementation of the Unicode BiDi algorithm
+ii  libgbm1:amd64                                    25.0.7-2+deb13u1                          amd64        generic buffer management API -- runtime
+ii  libgcc-14-dev:amd64                              14.2.0-19                                 amd64        GCC support library (development files)
+ii  libgcc-s1:amd64                                  14.2.0-19                                 amd64        GCC support library
+ii  libgcrypt20:amd64                                1.11.0-7+deb13u1                          amd64        LGPL Crypto library - runtime library
+ii  libgdbm-compat4t64:amd64                         1.24-2                                    amd64        GNU dbm database routines (legacy support runtime version) 
+ii  libgdbm6t64:amd64                                1.24-2                                    amd64        GNU dbm database routines (runtime version) 
+ii  libgdk-pixbuf-2.0-0:amd64                        2.42.12+dfsg-4+deb13u1                    amd64        GDK Pixbuf library
+ii  libgdk-pixbuf2.0-common                          2.42.12+dfsg-4+deb13u1                    all          GDK Pixbuf library - data files
+ii  libgee-0.8-2:amd64                               0.20.8-1                                  amd64        GObject based collection and utility library
+ii  libgfortran5:amd64                               14.2.0-19                                 amd64        Runtime library for GNU Fortran applications
+ii  libgif7:amd64                                    5.2.2-1+deb13u1                           amd64        library for GIF images (library)
+ii  libgit2-1.9:amd64                                1.9.0+ds-2+deb13u1                        amd64        low-level Git library
+ii  libgl1:amd64                                     1.7.0-1+b2                                amd64        Vendor neutral GL dispatch library -- legacy GL support
+ii  libgl1-mesa-dri:amd64                            25.0.7-2+deb13u1                          amd64        free implementation of the OpenGL API -- DRI modules
+ii  libglib2.0-0t64:amd64                            2.84.4-3~deb13u3                          amd64        GLib library of C routines
+ii  libglvnd0:amd64                                  1.7.0-1+b2                                amd64        Vendor neutral GL dispatch library
+ii  libglx-mesa0:amd64                               25.0.7-2+deb13u1                          amd64        free implementation of the OpenGL API -- GLX vendor library
+ii  libglx0:amd64                                    1.7.0-1+b2                                amd64        Vendor neutral GL dispatch library -- GLX support
+ii  libgme0:amd64                                    0.6.3-7+b2                                amd64        Playback library for video game music files - shared library
+ii  libgmp10:amd64                                   2:6.3.0+dfsg-3                            amd64        Multiprecision arithmetic library
+ii  libgnome-menu-3-0:amd64                          3.36.0-3                                  amd64        GNOME implementation of the freedesktop menu specification
+ii  libgnutls30t64:amd64                             3.8.9-3+deb13u4                           amd64        GNU TLS library - main runtime library
+ii  libgomp1:amd64                                   14.2.0-19                                 amd64        GCC OpenMP (GOMP) support library
+ii  libgpg-error0:amd64                              1.51-4                                    amd64        GnuPG development runtime library
+ii  libgpgme11t64:amd64                              1.24.2-3                                  amd64        GPGME - GnuPG Made Easy (library)
+ii  libgpgmepp6t64:amd64                             1.24.2-3                                  amd64        C++ wrapper library for GPGME
+ii  libgprofng0:amd64                                2.44-3                                    amd64        GNU Next Generation profiler (runtime library)
+ii  libgraphite2-3:amd64                             1.3.14-2+deb13u1                          amd64        Font rendering engine for Complex Scripts -- library
+ii  libgs-common                                     10.05.1~dfsg-1+deb13u1                    all          interpreter for the PostScript language and for PDF - ICC profiles
+ii  libgs10:amd64                                    10.05.1~dfsg-1+deb13u1                    amd64        interpreter for the PostScript language and for PDF - Library
+ii  libgs10-common                                   10.05.1~dfsg-1+deb13u1                    all          interpreter for the PostScript language and for PDF - common files
+ii  libgsm1:amd64                                    1.0.22-1+b2                               amd64        Shared libraries for GSM speech compressor
+ii  libgssapi-krb5-2:amd64                           1.21.3-5+deb13u1                          amd64        MIT Kerberos runtime libraries - krb5 GSS-API Mechanism
+ii  libgtk-3-0t64:amd64                              3.24.49-3                                 amd64        GTK graphical user interface library
+ii  libgtk-3-common                                  3.24.49-3                                 all          common files for the GTK graphical user interface library
+ii  libgtop-2.0-11:amd64                             2.41.3-1+b2                               amd64        gtop system monitoring library (shared)
+ii  libgtop2-common                                  2.41.3-1                                  all          gtop system monitoring library (common)
+ii  libgudev-1.0-0:amd64                             238-6                                     amd64        GObject-based wrapper library for libudev
+ii  libharfbuzz0b:amd64                              10.2.0-1+deb13u1                          amd64        OpenType text shaping engine (shared library)
+ii  libheif-plugin-dav1d:amd64                       1.19.8-1+deb13u1                          amd64        HEIF and AVIF file format decoder and encoder - dav1d plugin
+ii  libheif-plugin-libde265:amd64                    1.19.8-1+deb13u1                          amd64        HEIF and AVIF file format decoder and encoder - libde265 plugin
+ii  libheif1:amd64                                   1.19.8-1+deb13u1                          amd64        HEIF and AVIF file format decoder and encoder - shared library
+ii  libhogweed6t64:amd64                             3.10.1-1                                  amd64        low level cryptographic library (public-key cryptos)
+ii  libhttp-parser2.9:amd64                          2.9.4-6+b2                                amd64        parser for HTTP messages written in C
+ii  libhwasan0:amd64                                 14.2.0-19                                 amd64        AddressSanitizer -- a fast memory error detector
+ii  libhwy1t64:amd64                                 1.2.0-2+b2                                amd64        Efficient and performance-portable SIMD wrapper (runtime files)
+ii  libice6:amd64                                    2:1.1.1-1                                 amd64        X11 Inter-Client Exchange library
+ii  libicu76:amd64                                   76.1-4                                    amd64        International Components for Unicode
+ii  libid3tag0:amd64                                 0.16.3-1                                  amd64        ID3 tag reading library from the MAD project
+ii  libidn12:amd64                                   1.43-1                                    amd64        GNU Libidn library, implementation of IETF IDN specifications
+ii  libidn2-0:amd64                                  2.3.8-2                                   amd64        Internationalized domain names (IDNA2008/TR46) library
+ii  libiec61883-0:amd64                              1.2.0-7                                   amd64        partial implementation of IEC 61883 (shared lib)
+ii  libijs-0.35:amd64                                0.35-15.2                                 amd64        IJS raster image transport protocol: shared library
+ii  libimlib2t64:amd64                               1.12.4-2                                  amd64        image loading, rendering, saving library
+ii  libisl23:amd64                                   0.27-1                                    amd64        manipulating sets and relations of integer points bounded by linear constraints
+ii  libitm1:amd64                                    14.2.0-19                                 amd64        GNU Transactional Memory Library
+ii  libjack-jackd2-0:amd64                           1.9.22~dfsg-4                             amd64        JACK Audio Connection Kit (libraries)
+ii  libjansson4:amd64                                2.14-2+b3                                 amd64        C library for encoding, decoding and manipulating JSON data
+ii  libjbig0:amd64                                   2.1-6.1+b2                                amd64        JBIGkit libraries
+ii  libjbig2dec0:amd64                               0.20-1+b3                                 amd64        JBIG2 decoder library - shared libraries
+ii  libjemalloc2:amd64                               5.3.0-3                                   amd64        general-purpose scalable concurrent malloc(3) implementation
+ii  libjpeg62-turbo:amd64                            1:2.1.5-4                                 amd64        libjpeg-turbo JPEG runtime library
+ii  libjq1:amd64                                     1.7.1-6+deb13u3                           amd64        lightweight and flexible command-line JSON processor - shared library
+ii  libjs-events                                     3.3.0+~3.0.0-3                            all          Node.js events module for browsers
+ii  libjs-inherits                                   2.0.4-6                                   all          Browser library that exposes inherits function from Node.js environment
+ii  libjs-is-typedarray                              1.0.0-4                                   all          JavaScript library checking if object is TypedArray
+ii  libjs-prettify                                   2015.12.04+dfsg-1.1                       all          syntax highlighting of source code snippets in an html page
+ii  libjs-regenerate                                 1.4.2-3                                   all          Unicode-aware regular expression generator (JavaScript library)
+ii  libjs-source-map                                 0.7.0++dfsg2+really.0.6.1-15              all          Mozilla source map generator and consumer - JavaScript library
+ii  libjs-sprintf-js                                 1.1.2+ds1+~1.1.2-1                        all          JavaScript sprintf implementation
+ii  libjs-typedarray-to-buffer                       4.0.0-2                                   all          Nodejs utility converting TypedArray to buffer without copy
+ii  libjs-util                                       0.12.5+~1.0.10-1                          all          JavaScript util module
+ii  libjxl0.11:amd64                                 0.11.2-0.1~deb13u2                        amd64        JPEG XL Image Coding System - "JXL" (shared libraries)
+ii  libk5crypto3:amd64                               1.21.3-5+deb13u1                          amd64        MIT Kerberos runtime libraries - Crypto Library
+ii  libkeyutils1:amd64                               1.6.3-6                                   amd64        Linux Key Management Utilities (library)
+ii  libkrb5-3:amd64                                  1.21.3-5+deb13u1                          amd64        MIT Kerberos runtime libraries
+ii  libkrb5support0:amd64                            1.21.3-5+deb13u1                          amd64        MIT Kerberos runtime libraries - Support library
+ii  libksba8:amd64                                   1.6.7-2+b1                                amd64        X.509 and CMS support library
+ii  liblapack3:amd64                                 3.12.1-6                                  amd64        Library of linear algebra routines 3 - shared version
+ii  liblastlog2-2:amd64                              2.41.5-0+deb13u1                          amd64        lastlog2 database shared library
+ii  liblcms2-2:amd64                                 2.16-2+deb13u2                            amd64        Little CMS 2 color management library
+ii  libldap2:amd64                                   2.6.10+dfsg-1                             amd64        OpenLDAP libraries
+ii  liblerc4:amd64                                   4.0.0+ds-5                                amd64        Limited Error Raster Compression library
+ii  liblilv-0-0:amd64                                0.24.26-1                                 amd64        library for simple use of LV2 plugins
+ii  libllvm19:amd64                                  1:19.1.7-3+b1                             amd64        Modular compiler and toolchain technologies, runtime library
+ii  liblsan0:amd64                                   14.2.0-19                                 amd64        LeakSanitizer -- a memory leak detector (runtime)
+ii  liblz4-1:amd64                                   1.10.0-4                                  amd64        Fast LZ compression algorithm library - runtime
+ii  liblzma5:amd64                                   5.8.1-1+deb13u1                           amd64        XZ-format compression library
+ii  liblzo2-2:amd64                                  2.10-3+b1                                 amd64        data compression library
+ii  libmbedcrypto16:amd64                            3.6.5-0.1~deb13u1                         amd64        lightweight crypto and SSL/TLS library - crypto library
+ii  libmbedtls21:amd64                               3.6.5-0.1~deb13u1                         amd64        lightweight crypto and SSL/TLS library - tls library
+ii  libmbedx509-7:amd64                              3.6.5-0.1~deb13u1                         amd64        lightweight crypto and SSL/TLS library - x509 certificate library
+ii  libmd0:amd64                                     1.1.0-2+b1                                amd64        message digest functions from BSD systems - shared library
+ii  libmnl0:amd64                                    1.0.5-3                                   amd64        minimalistic Netlink communication library
+ii  libmount1:amd64                                  2.41.5-0+deb13u1                          amd64        device mounting library
+ii  libmp3lame0:amd64                                3.100-6+b3                                amd64        MP3 encoding library
+ii  libmpc3:amd64                                    1.3.1-1+b3                                amd64        multiple precision complex floating-point library
+ii  libmpfr6:amd64                                   4.2.2-1                                   amd64        multiple precision floating-point computation
+ii  libmpg123-0t64:amd64                             1.32.10-1+deb13u1                         amd64        MPEG layer 1/2/3 audio decoder (shared library)
+ii  libmsgpack-c2:amd64                              6.0.1-3+b1                                amd64        binary-based efficient object serialization library
+ii  libmysofa1:amd64                                 1.3.3+dfsg-1                              amd64        library to read HRTFs stored in the AES69-2015 SOFA format
+ii  libncursesw6:amd64                               6.5+20250216-2                            amd64        shared libraries for terminal handling (wide character support)
+ii  libnettle8t64:amd64                              3.10.1-1                                  amd64        low level cryptographic library (symmetric and one-way cryptos)
+ii  libnghttp2-14:amd64                              1.64.0-1.1+deb13u1                        amd64        library implementing HTTP/2 protocol (shared library)
+ii  libnghttp3-9:amd64                               1.8.0-1                                   amd64        HTTP/3 library with QUIC and QPACK (library)
+ii  libngtcp2-16:amd64                               1.11.0-1+deb13u1                          amd64        implementation of QUIC protocol (library)
+ii  libngtcp2-crypto-gnutls8:amd64                   1.11.0-1+deb13u1                          amd64        implementation of QUIC protocol (library)
+ii  libnode-dev                                      20.19.2+dfsg-1+deb13u2                    amd64        evented I/O for V8 javascript (development files)
+ii  libnode115:amd64                                 20.19.2+dfsg-1+deb13u2                    amd64        evented I/O for V8 javascript - runtime library
+ii  libnorm1t64:amd64                                1.5.9+dfsg-3.1+b2                         amd64        NACK-Oriented Reliable Multicast (NORM) library
+ii  libnotify4:amd64                                 0.8.6-1                                   amd64        sends desktop notifications to a notification daemon
+ii  libnpth0t64:amd64                                1.8-3                                     amd64        replacement for GNU Pth using system threads
+ii  libnspr4:amd64                                   2:4.36-1                                  amd64        NetScape Portable Runtime Library
+ii  libnss3:amd64                                    2:3.110-1+deb13u4                         amd64        Network Security Service libraries
+ii  libnuma1:amd64                                   2.0.19-1                                  amd64        Libraries for controlling NUMA policy
+ii  libogg0:amd64                                    1.3.5-3+b2                                amd64        Ogg bitstream library
+ii  libonig5:amd64                                   6.9.9-1+b1                                amd64        regular expressions library
+ii  libopenal-data                                   1:1.24.2-1                                all          Software implementation of the OpenAL audio API (data files)
+ii  libopenal1:amd64                                 1:1.24.2-1                                amd64        Software implementation of the OpenAL audio API (shared library)
+ii  libopenjp2-7:amd64                               2.5.3-2.1~deb13u2                         amd64        JPEG 2000 image compression/decompression library
+ii  libopenmpt0t64:amd64                             0.7.13-1+b1                               amd64        module music library based on OpenMPT -- shared library
+ii  libopus0:amd64                                   1.5.2-2                                   amd64        Opus codec runtime library
+ii  libp11-kit0:amd64                                0.25.5-3                                  amd64        library for loading and coordinating access to PKCS#11 modules - runtime
+ii  libpam-modules:amd64                             1.7.0-5                                   amd64        Pluggable Authentication Modules for PAM
+ii  libpam-modules-bin                               1.7.0-5                                   amd64        Pluggable Authentication Modules for PAM - helper binaries
+ii  libpam-runtime                                   1.7.0-5                                   all          Runtime support for the PAM library
+ii  libpam0g:amd64                                   1.7.0-5                                   amd64        Pluggable Authentication Modules library
+ii  libpango-1.0-0:amd64                             1.56.3-1                                  amd64        Layout and rendering of internationalized text
+ii  libpangocairo-1.0-0:amd64                        1.56.3-1                                  amd64        Layout and rendering of internationalized text
+ii  libpangoft2-1.0-0:amd64                          1.56.3-1                                  amd64        Layout and rendering of internationalized text
+ii  libpaper2:amd64                                  2.2.5-0.3+b2                              amd64        Paper sizes catalogue
+ii  libpciaccess0:amd64                              0.17-3+b3                                 amd64        Generic PCI access library for X
+ii  libpcre2-8-0:amd64                               10.46-1~deb13u1                           amd64        New Perl Compatible Regular Expression Library- 8 bit runtime files
+ii  libperl5.40:amd64                                5.40.1-6                                  amd64        shared Perl library
+ii  libpgm-5.3-0t64:amd64                            5.3.128~dfsg-2.1+b1                       amd64        OpenPGM shared library
+ii  libpixman-1-0:amd64                              0.44.0-3                                  amd64        pixel-manipulation library for X and cairo
+ii  libplacebo349:amd64                              7.349.0-3                                 amd64        GPU-accelerated video/image rendering primitives (shared library)
+ii  libplank-common                                  0.11.89-6                                 all          Library to build an elegant, simple, clean dock (shared files)
+ii  libplank1:amd64                                  0.11.89-6+b1                              amd64        Library to build an elegant, simple, clean dock
+ii  libpng16-16t64:amd64                             1.6.48-1+deb13u5                          amd64        PNG library - runtime (version 1.6)
+ii  libpocketsphinx3:amd64                           0.8+5prealpha+1-15+b4                     amd64        Speech recognition tool - front-end library
+ii  libpoppler147:amd64                              25.03.0-5+deb13u4                         amd64        PDF rendering library
+ii  libpostproc58:amd64                              7:7.1.5-0+deb13u1                         amd64        FFmpeg library for post processing - runtime files
+ii  libproc2-0:amd64                                 2:4.0.4-9                                 amd64        library for accessing process information from /proc
+ii  libpsl5t64:amd64                                 0.21.2-1.1+b1                             amd64        Library for Public Suffix List (shared libraries)
+ii  libpulse0:amd64                                  17.0+dfsg1-2+b1                           amd64        PulseAudio client libraries
+ii  libpython3-stdlib:amd64                          3.13.5-1                                  amd64        interactive high-level object-oriented language (default python3 version)
+ii  libpython3.13-minimal:amd64                      3.13.5-2+deb13u4                          amd64        Minimal subset of the Python language (version 3.13)
+ii  libpython3.13-stdlib:amd64                       3.13.5-2+deb13u4                          amd64        Interactive high-level object-oriented language (standard library, version 3.13)
+ii  libquadmath0:amd64                               14.2.0-19                                 amd64        GCC Quad-Precision Math Library
+ii  librabbitmq4:amd64                               0.15.0-1+deb13u2                          amd64        AMQP client library written in C
+ii  librav1e0.7:amd64                                0.7.1-9+b2                                amd64        Fastest and safest AV1 encoder - shared library
+ii  libraw1394-11:amd64                              2.1.2-2+b2                                amd64        library for direct access to IEEE 1394 bus (aka FireWire)
+ii  libreadline8t64:amd64                            8.2-6                                     amd64        GNU readline and history libraries, run-time libraries
+ii  librist4:amd64                                   0.2.11+dfsg-1                             amd64        Reliable Internet Stream Transport -- shared library
+ii  librsvg2-2:amd64                                 2.60.0+dfsg-1                             amd64        SAX-based renderer library for SVG files (runtime)
+ii  librtmp1:amd64                                   2.4+20151223.gitfa8646d.1-2+b5            amd64        toolkit for RTMP streams (shared library)
+ii  librubberband2:amd64                             3.3.0+dfsg-2+b3                           amd64        audio time-stretching and pitch-shifting library
+ii  libsamplerate0:amd64                             0.2.2-4+b2                                amd64        Audio sample rate conversion library
+ii  libsasl2-2:amd64                                 2.1.28+dfsg1-9                            amd64        Cyrus SASL - authentication abstraction library
+ii  libsasl2-modules-db:amd64                        2.1.28+dfsg1-9                            amd64        Cyrus SASL - pluggable authentication modules (DB)
+ii  libsdl2-2.0-0:amd64                              2.32.4+dfsg-1                             amd64        Simple DirectMedia Layer
+ii  libseccomp2:amd64                                2.6.0-2                                   amd64        high level interface to Linux seccomp filter
+ii  libselinux1:amd64                                3.8.1-1                                   amd64        SELinux runtime shared libraries
+ii  libsemanage-common                               3.8.1-1                                   all          Common files for SELinux policy management libraries
+ii  libsemanage2:amd64                               3.8.1-1                                   amd64        SELinux policy management library
+ii  libsensors-config                                1:3.6.2-2                                 all          lm-sensors configuration files
+ii  libsensors5:amd64                                1:3.6.2-2                                 amd64        library to read temperature/voltage/fan sensors
+ii  libsepol2:amd64                                  3.8.1-1                                   amd64        SELinux library for manipulating binary security policies
+ii  libserd-0-0:amd64                                0.32.4-1                                  amd64        lightweight RDF syntax library
+ii  libsframe1:amd64                                 2.44-3                                    amd64        Library to handle the SFrame format (runtime library)
+ii  libsharpyuv0:amd64                               1.5.0-0.1                                 amd64        Library for sharp RGB to YUV conversion
+ii  libshine3:amd64                                  3.1.1-2+b2                                amd64        Fixed-point MP3 encoding library - runtime files
+ii  libslang2:amd64                                  2.3.3-5+b2                                amd64        S-Lang programming library - runtime version
+ii  libsm6:amd64                                     2:1.2.6-1                                 amd64        X11 Session Management library
+ii  libsmartcols1:amd64                              2.41.5-0+deb13u1                          amd64        smart column output alignment library
+ii  libsnappy1v5:amd64                               1.2.2-1                                   amd64        fast compression/decompression library
+ii  libsndfile1:amd64                                1.2.2-2+deb13u1                           amd64        Library for reading/writing audio files
+ii  libsodium23:amd64                                1.0.18-1+deb13u1                          amd64        Network communication, cryptography and signaturing library
+ii  libsord-0-0:amd64                                0.16.18-1                                 amd64        library for storing RDF data in memory
+ii  libsoxr0:amd64                                   0.1.3-4+b2                                amd64        High quality 1D sample-rate conversion library
+ii  libspectre1:amd64                                0.2.12-1+b2                               amd64        Library for rendering PostScript documents
+ii  libspeex1:amd64                                  1.2.1-3                                   amd64        Speex codec library (runtime library)
+ii  libsphinxbase3t64:amd64                          0.8+5prealpha+1-21+b1                     amd64        Speech recognition tool - shared library
+ii  libsqlite3-0:amd64                               3.46.1-7+deb13u1                          amd64        SQLite 3 shared library
+ii  libsratom-0-0:amd64                              0.6.18-1                                  amd64        library for serialising LV2 atoms to/from Turtle
+ii  libsrt1.5-gnutls:amd64                           1.5.4-1+deb13u1                           amd64        Secure Reliable Transport UDP streaming library (GnuTLS flavour)
+ii  libssh-4:amd64                                   0.11.5-0+deb13u1                          amd64        tiny C SSH library (OpenSSL flavor)
+ii  libssh2-1t64:amd64                               1.11.1-1+deb13u1                          amd64        SSH2 client-side library
+ii  libssl-dev:amd64                                 3.5.7-1~deb13u2                           amd64        Secure Sockets Layer toolkit - development files
+ii  libssl3t64:amd64                                 3.5.7-1~deb13u2                           amd64        Secure Sockets Layer toolkit - shared libraries
+ii  libstartup-notification0:amd64                   0.12-8                                    amd64        library for program launch feedback (shared library)
+ii  libstd-rust-1.85:amd64                           1.85.0+dfsg3-1                            amd64        Rust standard libraries
+ii  libstd-rust-dev:amd64                            1.85.0+dfsg3-1                            amd64        Rust standard libraries - development files
+ii  libstdc++6:amd64                                 14.2.0-19                                 amd64        GNU Standard C++ Library v3
+ii  libsvtav1enc2:amd64                              2.3.0+dfsg-1                              amd64        Scalable Video Technology for AV1 (libsvtav1enc shared library)
+ii  libswresample5:amd64                             7:7.1.5-0+deb13u1                         amd64        FFmpeg library for audio resampling, rematrixing etc. - runtime files
+ii  libswscale8:amd64                                7:7.1.5-0+deb13u1                         amd64        FFmpeg library for image scaling and various conversions - runtime files
+ii  libsystemd0:amd64                                257.13-1~deb13u1                          amd64        systemd utility library
+ii  libtasn1-6:amd64                                 4.20.0-2+deb13u1                          amd64        Manage ASN.1 structures (runtime)
+ii  libtcl8.6:amd64                                  8.6.16+dfsg-1                             amd64        Tcl (the Tool Command Language) v8.6 - run-time library files
+ii  libthai-data                                     0.1.29-2                                  all          Data files for Thai language support library
+ii  libthai0:amd64                                   0.1.29-2+b1                               amd64        Thai language support library
+ii  libtheoradec1:amd64                              1.2.0~alpha1+dfsg-6                       amd64        Theora Video Compression Codec (shared library - libtheoradec)
+ii  libtheoraenc1:amd64                              1.2.0~alpha1+dfsg-6                       amd64        Theora Video Compression Codec (shared library - libtheoraenc)
+ii  libthunarx-3-0:amd64                             4.20.2-1+deb13u1                          amd64        extension library for thunar
+ii  libtiff6:amd64                                   4.7.0-3+deb13u3                           amd64        Tag Image File Format (TIFF) library
+ii  libtinfo6:amd64                                  6.5+20250216-2                            amd64        shared low-level terminfo library for terminal handling
+ii  libtirpc-common                                  1.3.6+ds-1                                all          transport-independent RPC library - common files
+ii  libtirpc3t64:amd64                               1.3.6+ds-1                                amd64        transport-independent RPC library
+ii  libtk8.6:amd64                                   8.6.16-1                                  amd64        Tk toolkit for Tcl and X11 v8.6 - run-time files
+ii  libtsan2:amd64                                   14.2.0-19                                 amd64        ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
+ii  libtwolame0:amd64                                0.4.0-2+b2                                amd64        MPEG Audio Layer 2 encoding library
+ii  libubsan1:amd64                                  14.2.0-19                                 amd64        UBSan -- undefined behaviour sanitizer (runtime)
+ii  libudev1:amd64                                   257.13-1~deb13u1                          amd64        libudev shared library
+ii  libudfread0:amd64                                1.1.2-1+b2                                amd64        UDF reader library
+ii  libunibreak6:amd64                               6.1-3                                     amd64        line breaking library for Unicode (shared library)
+ii  libunistring5:amd64                              1.3-2                                     amd64        Unicode string library for C
+ii  libunwind8:amd64                                 1.8.1-0.1                                 amd64        library to determine the call-chain of a program - runtime
+ii  libusb-1.0-0:amd64                               2:1.0.28-1                                amd64        userspace USB programming library
+ii  libutempter0:amd64                               1.2.1-4                                   amd64        privileged helper for utmp/wtmp updates (runtime)
+ii  libuuid1:amd64                                   2.41.5-0+deb13u1                          amd64        Universally Unique ID library
+ii  libuv1-dev:amd64                                 1.50.0-2                                  amd64        asynchronous event notification library - development files
+ii  libuv1t64:amd64                                  1.50.0-2                                  amd64        asynchronous event notification library - runtime library
+ii  libva-drm2:amd64                                 2.22.0-3                                  amd64        Video Acceleration (VA) API for Linux -- DRM runtime
+ii  libva-x11-2:amd64                                2.22.0-3                                  amd64        Video Acceleration (VA) API for Linux -- X11 runtime
+ii  libva2:amd64                                     2.22.0-3                                  amd64        Video Acceleration (VA) API for Linux -- runtime
+ii  libvdpau1:amd64                                  1.5-3+b1                                  amd64        Video Decode and Presentation API for Unix (libraries)
+ii  libvidstab1.1:amd64                              1.1.0-2+b2                                amd64        video stabilization library (shared library)
+ii  libvncclient1:amd64                              0.9.15+dfsg-1+deb13u2                     amd64        API to write one's own VNC server - client library
+ii  libvncserver1:amd64                              0.9.15+dfsg-1+deb13u2                     amd64        API to write one's own VNC server
+ii  libvorbis0a:amd64                                1.3.7-3                                   amd64        decoder library for Vorbis General Audio Compression Codec
+ii  libvorbisenc2:amd64                              1.3.7-3                                   amd64        encoder library for Vorbis General Audio Compression Codec
+ii  libvorbisfile3:amd64                             1.3.7-3                                   amd64        high-level API for Vorbis General Audio Compression Codec
+ii  libvpl2                                          1:2.14.0-1+b1                             amd64        Intel Video Processing Library -- shared library
+ii  libvpx9:amd64                                    1.15.0-2.1+deb13u1                        amd64        VP8 and VP9 video codec (shared library)
+ii  libvte-2.91-0:amd64                              0.80.1-1                                  amd64        Terminal emulator widget for GTK 3 - runtime files
+ii  libvte-2.91-common                               0.80.1-1                                  amd64        Terminal emulator widget for GTK 3 - common files
+ii  libvulkan1:amd64                                 1.4.309.0-1                               amd64        Vulkan loader library
+ii  libwayland-client0:amd64                         1.23.1-3                                  amd64        wayland compositor infrastructure - client library
+ii  libwayland-cursor0:amd64                         1.23.1-3                                  amd64        wayland compositor infrastructure - cursor library
+ii  libwayland-egl1:amd64                            1.23.1-3                                  amd64        wayland compositor infrastructure - EGL library
+ii  libwayland-server0:amd64                         1.23.1-3                                  amd64        wayland compositor infrastructure - server library
+ii  libwebp7:amd64                                   1.5.0-0.1                                 amd64        Lossy compression of digital photographic images (shared library)
+ii  libwebpdemux2:amd64                              1.5.0-0.1                                 amd64        Lossy compression of digital photographic images (libwebpdemux library)
+ii  libwebpmux3:amd64                                1.5.0-0.1                                 amd64        Lossy compression of digital photographic images (libwebpmux library)
+ii  libwnck-3-0:amd64                                43.2-1                                    amd64        Window Navigator Construction Kit - runtime files
+ii  libwnck-3-common                                 43.2-1                                    all          Window Navigator Construction Kit - common files
+ii  libx11-6:amd64                                   2:1.8.12-1                                amd64        X11 client-side library
+ii  libx11-data                                      2:1.8.12-1                                all          X11 client-side library
+ii  libx11-xcb1:amd64                                2:1.8.12-1                                amd64        Xlib/XCB interface library
+ii  libx264-164:amd64                                2:0.164.3108+git31e19f9-2+b1              amd64        x264 video coding library
+ii  libx265-215:amd64                                4.1-2                                     amd64        H.265/HEVC video stream encoder (shared library)
+ii  libxau6:amd64                                    1:1.0.11-1                                amd64        X11 authorisation library
+ii  libxaw7:amd64                                    2:1.0.16-1                                amd64        X11 Athena Widget library
+ii  libxcb-composite0:amd64                          1.17.0-2+b1                               amd64        X C Binding, composite extension
+ii  libxcb-damage0:amd64                             1.17.0-2+b1                               amd64        X C Binding, damage extension
+ii  libxcb-dri3-0:amd64                              1.17.0-2+b1                               amd64        X C Binding, dri3 extension
+ii  libxcb-glx0:amd64                                1.17.0-2+b1                               amd64        X C Binding, glx extension
+ii  libxcb-image0:amd64                              0.4.0-2+b2                                amd64        utility libraries for X C Binding -- image
+ii  libxcb-present0:amd64                            1.17.0-2+b1                               amd64        X C Binding, present extension
+ii  libxcb-randr0:amd64                              1.17.0-2+b1                               amd64        X C Binding, randr extension
+ii  libxcb-render-util0:amd64                        0.3.10-1                                  amd64        utility libraries for X C Binding -- render-util
+ii  libxcb-render0:amd64                             1.17.0-2+b1                               amd64        X C Binding, render extension
+ii  libxcb-shape0:amd64                              1.17.0-2+b1                               amd64        X C Binding, shape extension
+ii  libxcb-shm0:amd64                                1.17.0-2+b1                               amd64        X C Binding, shm extension
+ii  libxcb-sync1:amd64                               1.17.0-2+b1                               amd64        X C Binding, sync extension
+ii  libxcb-util1:amd64                               0.4.1-1                                   amd64        utility libraries for X C Binding -- atom, aux and event
+ii  libxcb-xfixes0:amd64                             1.17.0-2+b1                               amd64        X C Binding, xfixes extension
+ii  libxcb1:amd64                                    1.17.0-2+b1                               amd64        X C Binding
+ii  libxcomposite1:amd64                             1:0.4.6-1                                 amd64        X11 Composite extension library
+ii  libxcursor1:amd64                                1:1.2.3-1                                 amd64        X cursor management library
+ii  libxdamage1:amd64                                1:1.1.6-1+b2                              amd64        X11 damaged region extension library
+ii  libxdmcp6:amd64                                  1:1.1.5-1                                 amd64        X11 Display Manager Control Protocol library
+ii  libxdo3:amd64                                    1:3.20160805.1-5.1                        amd64        library for simulating (generating) X11 keyboard/mouse input events
+ii  libxext6:amd64                                   2:1.3.4-1+b3                              amd64        X11 miscellaneous extension library
+ii  libxfce4ui-2-0:amd64                             4.20.1-1                                  amd64        widget library for Xfce - Gtk+3 variant
+ii  libxfce4ui-common                                4.20.1-1                                  all          common files for libxfce4ui
+ii  libxfce4util-common                              4.20.1-1                                  all          common files for libxfce4util
+ii  libxfce4util7:amd64                              4.20.1-1                                  amd64        Utility functions library for Xfce4
+ii  libxfconf-0-3:amd64                              4.20.0-1                                  amd64        Client library for Xfce4 configure interface
+ii  libxfixes3:amd64                                 1:6.0.0-2+b4                              amd64        X11 miscellaneous 'fixes' extension library
+ii  libxfont2:amd64                                  1:2.0.6-1+deb13u1                         amd64        X11 font rasterisation library
+ii  libxft2:amd64                                    2.3.6-1+b4                                amd64        FreeType-based font drawing library for X
+ii  libxi6:amd64                                     2:1.8.2-1                                 amd64        X11 Input extension library
+ii  libxinerama1:amd64                               2:1.1.4-3+b4                              amd64        X11 Xinerama extension library
+ii  libxkbcommon0:amd64                              1.7.0-2                                   amd64        library interface to the XKB compiler - shared library
+ii  libxkbfile1:amd64                                1:1.1.0-1+b4                              amd64        X11 keyboard file manipulation library
+ii  libxml2:amd64                                    2.12.7+dfsg+really2.9.14-2.1+deb13u3      amd64        GNOME XML library
+ii  libxmu6:amd64                                    2:1.1.3-3+b4                              amd64        X11 miscellaneous utility library
+ii  libxmuu1:amd64                                   2:1.1.3-3+b4                              amd64        X11 miscellaneous micro-utility library
+ii  libxpm4:amd64                                    1:3.5.17-1+deb13u1                        amd64        X11 pixmap library
+ii  libxpresent1:amd64                               1.0.1-1+b2                                amd64        X11 Present extension library
+ii  libxrandr2:amd64                                 2:1.5.4-1+b3                              amd64        X11 RandR extension library
+ii  libxrender1:amd64                                1:0.9.12-1                                amd64        X Rendering Extension client library
+ii  libxres1:amd64                                   2:1.2.1-1+b2                              amd64        X11 Resource extension library
+ii  libxshmfence1:amd64                              1.3.3-1                                   amd64        X shared memory fences - shared library
+ii  libxss1:amd64                                    1:1.2.3-1+b3                              amd64        X11 Screen Saver extension library
+ii  libxt6t64:amd64                                  1:1.2.1-1.2+b2                            amd64        X11 toolkit intrinsics library
+ii  libxtables12:amd64                               1.8.11-2                                  amd64        netfilter xtables library
+ii  libxtst6:amd64                                   2:1.2.5-1                                 amd64        X11 Testing -- Record extension library
+ii  libxv1:amd64                                     2:1.0.11-1.1+b3                           amd64        X11 Video extension library
+ii  libxvidcore4:amd64                               2:1.3.7-1+b2                              amd64        Open source MPEG-4 video codec (library)
+ii  libxxf86dga1:amd64                               2:1.1.5-1+b3                              amd64        X11 Direct Graphics Access extension library
+ii  libxxf86vm1:amd64                                1:1.1.4-1+b4                              amd64        X11 XFree86 video mode extension library
+ii  libxxhash0:amd64                                 0.8.3-2                                   amd64        shared library for xxhash
+ii  libz3-4:amd64                                    4.13.3-1                                  amd64        theorem prover from Microsoft Research - runtime libraries
+ii  libzimg2:amd64                                   3.0.5+ds1-1+b2                            amd64        scaling, colorspace, depth conversion library (shared library)
+ii  libzix-0-0:amd64                                 0.6.2-1                                   amd64        library of portability wrappers and data structures (shared library)
+ii  libzmq5:amd64                                    4.3.5-1+b3                                amd64        lightweight messaging kernel (shared library)
+ii  libzstd1:amd64                                   1.5.7+dfsg-1                              amd64        fast lossless compression algorithm
+ii  libzvbi-common                                   0.2.44-1                                  all          Vertical Blanking Interval decoder (VBI) - common files
+ii  libzvbi0t64:amd64                                0.2.44-1                                  amd64        Vertical Blanking Interval decoder (VBI) - runtime files
+ii  linux-libc-dev                                   6.12.107-1                                all          Linux support headers for userspace development
+ii  login                                            1:4.16.0-2+really2.41.5-0+deb13u1         amd64        system login tools
+ii  login.defs                                       1:4.17.4-2                                all          system user management configuration
+ii  mawk                                             1.3.4.20250131-1                          amd64        Pattern scanning and text processing language
+ii  media-types                                      13.0.0                                    all          List of standard media types and their usual file extension
+ii  mesa-libgallium:amd64                            25.0.7-2+deb13u1                          amd64        shared infrastructure for Mesa drivers
+ii  mount                                            2.41.5-0+deb13u1                          amd64        tools for mounting and manipulating filesystems
+ii  ncurses-base                                     6.5+20250216-2                            all          basic terminal type definitions
+ii  ncurses-bin                                      6.5+20250216-2                            amd64        terminal-related programs and man pages
+ii  net-tools                                        2.10-1.3                                  amd64        NET-3 networking toolkit
+ii  netbase                                          6.5                                       all          Basic TCP/IP networking system
+ii  node-abbrev                                      1.1.1+~1.1.2-1                            all          Get unique abbreviations for a set of strings - Node.js module
+ii  node-acorn                                       8.8.1+ds+~cs25.17.7-2                     all          ECMAScript parser for Node.js
+ii  node-agent-base                                  7.1.1~0~2024040606-6+deb13u1              all          Node.js wrapper around http.Agent class
+ii  node-ajv                                         8.12.0~ds+~2.1.1-5                        all          another JSON Schema Validator
+ii  node-ajv-keywords                                5.1.0-4                                   all          Custom JSON-Schema keywords for Ajv validator
+ii  node-ampproject-remapping                        2.2.0+~cs5.15.37-1                        all          Nodejs module to remap sequential sourcemaps through transformations
+ii  node-ansi-escapes                                5.0.0+really.4.3.1-1                      all          ANSI escape codes for manipulating the terminal
+ii  node-ansi-regex                                  5.0.1-1                                   all          regular expression for matching ANSI escape codes
+ii  node-ansi-styles                                 6.2.1-3                                   all          ANSI escape codes for styling strings in the terminal with Node.js
+ii  node-anymatch                                    3.1.3+~cs4.6.1-2                          all          Matches strings against configurable strings
+ii  node-aproba                                      2.0.0-3                                   all          light-weight argument validator
+ii  node-archy                                       1.0.0-6                                   all          Pretty-print nested hierarchies module for Node.js
+ii  node-are-we-there-yet                            3.0.1+~1.1.0-1                            all          Keep track of the overall completion of many disparate processes
+ii  node-argparse                                    2.0.1-2                                   all          CLI arguments parser for node.js
+ii  node-arrify                                      2.0.1-3                                   all          Convert a value to an array
+ii  node-assert                                      2.0.0+~cs3.9.8-2                          all          simple assertion library for javascript
+ii  node-async                                       3.2.6+dfsg-2                              all          functions and patterns for asynchronous code - Node.js
+ii  node-async-each                                  1.0.3-3                                   all          async parallel forEach / map function for JavaScript
+ii  node-babel-helper-define-polyfill-provider       0.3.3~0~20220913+ds1-1                    all          node-babel helper for polyfills
+ii  node-babel-plugin-add-module-exports             1.0.4+dfsg1~cs5.8.0-4                     all          Babel plugin for default module.exports like babel version 5
+ii  node-babel-plugin-lodash                         3.3.4+~cs2.0.1-7                          all          Modular Lodash builds without the hassle
+ii  node-babel-plugin-polyfill-corejs2               0.3.3~0~20220913+ds1-1                    all          node-babel plugin to inject corejs2 polyfill
+ii  node-babel-plugin-polyfill-corejs3               0.6.0~0~20220913+ds1-1                    all          node-babel plugin to inject corejs3 polyfill
+ii  node-babel-plugin-polyfill-regenerator           0.4.1~0~20220913+ds1-1                    all          node-babel plugin to regenerate polyfills
+ii  node-babel7                                      7.20.15+ds1+~cs214.269.168-8              all          Babel compiler for writing next generation JavaScript
+ii  node-babel7-runtime                              7.20.15+ds1+~cs214.269.168-8              all          Babel modular runtime helpers
+ii  node-balanced-match                              2.0.0-1                                   all          Match balanced character pairs in Node.js
+ii  node-base64-js                                   1.5.1+dfsg+~1.3.0-2                       all          Base64 encoding/decoding in pure JS
+ii  node-binary-extensions                           2.2.0-2                                   all          List of binary file extensions
+ii  node-brace-expansion                             2.0.1+~1.1.0-2                            all          Brace expansion as known from sh/bash for Node.js
+ii  node-braces                                      3.0.3+~3.0.5-1                            all          Fast, comprehensive, bash-like brace expansion implemented in JS
+ii  node-browserslist                                4.25.0+~cs6.3.22-1                        all          Share browsers list between different front-end tools
+ii  node-builtins                                    5.0.1-1                                   all          lists nodejs builtin modules
+ii  node-cacache                                     17.0.3+~cs10.3.7-2                        all          fast, fault-tolerant, disk-based, data-agnostic, content-addressable cache
+ii  node-camelcase                                   7.0.0-3                                   all          Convert a string to camelCase
+ii  node-caniuse-lite                                1.0.30001723+dfsg+~1.0.5-1                all          smaller version of caniuse-db, with only the essentials
+ii  node-chalk                                       5.3.0-1                                   all          Terminal string styling for Node.js
+ii  node-chokidar                                    3.6.0-3                                   all          wrapper around watch / watchFile / fsevents
+ii  node-chownr                                      2.0.0-3                                   all          like chown -R
+ii  node-chrome-trace-event                          1.0.3-2                                   all          create a trace of your node app per Google's Trace Event format
+ii  node-ci-info                                     4.0.0+~cs1.1.0-1                          all          Get details about the current Continuous Integration environment
+ii  node-cjs-module-lexer                            1.2.3+dfsg-1                              all          Fast lexer to extract named exports from CommonJS modules
+ii  node-cli-table                                   0.3.11+~cs0.13.4-3                        all          Pretty unicode tables for the CLI
+ii  node-cliui                                       7.0.4+repack+1+~cs1.4.2-2                 all          easily create complex multi-column CLIs
+ii  node-clone                                       2.1.2+~2.1.2-1                            all          deep cloning of objects and arrays
+ii  node-clone-deep                                  4.0.1+~cs7.0.2-1                          all          Recursively (deep) clone JavaScript native types
+ii  node-color-convert                               2.0.1+~cs2.0.0-2                          all          Plain color conversion functions
+ii  node-color-name                                  1.1.4+~1.1.1-2                            all          list of color names and its values
+ii  node-colors                                      1.4.0-4                                   all          Get color and style in your node.js console
+ii  node-columnify                                   1.6.0+~1.5.1-1                            all          Render data in text columns with in-column text-wrap
+ii  node-commander                                   9.4.1-1                                   all          Complete solution for Node.js command-line interfaces
+ii  node-commondir                                   1.0.1+~1.0.0-1                            all          compute the closest common parent for file paths
+ii  node-concat-stream                               2.0.0+~2.0.0-2                            all          writable stream that concatenates strings
+ii  node-console-control-strings                     1.1.0-3                                   all          cross-platform tested terminal/console command strings
+ii  node-convert-source-map                          1.9.0+~1.5.2-1                            all          Converts a source-map from/to between formats
+ii  node-copy-concurrently                           1.0.5-9                                   all          Copy files, directories and symlinks concurrently
+ii  node-core-js                                     3.33.2-1                                  all          Modular standard library for JavaScript
+ii  node-core-js-compat                              3.33.2-1                                  all          data about the necessity of core-js
+ii  node-core-js-pure                                3.33.2-1                                  all          Modular standard library for JavaScript without global namespace pollution
+ii  node-core-util-is                                1.0.3-1                                   all          util.is* functions introduced in Node v0.12 for older versions
+ii  node-corepack                                    0.24.0-5                                  all          Access npm, Yarn and pnpm without having to install them
+ii  node-css-loader                                  6.8.1+~cs14.0.17-1                        all          css loader module for webpack
+ii  node-css-selector-tokenizer                      0.8.0+~cs4.8.3-1                          all          Parses and stringifies CSS selectors
+ii  node-data-uri-to-buffer                          6.0.2~0~2024040606-6+deb13u1              all          Node.js module that generate a Buffer instance from a Data URI string
+ii  node-debbundle-es-to-primitive                   1.2.1+~cs9.7.25-2                         all          Pure javascript implementation of ToPrimitive algorithm
+ii  node-debug                                       4.3.4+~cs4.1.7-1                          all          small debugging utility for Node.js
+ii  node-decamelize                                  4.0.0-2                                   all          convert a camelized string into a lowercased one with a custom separator
+ii  node-decompress-response                         6.0.0-3                                   all          Decompress a HTTP response if needed
+ii  node-deep-equal                                  2.2.3+~cs43.15.94-1                       all          node's assert.deepEqual algorithm
+ii  node-deep-is                                     0.1.4-1                                   all          node's assert.deepEqual algorithm except for NaN being equal to NaN
+ii  node-defaults                                    1.0.4+~1.0.3-1                            all          merge single level defaults over a config object
+ii  node-define-properties                           1.2.1+~cs2.2.3-1                          all          Define multiple non-enumerable properties at once
+ii  node-define-property                             2.0.2+really+2.0.2-3                      all          Define property on an object
+ii  node-defined                                     1.0.1+~1.0.0-1                            all          return the first argument that is `!== undefined`
+ii  node-del                                         7.1.0-1                                   all          Delete files and folders
+ii  node-delegates                                   1.0.0-3                                   all          delegate methods and accessors to another property
+ii  node-depd                                        2.0.0-2                                   all          mark a function or property as deprecated - Node.js module
+ii  node-diff                                        5.0.0~dfsg+~5.0.1-4                       all          javascript text differencing implementation
+ii  node-doctrine                                    3.0.0-4                                   all          JSDoc parser
+ii  node-electron-to-chromium                        1.5.166-1                                 all          Provides a list of electron-to-chromium version mappings
+ii  node-encoding                                    0.1.13-2                                  all          Convert encodings, uses iconv by default and fallbacks to iconv-lite if needed
+ii  node-enhanced-resolve                            5.15.0-1                                  all          Offers a async require.resolve function
+ii  node-envinfo                                     7.11.0+~cs14.3.0-3                        all          Generate reports of the common details used by Node.js packages
+ii  node-err-code                                    2.0.3+dfsg-3                              all          Create an error with a code
+ii  node-errno                                       1.0.0-3                                   all          libuv errno details exposed - Node.js module
+ii  node-error-ex                                    1.3.2-4                                   all          easy error subclassing and stack customization
+ii  node-es-abstract                                 1.20.4+~cs26.27.47-2                      all          ECMAScript spec abstract operations
+ii  node-es-module-lexer                             1.1.0+dfsg-3                              all          Fast lexer to extract named exports from EcmaScript modules
+ii  node-es6-error                                   4.1.1-5                                   all          Easily-extendable error for use with ES6 classes
+ii  node-escape-string-regexp                        4.0.0-2                                   all          Escape RegExp special characters in Node.js
+ii  node-escodegen                                   2.1.0+dfsg+~0.0.8-1                       all          ECMAScript code generator
+ii  node-eslint-scope                                7.1.1+~3.7.4-1                            all          ECMAScript scope analyzer for ESLint
+ii  node-eslint-utils                                3.0.0-3                                   all          utilities for ESLint plugins
+ii  node-eslint-visitor-keys                         3.3.0+~1.0.0-1                            all          Constants and utilities about visitor keys to traverse AST
+ii  node-espree                                      9.4.1~dfsg-2                              all          Esprima-compatible JavaScript parser built on Acorn
+ii  node-esprima                                     4.0.1+ds+~4.0.3-2                         all          ECMAScript parsing infrastructure for multipurpose analysis
+ii  node-esquery                                     1.4.2~ds-1                                all          query library for ECMAScript AST using CSS-like queries
+ii  node-esrecurse                                   4.3.0-2                                   all          ECMAScript AST recursive visitor
+ii  node-estraverse                                  5.3.0+ds+~5.1.1-1                         all          ECMAScript JS AST traversal functions
+ii  node-esutils                                     2.0.3+~2.0.0-1                            all          utility box for ECMAScript language tools
+ii  node-events                                      3.3.0+~3.0.0-3                            all          Node.js events module to embed by web packers
+ii  node-execa                                       8.0.1+dfsg1+~cs12.0.0-1                   all          better `child_process`
+ii  node-fancy-log                                   1.3.3+~cs1.3.1-2                          all          Log things, prefixed with a timestamp
+ii  node-fast-deep-equal                             3.1.3-3                                   all          Fast Deep Equal
+ii  node-fast-levenshtein                            2.0.6+ds-3                                all          efficient implementation of Levenshtein algorithm
+ii  node-fetch                                       3.3.2+~cs11.4.11-3                        all          light-weight module that brings window.fetch to node.js
+ii  node-file-entry-cache                            6.0.1+~3.0.4+~2.0.0+~1.0.0+~2.0.1-1       all          Node.js library implementing a simple cache for file metadata
+ii  node-fill-range                                  7.1.1+~7.0.3-1                            all          node module to fill in a range of numbers or letters
+ii  node-find-cache-dir                              3.3.2+~3.2.1-1                            all          finds the common standard cache directory
+ii  node-find-up                                     6.3.0-7                                   all          Find a file by walking up parent directories
+ii  node-flat-cache                                  3.0.4~6.0.1+~3.0.4+~2.0.0+~1.0.0+~2.0.1-1 all          Node.js library implementing a simple persistent key/value storage
+ii  node-flatted                                     3.2.7~ds-1+deb13u1                        all          super light and fast circular JSON parser - Node library
+ii  node-for-in                                      1.0.2-4                                   all          iterate over object
+ii  node-for-own                                     1.0.0-3                                   all          Iterate over the own enumerable properties of an object
+ii  node-foreground-child                            3.1.1-2                                   all          helper running a child process as a foreground process
+ii  node-fs-readdir-recursive                        1.1.0+~1.1.0-1                            all          Recursively read a directory
+ii  node-fs-write-stream-atomic                      1.0.10-6                                  all          Like fs.createWriteStream(...), but atomic
+ii  node-fs.realpath                                 1.0.0-3                                   all          Use node's fs.realpath
+ii  node-function-bind                               1.1.2+~cs2.1.14-1                         all          Implementation of Function.prototype.bind
+ii  node-functional-red-black-tree                   1.0.1+20181105-7                          all          fully persistent balanced binary search tree - Node.js library
+ii  node-gauge                                       4.0.4-2                                   all          terminal based horizontal progress bar
+ii  node-get-caller-file                             2.0.5+~cs1.1.1-4                          all          inspects the v8 stack trace
+ii  node-get-stream                                  8.0.1-11                                  all          Get a stream as a string, buffer, or array
+ii  node-glob                                        8.1.0+~cs8.5.15-1                         all          glob functionality for Node.js
+ii  node-glob-parent                                 6.0.2+~5.1.1-2                            all          Extract the non-magic parent path from a glob string
+ii  node-globals                                     13.23.0-1                                 all          Global identifiers from different JavaScript environments
+ii  node-globby                                      13.1.3+~cs16.25.40-3                      all          Extends glob with promise API
+ii  node-got                                         11.8.5+~cs58.13.36-5                      all          Simplified HTTP requests
+ii  node-graceful-fs                                 4.2.10-1                                  all          drop-in replacement improving the Node.js fs module
+ii  node-gyp                                         11.1.0+~5.0.0-1                           all          Native addon build tool for Node.js
+ii  node-has-flag                                    5.0.1-1                                   all          check if argv has a specific flag
+ii  node-has-unicode                                 2.0.1-5                                   all          Try to guess if your terminal supports unicode
+ii  node-hosted-git-info                             6.1.1-2                                   all          Provides metadata from Github, Bitbucket and Gitlab
+ii  node-http-proxy-agent                            7.0.2~0~2024040606-6+deb13u1              all          HTTP(s) proxy http.Agent implementation for HTTP
+ii  node-https-proxy-agent                           7.0.4~0~2024040606-6+deb13u1              all          HTTP(s) proxy http.Agent implementation for HTTPS
+ii  node-iconv-lite                                  0.6.3-3                                   all          Pure JS character encoding conversion
+ii  node-icss-utils                                  5.1.0+~5.1.0-1                            all          ICSS utils for postcss ast
+ii  node-ieee754                                     1.2.1-3                                   all          Node.js module to read or write IEEE754 floating point numbers
+ii  node-iferr                                       1.0.2+~1.0.2-1                            all          Higher-order functions for easier error handling
+ii  node-ignore                                      5.2.1-1                                   all          manager and filter for .gitignore rules - Node.js library
+ii  node-imurmurhash                                 0.1.4+dfsg+~0.1.1-2                       all          incremental implementation of MurmurHash3 hashing algorithm
+ii  node-indent-string                               4.0.0-2                                   all          Indent each line in a string
+ii  node-inflight                                    1.0.6-2                                   all          add callbacks to requests in flight to avoid async duplication
+ii  node-inherits                                    2.0.4-6                                   all          Node.js module that exposes inherits function
+ii  node-ini                                         3.0.1-2                                   all          ini format parser and serializer for Node.js
+ii  node-interpret                                   2.2.0-3                                   all          dictionary of file extensions and associated module loaders
+ii  node-ip                                          2.0.1+~1.1.3-3                            all          IP address utilities for node.js
+ii  node-ip-regex                                    4.3.0+~4.1.1-1                            all          Regular expression for matching IP addresses
+ii  node-is-arrayish                                 0.3.2-3                                   all          Determines if an object can be used as an array
+ii  node-is-binary-path                              2.1.0-5                                   all          check if a filepath is a binary file
+ii  node-is-buffer                                   2.0.5-2                                   all          Determine if an object is a Buffer
+ii  node-is-descriptor                               3.0.0-2                                   all          Returns true if value has characteristics of a valid JS descriptor
+ii  node-is-extendable                               1.0.1-3                                   all          determine if a value can be extended
+ii  node-is-extglob                                  2.1.1-5                                   all          Node module to return true if a string is an extglob
+ii  node-is-glob                                     4.0.3-2                                   all          Node module to return true if a string is a glob or extglob
+ii  node-is-number                                   7.0.0-4                                   all          returns true if the value is a number
+ii  node-is-path-cwd                                 2.2.0-2                                   all          Check if a path is CWD
+ii  node-is-path-inside                              3.0.3-2                                   all          Check if a path is inside another path
+ii  node-is-plain-obj                                3.0.0-2                                   all          Check if a value is a plain object
+ii  node-is-plain-object                             5.0.0-7                                   all          Returns true if object was created by `Object` constructor
+ii  node-is-stream                                   3.0.0-4                                   all          Check if something is a Node.js stream
+ii  node-is-typedarray                               1.0.0-4                                   all          Nodejs library checking if object is TypedArray
+ii  node-is-windows                                  1.0.2+~cs1.0.0-1                          all          True if the platform is windows
+ii  node-isarray                                     2.0.5-4                                   all          JavaScript Array#isArray for older browsers
+ii  node-isexe                                       2.0.0+~2.0.1-5                            all          minimal module to check if a file is executable
+ii  node-isobject                                    4.0.0-2                                   all          Checks if the value is an object and not an array or null
+ii  node-istanbul                                    0.4.5+repack10+~cs98.25.59-3              all          JavaScript code coverage tool
+ii  node-jest-debbundle                              29.6.2~ds1+~cs73.45.28-5                  all          various ittle Node.js modules needed by jest
+ii  node-jest-worker                                 29.6.2~ds1+~cs73.45.28-5                  all          Nodejs module for executing heavy tasks under forked processes in parallel
+ii  node-js-tokens                                   8.0.0-2                                   all          Regex that tokenizes JavaScript
+ii  node-js-yaml                                     4.1.0+dfsg+~4.0.5-7                       all          YAML 1.2 parser and serializer
+ii  node-jsesc                                       3.0.2+~3.0.1-1                            all          Escape JavaScript strings, with short output (Node.js module)
+ii  node-json-buffer                                 3.0.1+~3.0.0-1                            all          JSON functions that can convert buffers.
+ii  node-json-parse-better-errors                    1.0.2+~cs3.3.1-3                          all          JSON.parse() with context information on error
+ii  node-json-schema                                 0.4.0+~7.0.11-1                           all          JSON Schema validation and specifications
+ii  node-json-schema-traverse                        1.0.0-3                                   all          Json schema traversal package
+ii  node-json-stable-stringify                       1.0.2+repack1+~cs1.0.34-2                 all          deterministic JSON.stringify()
+ii  node-json5                                       2.2.3+dfsg-1                              all          JSON for the ES5 era
+ii  node-jsonify                                     0.0.1-1                                   all          JSON without touching any globals
+ii  node-jsonparse                                   1.3.1-10                                  all          Pure javascript JSON streaming parser for node.js
+ii  node-kind-of                                     6.0.3+dfsg-2                              all          Get the native type of a value
+ii  node-levn                                        0.4.1+dfsg-2                              all          Light ECMAScript (JavaScript) Value Notation
+ii  node-loader-runner                               4.3.0-1                                   all          Runs (webpack) loaders
+ii  node-locate-path                                 7.1.1-2                                   all          Get the first path that exists on disk of multiple paths
+ii  node-lodash                                      4.17.21+dfsg+~cs8.31.198.20210220-9       all          Lo-dash is a Node.js utility library
+ii  node-lodash-packages                             4.17.21+dfsg+~cs8.31.198.20210220-9       all          Lo-dash is a Node.js utility library (per method packages)
+ii  node-lowercase-keys                              2.0.0-2                                   all          Lowercase the keys of an object
+ii  node-lru-cache                                   10.0.1-3                                  all          least-recently-used cache object for Node.js
+ii  node-make-dir                                    3.1.0-3                                   all          Make a directory and its parents if needed - Think mkdir -p
+ii  node-memfs                                       3.4.12+~cs1.0.3-1                         all          In-memory filesystem with Node's API
+ii  node-memory-fs                                   0.5.0+~0.3.3-2                            all          simple in-memory filesystem
+ii  node-merge-stream                                2.0.0+~1.1.2-2                            all          Create a stream that emits events from multiple other streams
+ii  node-micromatch                                  4.0.7+~4.0.9-1                            all          Glob matching for javascript/node.js
+ii  node-mime                                        3.0.0+dfsg+~cs6.97.2-2                    all          library for mime-type mapping for Node.js
+ii  node-mime-types                                  2.1.35-2                                  all          ultimate JavaScript content-type utility - Node.js module
+ii  node-mimic-fn                                    4.0.0-5                                   all          Make a function mimic another one
+ii  node-mimic-response                              3.1.0-9                                   all          Mimic a Node.js HTTP response stream
+ii  node-minimatch                                   9.0.3-6                                   all          Convert glob expressions into RegExp objects for Node.js
+ii  node-minimist                                    1.2.8+~cs5.3.5-1                          all          Argument options parsing for Node.js
+ii  node-minipass                                    5.0.0+~cs10.3.21-3                        all          Minimal implementation of a PassThrough for Node.js
+ii  node-mkdirp                                      2.1.6+~cs5.2.1-2                          all          Recursively create directories - Node.js module
+ii  node-move-concurrently                           1.0.1-5                                   all          Move files and directories concurrently
+ii  node-ms                                          2.1.3+~cs0.7.31-3                         all          milliseconds conversion utility - Node.js module
+ii  node-mute-stream                                 0.0.8+~0.0.1-3                            all          Pass-through stream that can be muted module for Node.js
+ii  node-n3                                          1.16.3+~1.2.3+~1.10.4-1                   all          fast asynchronous streaming RDF for JavaScript - Node library
+ii  node-negotiator                                  0.6.3+~0.6.1-1                            all          HTTP content negotiator for Node.js
+ii  node-neo-async                                   2.6.2+~cs3.0.0-3                          all          faster replacement for Async
+ii  node-nopt                                        5.0.0-4                                   all          Command-line option parser for Node.js
+ii  node-normalize-package-data                      4.0.1+~2.4.1-1                            all          Normalizes package metadata - Node.js module
+ii  node-normalize-path                              3.0.0+~3.0.0-1                            all          Normalize file path slashes to be unix-like forward slashes
+ii  node-npm-bundled                                 2.0.1-2                                   all          Parses info on bundled dependencies
+ii  node-npm-package-arg                             10.0.0+~3.0.0-2                           all          Parse the things that can be arguments to npm install
+ii  node-npm-run-path                                5.1.0+~4.0.0-8                            all          Get your PATH prepended with locally installed binaries
+ii  node-npmlog                                      7.0.1+~4.1.4-1                            all          Logger with custom levels and colored output for Node.js
+ii  node-object-assign                               4.1.1-7                                   all          ES2015 Object.assign() ponyfill
+ii  node-object-inspect                              1.12.2+~cs1.8.1-1                         all          string representations of objects in node and the browser
+ii  node-once                                        1.4.1-1                                   all          Run a function only once with this module for Node.js
+ii  node-optimist                                    0.6.1+~0.0.30-2                           all          light-weight option parsing library for NodeJS
+ii  node-optionator                                  0.9.1+dfsg+~cs1.2.3-1                     all          option parsing and help generation
+ii  node-osenv                                       0.1.5+~0.1.1-1                            all          Environment settings lookup module for Node.js
+ii  node-p-cancelable                                2.1.1-1                                   all          Create a promise that can be canceled
+ii  node-p-limit                                     4.0.0+~cs4.0.0-5                          all          run multiple promise-returning & async functions
+ii  node-p-locate                                    6.0.0-12                                  all          async version of Array
+ii  node-p-map                                       4.0.0+~3.1.0+~3.0.1-2                     all          Map over promises concurrently
+ii  node-parse-json                                  5.2.0+~cs5.1.7-2                          all          parse JSON with more helpful errors
+ii  node-path-dirname                                1.0.2-2                                   all          Node.js library for function path.dirname ponyfill
+ii  node-path-exists                                 5.0.0-8                                   all          Check if a path exists
+ii  node-path-is-absolute                            2.0.0-2                                   all          Node.js 0.12 path.isAbsolute() ponyfill
+ii  node-path-is-inside                              1.0.2+~1.0.0-1                            all          Tests whether one path is inside another path
+ii  node-path-type                                   4.0.0-3                                   all          check if a path is a file, directory, or symlink
+ii  node-picocolors                                  1.0.0-4                                   all          library for terminal output formatting with colors (Node.js module)
+ii  node-pify                                        5.0.0+~cs5.0.1-1                          all          promisify a callback-style function
+ii  node-pkg-dir                                     5.0.0-2                                   all          find the root directory of a npm package
+ii  node-postcss                                     8.4.49+~cs9.2.32-1                        all          Tool for transforming styles with JS plugins
+ii  node-postcss-modules-extract-imports             3.0.0-2                                   all          CSS Modules transform to extract local aliases for inline imports
+ii  node-postcss-modules-values                      4.0.0+~4.0.0-1                            all          pass arbitrary values between your module files
+ii  node-postcss-value-parser                        4.2.0-1                                   all          Transforms css values and at-rule params into the tree
+ii  node-prelude-ls                                  1.2.1+dfsg-3                              all          functionally oriented utility library for Livescript
+ii  node-process-nextick-args                        2.0.1-3                                   all          process.nextTick but always with args
+ii  node-progress                                    2.0.3-2                                   all          Flexible ascii progress bar
+ii  node-promise-inflight                            1.0.1+~1.0.0-1                            all          one promise for multiple requests in flight to avoid async duplication
+ii  node-promise-retry                               2.0.1-4                                   all          Retries a function that returns a promise
+ii  node-promzard                                    0.3.0-2                                   all          Promzard provides a prompting json wizard
+ii  node-prr                                         1.0.1-3                                   all          Object.defineProperty() with common defaults - Node.js module
+ii  node-punycode                                    2.3.1+~2.1.4-1                            all          Nodejs robust Punycode converter fully RFC compliant
+ii  node-quick-lru                                   6.1.1-4                                   all          Simple "Least Recently Used" (LRU) cache
+ii  node-randombytes                                 2.1.0+~2.0.0-2                            all          random bytes from browserify stand alone
+ii  node-read                                        1.0.7-5                                   all          Read user input from stdin module for Node.js
+ii  node-read-package-json                           5.0.2+~2.0.0-2                            all          Read package.json for npm module for Node.js
+ii  node-read-pkg                                    5.2.0-2                                   all          Read a package.json file
+ii  node-readable-stream                             3.6.0+~cs3.0.0-4                          all          stream compatibility library for Node.js and browser
+ii  node-readdirp                                    3.6.0-1                                   all          Recursive version of Node.js's fs.readdir
+ii  node-rechoir                                     0.8.0+~0.6.1-2                            all          Node module to require any supported file as a node module
+ii  node-regenerate                                  1.4.2-3                                   all          Unicode-aware regular expression generator (Node.js module)
+ii  node-regenerate-unicode-properties               10.1.0+ds-1                               all          Unicode properties and values as Regenerate sets for Node.js
+ii  node-regenerator-runtime                         0.15.2+~0.10.8-1                          all          Nodejs runtime for regenerator-compiled generator and async functions
+ii  node-regenerator-transform                       0.15.2+~0.10.8-1                          all          Explode async and generator functions into a state machine
+ii  node-regexpp                                     3.2.0-5                                   all          regular expression parser for ECMAScript - Node.js library
+ii  node-regexpu-core                                5.2.2-3                                   all          Core functionality for regexpu's functionality in Node.js
+ii  node-regjsgen                                    0.7.1+ds-1                                all          Regular expression from abstract syntax trees in Node.js
+ii  node-regjsparser                                 0.9.1+ds-2                                all          Parser for JavaScript's RegExp for Node.js
+ii  node-repeat-string                               1.6.1+repack-1                            all          repeat the given string n times
+ii  node-require-directory                           2.1.1+~2.1.2-1                            all          require all files in a directory
+ii  node-resolve                                     1.22.8+~cs5.34.15-2                       all          Synchronous/Asynchronous require.resolve() algorithm
+ii  node-resolve-cwd                                 3.0.0-2                                   all          Resolve the path of a module from current directory
+ii  node-resolve-from                                5.0.0+~3.1.0+~3.3.0+~2.0.0-1              all          Resolve the path of a module from a given path
+ii  node-resumer                                     0.0.0-6                                   all          through stream that starts paused and resumes on the next tick
+ii  node-retry                                       0.13.1.+~cs2.19.16-1                      all          Retry strategies for failed operations module for Node.js
+ii  node-rimraf                                      3.0.2-2                                   all          Deep deletion (like rm -rf) module for Node.js
+ii  node-run-queue                                   2.0.0-3                                   all          promise based dynamic priority queue runner
+ii  node-safe-buffer                                 5.2.1+~cs2.1.2-3                          all          Safer Node.js Buffer API
+ii  node-schema-utils                                4.2.0~ds-3                                all          Webpack Schema Validation Utilities
+ii  node-semver                                      7.6.1+~7.5.8-2                            all          Semantic Versioning for Node.js
+ii  node-serialize-javascript                        6.0.2-1                                   all          serialize JavaScript to a superset of JSON
+ii  node-set-blocking                                2.0.0-2                                   all          set blocking stdio and stderr
+ii  node-set-immediate-shim                          2.0.0-2                                   all          Simple setImmediate shim
+ii  node-shebang-command                             2.0.0-1                                   all          Get the command from a shebang
+ii  node-shebang-regex                               3.0.0-2                                   all          Regular expression for matching a shebang line
+ii  node-signal-exit                                 4.1.0-7                                   all          Fire an event no matter how a process exits
+ii  node-slash                                       4.0.0-3                                   all          Node.js library to convert Windows backslash paths to slash paths
+ii  node-slice-ansi                                  5.0.0+~cs9.0.0-5                          all          Slice a string with ANSI escape codes
+ii  node-source-list-map                             2.0.1+dfsg+~0.1.2-1                       all          Fast line to line SourceMap generator
+ii  node-source-map                                  0.7.0++dfsg2+really.0.6.1-15              all          Mozilla source map generator and consumer - Node.js module
+ii  node-source-map-support                          0.5.21+ds+~0.5.10-1                       all          Fixes stack traces for files with source maps
+ii  node-spdx-correct                                3.1.1-2                                   all          correct invalid SPDX identifiers
+ii  node-spdx-exceptions                             2.3.0-2                                   all          list of SPDX standard license exceptions
+ii  node-spdx-expression-parse                       3.0.1+~3.0.1-1                            all          parse SPDX license expressions
+ii  node-spdx-license-ids                            3.0.12-1                                  all          List of SPDX license identifiers
+ii  node-sprintf-js                                  1.1.2+ds1+~1.1.2-1                        all          Node.js Pure JavaScript sprintf implementation
+ii  node-ssri                                        9.0.1-3                                   all          Utility for parsing, serializing, generating and verifying  ssri metadata
+ii  node-string-decoder                              1.3.0-6                                   all          string_decoder module from Node core for browsers
+ii  node-string-width                                4.2.3+~cs13.2.3-1                         all          Get the visual width of a string
+ii  node-strip-ansi                                  6.0.1-2                                   all          Strip ANSI escape codes
+ii  node-strip-bom                                   4.0.0-2                                   all          Strip UTF-8 byte order mark (BOM) from a string
+ii  node-strip-eof                                   3.0.0-5                                   all          strip CR and LF characters from a string/buffer
+ii  node-strip-json-comments                         4.0.0-4                                   all          Node.js module to strip comments from JSON
+ii  node-supports-color                              8.1.1+~8.1.1-1                            all          Detect whether a terminal supports color in Node.js
+ii  node-tapable                                     2.2.1-3                                   all          just a little module for plugins
+ii  node-tape                                        5.6.1+~cs8.20.19-3                        all          tap-producing test harness for node and browsers
+ii  node-tar                                         6.2.1+~cs7.0.8-1+deb13u1                  all          read and write portable tar archives module for Node.js
+ii  node-terser                                      5.38.0-1                                  all          parser/mangler/compressor for ES6+ - Node.js library
+ii  node-text-table                                  0.2.0-4                                   all          borderless text tables with alignment
+ii  node-through                                     2.3.8+~cs0.0.30-1                         all          simplified stream construction
+ii  node-time-stamp                                  2.2.0-2                                   all          get a formatted timestamp
+ii  node-to-fast-properties                          3.0.1-3                                   all          Force V8 to use fast properties for an object
+ii  node-to-regex-range                              5.0.1-4                                   all          returns a regex-compatible range from two numbers, min and max
+ii  node-tslib                                       2.4.1-1                                   all          Implementation of tslib for javascript
+ii  node-type-check                                  0.4.0+dfsg-3                              all          Check the types of JavaScript values at runtime
+ii  node-typedarray                                  0.0.7-1                                   all          TypedArray polyfill for old browsers
+ii  node-typedarray-to-buffer                        4.0.0-2                                   all          JavaScript utility converting TypedArray to buffer without copy
+ii  node-undici                                      7.3.0+dfsg1+~cs24.12.11-1                 all          Node.js HTTP/1.1 client
+ii  node-unicode-canonical-property-names-ecmascript 2.0.0-2                                   all          Unicode property names supported in ES RegExp in Node.js
+ii  node-unicode-match-property-ecmascript           2.0.0-2                                   all          Match a Unicode property to its canonical name for Node.js
+ii  node-unicode-match-property-value-ecmascript     2.1.0+ds-1                                all          Match a Unicode property value to its canonical version in Node.js
+ii  node-unicode-property-aliases-ecmascript         2.1.0+ds-1                                all          Unicode property aliases mapping for property names in Node.js
+ii  node-unique-filename                             1.1.1+ds-2                                all          unique filename for use in temporary directories or caches
+ii  node-uri-js                                      4.4.0+dfsg-8                              all          URI/IRI parsing/validating/resolving library
+ii  node-util                                        0.12.5+~1.0.10-1                          all          NodeJS util module
+ii  node-util-deprecate                              1.0.2-3                                   all          Node.js's `util.deprecate()` function with browser support
+ii  node-uuid                                        8.3.2+~8.3.4-1                            all          simple and fast RFC4122 UUID generation - Node.js module
+ii  node-v8-compile-cache                            2.4.0-2                                   all          Leverage v8 compile cache to speedup loading of Node.js modules
+ii  node-v8flags                                     3.2.0+~3.1.1-1                            all          Get available V8 JavaScript engine flags
+ii  node-validate-npm-package-license                3.0.4-2                                   all          Tells if a string is a valid npm package license string
+ii  node-validate-npm-package-name                   5.0.0+~4.0.0-1                            all          Checks if a string is a valid npm package name
+ii  node-watchpack                                   2.4.0+~cs2.8.1-1                          all          Wrapper library for directory and file watching
+ii  node-wcwidth.js                                  1.0.2-2                                   all          wcwidth.js is a javascript porting of C's wcwidth()
+ii  node-webassemblyjs                               1.11.4+dfsg+~cs10.11.17-2                 all          Toolchain for WebAssembly
+ii  node-webpack-sources                             3.2.3+~3.2.0-2                            all          Source code handling classes for webpack
+ii  node-which                                       2.0.2+~cs1.3.2-3                          all          Cross-platform 'which' module for Node.js
+ii  node-wide-align                                  1.1.3-4                                   all          Wide-character aware text alignment function
+ii  node-wordwrap                                    1.0.0-4                                   all          word wrapping library for NodeJS
+ii  node-wrap-ansi                                   8.0.1+~8.0.1-3                            all          Wordwrap a string with ANSI escape codes
+ii  node-wrappy                                      1.0.2-3                                   all          Callback wrapping utility
+ii  node-write                                       2.0.0~6.0.1+~3.0.4+~2.0.0+~1.0.0+~2.0.1-1 all          convenience wrapper for Node.js fs methods
+ii  node-write-file-atomic                           4.0.2+~4.0.0-2                            all          Write files in an atomic fashion w/configurable ownership
+ii  node-xtend                                       4.0.2-3                                   all          Node.js library to easily extend an object
+ii  node-y18n                                        5.0.8+~5.0.0-3                            all          bare-bones internationalization library used by yargs
+ii  node-yallist                                     4.0.0+~4.0.1-1                            all          Double linked list implementation for Node.js
+ii  node-yargs                                       16.2.0+~16.0.4-7                          all          command line parser for nodejs
+ii  node-yargs-parser                                21.1.1+~21.0.0-4                          all          mighty option parser used by yargs
+ii  nodejs                                           20.19.2+dfsg-1+deb13u2                    amd64        evented I/O for V8 javascript - runtime executable
+ii  novnc                                            1:1.6.0-2                                 all          HTML5 VNC client - daemon and programs
+ii  npm                                              9.2.0~ds1-3                               all          package manager for Node.js
+ii  ocl-icd-libopencl1:amd64                         2.3.3-1                                   amd64        Generic OpenCL ICD Loader
+ii  openssl                                          3.5.7-1~deb13u2                           amd64        Secure Sockets Layer toolkit - cryptographic utility
+ii  openssl-provider-legacy                          3.5.7-1~deb13u2                           amd64        Secure Sockets Layer toolkit - cryptographic utility
+ii  passwd                                           1:4.17.4-2                                amd64        change and administer password and group data
+ii  patch                                            2.8-2                                     amd64        Apply a diff file to an original
+ii  perl                                             5.40.1-6                                  amd64        Larry Wall's Practical Extraction and Report Language
+ii  perl-base                                        5.40.1-6                                  amd64        minimal Perl system
+ii  perl-modules-5.40                                5.40.1-6                                  all          Core Perl modules
+ii  picom                                            12.5-1                                    amd64        lightweight compositor for X11
+ii  pinentry-curses                                  1.3.1-2                                   amd64        curses-based PIN or pass-phrase entry dialog for GnuPG
+ii  plank                                            0.11.89-6+b1                              amd64        Elegant, simple, clean dock
+ii  poppler-data                                     0.4.12-1                                  all          encoding data for the poppler PDF rendering library
+ii  poppler-utils                                    25.03.0-5+deb13u4                         amd64        PDF utilities (based on Poppler)
+ii  procps                                           2:4.0.4-9                                 amd64        /proc file system utilities
+ii  psmisc                                           23.7-2                                    amd64        utilities that use the proc file system
+ii  python3                                          3.13.5-1                                  amd64        interactive high-level object-oriented language (default python3 version)
+ii  python3-bcrypt                                   4.2.0-2.1+b1                              amd64        password hashing library for Python 3
+ii  python3-certifi                                  2025.1.31+ds-1                            all          root certificates for validating SSL certs and verifying TLS hosts (python3)
+ii  python3-cffi-backend:amd64                       1.17.1-3                                  amd64        Foreign Function Interface for Python 3 calling C code - runtime
+ii  python3-chardet                                  5.2.0+dfsg-2                              all          Universal Character Encoding Detector (Python3)
+ii  python3-charset-normalizer                       3.4.2-1                                   amd64        charset, encoding and language detection (Python 3)
+ii  python3-cryptography                             43.0.0-3+deb13u1                          amd64        Python library exposing cryptographic recipes and primitives
+ii  python3-deprecated                               1.2.18-1                                  all          Python decorator for old classes, functions or methods
+ii  python3-idna                                     3.10-1+deb13u1                            all          Python IDNA2008 (RFC 5891) handling (Python 3)
+ii  python3-jwcrypto                                 1.5.6-1.1~deb13u1                         all          Python3 implementation of JOSE Web standards
+ii  python3-minimal                                  3.13.5-1                                  amd64        minimal subset of the Python language (default python3 version)
+ii  python3-numpy                                    1:2.2.4+ds-1                              amd64        Python library for numerical computations (Python 3)
+ii  python3-numpy-dev:amd64                          1:2.2.4+ds-1                              amd64        Python library for numerical computations (Python 3 headers)
+ii  python3-packaging                                25.0-1                                    all          core utilities for python3 packages
+ii  python3-pip                                      25.1.1+dfsg-1                             all          Python package installer
+ii  python3-pip-whl                                  25.1.1+dfsg-1                             all          Python package installer (pip wheel)
+ii  python3-redis                                    6.1.0-2                                   all          Python bindings for Redis, a persistent key-value database
+ii  python3-requests                                 2.32.3+dfsg-5+deb13u1                     all          elegant and simple HTTP library for Python3, built for human beings
+ii  python3-setuptools-whl                           78.1.1-0.1                                all          Python Distutils Enhancements (wheel package)
+ii  python3-typing-extensions                        4.13.2-1                                  all          Backported and Experimental Type Hints for Python
+ii  python3-urllib3                                  2.3.0-3+deb13u2                           all          HTTP library with thread-safe connection pooling for Python3
+ii  python3-venv                                     3.13.5-1                                  amd64        venv module for python3 (default python3 version)
+ii  python3-websockify                               0.12.0+dfsg1-4+b1                         amd64        WebSockets support for any application/server - Python 3
+ii  python3-wheel                                    0.46.1-2                                  all          built-package format for Python
+ii  python3-wrapt                                    1.15.0-4+b1                               amd64        decorators, wrappers and monkey patching. - Python 3.x
+ii  python3.13                                       3.13.5-2+deb13u4                          amd64        Interactive high-level object-oriented language (version 3.13)
+ii  python3.13-minimal                               3.13.5-2+deb13u4                          amd64        Minimal subset of the Python language (version 3.13)
+ii  python3.13-venv                                  3.13.5-2+deb13u4                          amd64        Interactive high-level object-oriented language (pyvenv binary, version 3.13)
+ii  readline-common                                  8.2-6                                     all          GNU readline and history libraries, common files
+ii  ripgrep                                          14.1.1-1+b4                               amd64        Recursively searches directories for a regex pattern
+ii  rpcsvc-proto                                     1.4.3-1                                   amd64        RPC protocol compiler and definitions
+ii  rustc                                            1.85.0+dfsg3-1                            amd64        Rust systems programming language
+ii  sed                                              4.9-2+deb13u1                             amd64        GNU stream editor for filtering/transforming text
+ii  shared-mime-info                                 2.4-5+b2                                  amd64        FreeDesktop.org shared MIME database and spec
+ii  sqv                                              1.3.0-3+b2                                amd64        OpenPGP signature verification program from Sequoia
+ii  sudo                                             1.9.16p2-3+deb13u2                        amd64        Provide limited super user privileges to specific users
+ii  sysvinit-utils                                   3.14-4                                    amd64        System-V-like utilities
+ii  tar                                              1.35+dfsg-3.1                             amd64        GNU version of the tar archiving utility
+ii  tcl                                              8.6.16                                    amd64        Tool Command Language (default version) - shell
+ii  tcl8.6                                           8.6.16+dfsg-1                             amd64        Tcl (the Tool Command Language) v8.6 - shell
+ii  terser                                           5.38.0-1                                  all          parser/mangler/compressor for ES6+ - CLI tool
+ii  thunar                                           4.20.2-1+deb13u1                          amd64        File Manager for Xfce
+ii  thunar-data                                      4.20.2-1+deb13u1                          all          Provides thunar documentation, icons and translations
+ii  tk                                               8.6.16                                    amd64        Toolkit for Tcl and X11 (default version) - windowing shell
+ii  tk8.6                                            8.6.16-1                                  amd64        Tk toolkit for Tcl and X11 v8.6 - windowing shell
+ii  tmate                                            2.4.0-3                                   amd64        terminal multiplexer with instant terminal sharing
+ii  tmux                                             3.5a-3                                    amd64        terminal multiplexer
+ii  tzdata                                           2026b-0+deb13u1                           all          time zone and daylight-saving time data
+ii  unzip                                            6.0-29+deb13u1                            amd64        De-archiver for .zip files
+ii  util-linux                                       2.41.5-0+deb13u1                          amd64        miscellaneous system utilities
+ii  webpack                                          5.97.1+dfsg1+~cs11.18.27-3                all          Packs CommonJs/AMD modules for the browser
+ii  websockify                                       0.12.0+dfsg1-4+b1                         amd64        WebSockets support for any application/server
+ii  wget                                             1.25.0-2                                  amd64        retrieves files from the web
+ii  x11-common                                       1:7.7+24+deb13u1                          all          X Window System (X.Org) infrastructure
+ii  x11-utils                                        7.7+7                                     amd64        X11 utilities
+ii  x11-xkb-utils                                    7.7+9                                     amd64        X11 XKB utilities
+ii  x11-xserver-utils                                7.7+11                                    amd64        X server utilities
+ii  x11vnc                                           0.9.17-1                                  amd64        VNC server to allow remote access to an existing X session
+ii  xauth                                            1:1.1.2-1.1                               amd64        X authentication utility
+ii  xdg-utils                                        1.2.1-2                                   all          desktop integration utilities from freedesktop.org
+ii  xdotool                                          1:3.20160805.1-5.1                        amd64        simulate (generate) X11 keyboard/mouse input events
+ii  xfce4-terminal                                   1.1.4-1                                   amd64        Xfce terminal emulator
+ii  xfconf                                           4.20.0-1                                  amd64        utilities for managing settings in Xfce
+ii  xfonts-encodings                                 1:1.0.4-2.2                               all          Encodings for X.Org fonts
+ii  xfonts-utils                                     1:7.7+7                                   amd64        X Window System font utility programs
+ii  xfwm4                                            4.20.0-1                                  amd64        window manager of the Xfce project
+ii  xkb-data                                         2.42-1                                    all          X Keyboard Extension (XKB) configuration data
+ii  xserver-common                                   2:21.1.16-1.3+deb13u3                     all          common files used by various X servers
+ii  xvfb                                             2:21.1.16-1.3+deb13u3                     amd64        Virtual Framebuffer 'fake' X server
+ii  zlib1g:amd64                                     1:1.3.dfsg+really1.3.1-1+b1               amd64        compression library - runtime

@@ -1,0 +1,1 @@
+/tmp/collect_specs.sh: line 40: crontab: command not found
