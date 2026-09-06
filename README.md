@@ -11,7 +11,6 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 ```text
 / (MicroVM Root Filesystem - OverlayFS on /dev/vda)
 ├── bin -> usr/bin                          # Core user binaries symlink
-│
 ├── boot/                                   # Kernel boot files (MicroVM boots host vmlinux-6.12 directly)
 │
 ├── dev/                                    # Device nodes
@@ -58,11 +57,7 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │   └── cpuinfo / meminfo / mounts          # Hardware topology & active mount table
 │
 ├── root/                                   # Root user home directory
-│
-├── run/                                    # Ephemeral system runtime state
-│   ├── dbus/                               # D-Bus system daemon socket
-│   └── sshd/                               # SSH daemon runtime directory
-│
+├── run/                                    # Ephemeral system runtime state (dbus, sshd)
 ├── sbin -> usr/sbin                        # System administration binaries symlink
 ├── srv/                                    # Service data directory
 │
@@ -96,7 +91,6 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │   └── share/backgrounds/                  # Cursor wallpapers (cursor-box-wallpaper.jpg)
 │
 ├── var/                                    # Variable data (system logs, package caches)
-│
 └── workspace/                              # Active project working tree & user repositories
 ```
 
@@ -162,8 +156,55 @@ GrokBot/
 
 ## 🔑 Key Architectural Findings
 
-1. **Kernel & Hypervisor**: Linux 6.12 monolithic kernel running under KVM with `nomodule`, fast failover panic handling, and overlayfs root branching.
-2. **Multi-Display Multiplexer**: Per-agent headless X11 virtual framebuffers (`1280x800x24`) mapped to dynamic WebSocket tokens via `websockify` on port `6081`.
-3. **Inverted WebAuthn Proxy**: Headless Chrome extension forwards `navigator.credentials` ceremonies over native messaging back to the host broker on `1340` (and local laptop YubiKey/TouchID).
-4. **Shared Session Model**: Per-display Chrome profiles symlink `Cookies` and `Login Data` SQLite databases to enable "One box, one session" across all screens.
-5. **Crash-Loop & Collision Defense**: Tailored wrapper launchers (`box-xvfb`, `box-xfwm4`, `box-picom`, `box-plank`, `box-x11vnc`) reap orphan sockets, locks, and X11 selections.
+### 1. Dual-Tier Session Sync: Cold Disk SQLite + Live CDP Sync
+* **The Problem**: Chrome loads cookies into memory at startup and never re-reads on-disk SQLite files while running. Writing to a shared disk database only affects *future* browser launches; a user logging in on Screen 1 leaves Screen 4 logged out.
+* **The Solution** ([`sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs) & [`link-chrome-session`](usr-local-bin/link-chrome-session)):
+  1. **Cold Disk Linker**: Symlinks `Cookies` and `Login Data` SQLite databases from the primary profile (`/home/box/chrome-profile/Default`) into forked monitor profiles (`chrome-profile-N/Default`).
+  2. **Live RAM CDP Sync**: A background daemon polls Chrome DevTools Protocol ports (`9222 + N`) every 1,500ms, pushing `httpOnly` and `Secure` session cookies across all active browser processes.
+  3. **SPA `localStorage` Sync**: Mirrors `localStorage` keys across origins (specifically identifying Slack `xoxc-` tokens) so single-page apps stay authenticated across all screens without page reload.
+  4. **Zero-Automation Tell**: Attaches transiently via CDP for a single tick and detaches immediately without enabling `Runtime` or `Page` domains, keeping `navigator.webdriver` false and undetected by anti-bot systems.
+
+### 2. Inverted WebAuthn / Passkey Hardware Key Bridge
+* **The Problem**: A headless cloud VM cannot physically access the developer's local USB YubiKey, Apple Touch ID, or Windows Hello biometric sensor.
+* **The Solution** ([`usr-local-share/sand-webauthn-proxy/`](usr-local-share/sand-webauthn-proxy)):
+  1. Chrome managed policy (`ExtensionSettings` in [`sand-webauthn.json`](etc-policies/policies/managed/sand-webauthn.json)) force-installs the proxy extension `pkjakndclmokfbgfnpgjieoebnbghhgb`.
+  2. The extension uses Chrome's `chrome.webAuthenticationProxy` API to intercept `navigator.credentials.get` and `create` calls.
+  3. Forwards ceremonies via Native Messaging ([`sand-webauthn-proxy-host`](usr-local-bin/sand-webauthn-proxy-host)) to the host gateway on port `1340`.
+  4. The host gateway reverse-tunnels the ceremony back to the user's local machine to be signed by their hardware key, completing cloud authentication without exposing private keys to the cloud VM.
+
+### 3. Self-Updating Host Runtime & Protected Deny-List
+* **The Architecture** ([`sand-supervisor.mjs`](usr-local-bin/sand-supervisor.mjs)):
+  * On boot, `sand-supervisor.mjs` probes an S3 bucket (`public-asphr-vm-daemon-bucket.s3.us-east-1.amazonaws.com/sand-host-bundle`) within a strict 20-second budget.
+  * Pulls dynamic updates to `/home/box/sand-host/host-main.cjs` and syncs supervisor scripts into `/usr/local/bin`.
+  * **Protected Deny-List (`BOX_SCRIPTS_DENY`)**: Explicitly blocks remote updates from overwriting core hypervisor/init scripts (`start-sand-box`, `sand-exit-watch`, `box-cgroups.sh`, `box-xvfb`, `box-x11vnc`), preventing bad remote updates from bricking the microVM.
+
+### 4. Remote Cloud Storage Mount via FUSE
+* **File**: [`cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (referenced in `cursor_agent_store_fuse_version`).
+* Mounts a remote agent storage filesystem via FUSE (`agent-store-fuse` binary from `public-asphr-vm-daemon-bucket`), allowing massive multi-gigabyte project workspaces and checkpoints to be mounted on-demand without exhausting the microVM's local disk.
+
+### 5. Developer Credential Persistence Across Hibernations
+* **File**: [`persist-cli-auth`](usr-local-bin/persist-cli-auth)
+* Solves credential loss when ephemeral containers stop or wake:
+  * Mirrors `~/.ssh`, `~/.gnupg`, `~/.config/gh`, `~/.config/gcloud`, `~/.aws`, `~/.npmrc`, and `~/.gitconfig`.
+  * Strips volatile cache folders (`cache/`, `logs/`) on the fly during copy to keep mirrors small.
+  * Computes deterministic SHA-256 hashes (`content_sig`) to avoid unnecessary disk writes.
+  * **Permission Hardening**: Enforces `0700` for directories and `0600` for private keys upon restoration so `ssh` does not reject loose permissions.
+
+### 6. Anti-Bot Fingerprint Spoofing
+* **Files**: [`sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs) & [`sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs)
+* Anti-bot platforms (Cloudflare Turnstile, DataDome, Akamai) look for Linux Xvfb signatures.
+* The governor injects `Page.addScriptToEvaluateOnNewDocument` scripts over CDP to spoof Windows/macOS hardware properties (screen color depth, hardware concurrency, WebGL renderer stubs, platform strings) so headless browser automation appears as real desktop users.
+
+### 7. Compositor Synchronization & Collision Defenses
+* **File**: [`box-plank`](usr-local-bin/box-plank)
+  * Uses Python ctypes with `libX11.so.6` to query `XGetSelectionOwner(dpy, "_NET_WM_CM_S0")`. Delays starting Plank until the window compositor is verified active, eliminating the bug where Plank paints an opaque black box.
+* **File**: [`box-picom`](usr-local-bin/box-picom)
+  * Reaps stale compositor processes holding `_NET_WM_CM_S0` before launch to fix `SAND-161` (fleet-wide compositor crash-loops).
+* **File**: [`box-bounded-log.mjs`](usr-local-bin/box-bounded-log.mjs)
+  * High-performance circular in-memory buffer ring capped at 1 MB. Logs rotate in RAM, preventing long-running agent workflows from filling up the root overlayfs.
+
+### 8. Cgroups v2 Dual-Slice Prioritization
+* **File**: [`box-cgroups.sh`](usr-local-bin/box-cgroups.sh)
+* Partitions processes into two cgroups:
+  * `interactive`: Higher `cpu.weight` allocated to UI, Xvfb, window manager, compositor, and VNC daemons to ensure silky 60 FPS remote interaction.
+  * `agent`: Lower priority slice where heavy compilers, LLM workers, test runners, and background subagents execute, preventing compute-heavy tasks from lagging the desktop stream.
