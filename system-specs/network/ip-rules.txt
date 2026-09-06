@@ -1,0 +1,6 @@
+0:	from all lookup local
+520:	from all to 192.168.0.0/16 lookup main
+521:	from all to 172.16.0.0/12 lookup main
+522:	from all to 10.0.0.2 lookup main
+32766:	from all lookup main
+32767:	from all lookup default

@@ -1,0 +1,124 @@
+Netid State      Recv-Q Send-Q       Local Address:Port         Peer Address:Port Process                                                               
+tcp   LISTEN     0      5                  0.0.0.0:2375              0.0.0.0:*                                                                          
+tcp   LISTEN     0      128                0.0.0.0:50052             0.0.0.0:*                                                                          
+tcp   LISTEN     0      511                0.0.0.0:1340              0.0.0.0:*     users:(("node",pid=608,fd=45))                                       
+tcp   LISTEN     0      511                0.0.0.0:1339              0.0.0.0:*     users:(("node",pid=167,fd=21))                                       
+tcp   LISTEN     0      128                0.0.0.0:26500             0.0.0.0:*                                                                          
+tcp   LISTEN     0      32               127.0.0.1:5900              0.0.0.0:*     users:(("x11vnc",pid=689,fd=8))                                      
+tcp   LISTEN     0      32               127.0.0.1:5904              0.0.0.0:*     users:(("x11vnc",pid=33924,fd=10))                                   
+tcp   LISTEN     0      32               127.0.0.1:5907              0.0.0.0:*     users:(("x11vnc",pid=171966,fd=10))                                  
+tcp   LISTEN     0      32               127.0.0.1:5906              0.0.0.0:*     users:(("x11vnc",pid=2019,fd=10))                                    
+tcp   LISTEN     0      10               127.0.0.1:9229              0.0.0.0:*     users:(("chrome",pid=177762,fd=86))                                  
+tcp   LISTEN     0      100                0.0.0.0:6081              0.0.0.0:*     users:(("websockify",pid=181177,fd=3),("websockify",pid=181163,fd=3))
+tcp   LISTEN     0      100                0.0.0.0:6080              0.0.0.0:*     users:(("websockify",pid=733,fd=3))                                  
+tcp   ESTAB      0      0               172.30.0.2:1340           172.30.0.1:40076 users:(("node",pid=608,fd=100))                                      
+tcp   ESTAB      0      0               172.30.0.2:39326       184.192.77.31:443   users:(("node",pid=608,fd=46))                                       
+tcp   ESTAB      0      0               172.30.0.2:6081           172.30.0.1:40034 users:(("websockify",pid=181177,fd=4))                               
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:59694                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:36382           127.0.0.1:5906                                                                       
+tcp   ESTAB      0      0               172.30.0.2:37666        3.235.12.186:443   users:(("node",pid=608,fd=47))                                       
+tcp   ESTAB      0      0               172.30.0.2:47632        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=29))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:49840                                                                      
+tcp   ESTAB      0      0               172.30.0.2:1340           172.30.0.1:40040 users:(("node",pid=608,fd=96))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:45940                                                                      
+tcp   ESTAB      0      0               172.30.0.2:1340           172.30.0.1:40034 users:(("node",pid=608,fd=31))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:46592                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:33486           127.0.0.1:5906                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:39812                                                                      
+tcp   ESTAB      0      0               172.30.0.2:47664        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=32))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:51390           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:41304                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:51366           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:42504           127.0.0.1:5904                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:41720           127.0.0.1:5906                                                                       
+tcp   ESTAB      0      0               172.30.0.2:47670        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=33))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:40276           127.0.0.1:1337                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:51406                                                                      
+tcp   ESTAB      0      0                127.0.0.1:9229            127.0.0.1:41342 users:(("chrome",pid=177762,fd=130))                                 
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:56226                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:49848                                                                      
+tcp   ESTAB      0      0               172.30.0.2:56188       52.55.202.196:443   users:(("node",pid=608,fd=44))                                       
+tcp   ESTAB      0      0               172.30.0.2:47574        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=23))                           
+tcp   ESTAB      0      0               172.30.0.2:59786      54.208.125.145:443   users:(("node",pid=608,fd=41))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:46870           127.0.0.1:5904                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:52614                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:51380                                                                      
+tcp   ESTAB      0      0               172.30.0.2:47614        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=27))                           
+tcp   ESTAB      0      0                127.0.0.1:42302           127.0.0.1:5907  users:(("websockify",pid=181177,fd=8))                               
+tcp   ESTAB      0      0                127.0.0.1:9229            127.0.0.1:39534 users:(("chrome",pid=177762,fd=103))                                 
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:39818                                                                      
+tcp   ESTAB      0      0               172.30.0.2:47672        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=34))                           
+tcp   ESTAB      0      0               172.30.0.2:47648        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=30))                           
+tcp   ESTAB      0      0               172.30.0.2:47600        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=25))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:49838           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:46582                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:47010           127.0.0.1:5907                                                                       
+tcp   ESTAB      0      0                127.0.0.1:5907            127.0.0.1:42302 users:(("x11vnc",pid=171966,fd=12))                                  
+tcp   TIME-WAIT  0      0                127.0.0.1:35062           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:45924           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:47918           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:45932           127.0.0.1:9229                                                                       
+tcp   ESTAB      0      0               172.30.0.2:47590        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=24))                           
+tcp   ESTAB      0      0                127.0.0.1:9229            127.0.0.1:39474 users:(("chrome",pid=177762,fd=90))                                  
+tcp   ESTAB      0      0               172.30.0.2:50306      100.60.160.158:443   users:(("node",pid=608,fd=102))                                      
+tcp   ESTAB      0      0               172.30.0.2:2375           172.30.0.1:41178                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:38802           127.0.0.1:5906                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:60338           127.0.0.1:5907                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:35520           127.0.0.1:5907                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:56242                                                                      
+tcp   ESTAB      0      0               172.30.0.2:38284       44.205.69.135:443   users:(("node",pid=608,fd=48))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:41320           127.0.0.1:9229                                                                       
+tcp   ESTAB      0      0               172.30.0.2:47626        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=28))                           
+tcp   ESTAB      0      0                127.0.0.1:39534           127.0.0.1:9229  users:(("node",pid=187,fd=22))                                       
+tcp   TIME-WAIT  0      0               172.30.0.2:51212        140.82.112.4:443                                                                        
+tcp   TIME-WAIT  0      0                127.0.0.1:47944           127.0.0.1:9229                                                                       
+tcp   ESTAB      0      0               172.30.0.2:47572        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=22))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:36562                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:36550                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:47960                                                                      
+tcp   CLOSE-WAIT 25     0               172.30.0.2:47270       108.138.85.95:443   users:(("python",pid=2900,fd=9))                                     
+tcp   ESTAB      0      0               172.30.0.2:48290      172.253.62.102:443   users:(("chrome",pid=177823,fd=18))                                  
+tcp   ESTAB      0      0                127.0.0.1:9229            127.0.0.1:39506 users:(("chrome",pid=177762,fd=141))                                 
+tcp   ESTAB      0      0               172.30.0.2:39404      173.194.45.188:5228  users:(("chrome",pid=177823,fd=30))                                  
+tcp   ESTAB      0      0                127.0.0.1:41342           127.0.0.1:9229  users:(("node",pid=261,fd=21))                                       
+tcp   ESTAB      0      0                127.0.0.1:39474           127.0.0.1:9229  users:(("node",pid=222,fd=21))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:41694           127.0.0.1:1337                                                                       
+tcp   ESTAB      0      0               172.30.0.2:59570       140.82.113.25:443   users:(("chrome",pid=177823,fd=43))                                  
+tcp   TIME-WAIT  0      0                127.0.0.1:46568           127.0.0.1:9229                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:45926                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:47930                                                                      
+tcp   ESTAB      0      0               172.30.0.2:26500          172.30.0.1:44290                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:39288           127.0.0.1:5907                                                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:41584                                                                      
+tcp   ESTAB      0      0               172.30.0.2:54996       100.51.88.221:443   users:(("node",pid=608,fd=40))                                       
+tcp   ESTAB      0      0               172.30.0.2:59318       52.20.228.219:443   users:(("node",pid=608,fd=95))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:43826           127.0.0.1:5904                                                                       
+tcp   ESTAB      0      0               172.30.0.2:34702       34.104.35.123:80    users:(("chrome",pid=177823,fd=19))                                  
+tcp   TIME-WAIT  0      0                127.0.0.1:46584           127.0.0.1:9229                                                                       
+tcp   ESTAB      0      0               172.30.0.2:1340           172.30.0.1:40036 users:(("node",pid=608,fd=94))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:52624                                                                      
+tcp   ESTAB      0      0               172.30.0.2:47686        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=35))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:41328                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:6081            127.0.0.1:59708                                                                      
+tcp   ESTAB      0      0               172.30.0.2:47702        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=36))                           
+tcp   TIME-WAIT  0      0                127.0.0.1:9229            127.0.0.1:41354                                                                      
+tcp   TIME-WAIT  0      0                127.0.0.1:44226           127.0.0.1:5904                                                                       
+tcp   ESTAB      0      0                127.0.0.1:39506           127.0.0.1:9229  users:(("node",pid=188,fd=23))                                       
+tcp   TIME-WAIT  0      0                127.0.0.1:49844           127.0.0.1:9229                                                                       
+tcp   ESTAB      0      0               172.30.0.2:47658        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=31))                           
+tcp   LAST-ACK   0      24              172.30.0.2:41038     188.166.207.127:22                                                                         
+tcp   ESTAB      0      0               172.30.0.2:47610        104.16.10.34:443   users:(("npm exec contex",pid=2729,fd=26))                           
+tcp   LISTEN     0      511                      *:1337                    *:*     users:(("node",pid=302,fd=21))                                       
+tcp   LISTEN     0      511                      *:1338                    *:*     users:(("node",pid=302,fd=22))                                       
+tcp   LISTEN     0      32                   [::1]:5904                 [::]:*     users:(("x11vnc",pid=33924,fd=11))                                   
+tcp   LISTEN     0      32                   [::1]:5906                 [::]:*     users:(("x11vnc",pid=2019,fd=11))                                    
+tcp   LISTEN     0      32                   [::1]:5907                 [::]:*     users:(("x11vnc",pid=171966,fd=11))                                  
+tcp   LISTEN     0      32                   [::1]:5900                 [::]:*     users:(("x11vnc",pid=689,fd=9))                                      
+tcp   LISTEN     0      511                      *:13604                   *:*     users:(("node",pid=33901,fd=24))                                     
+tcp   LISTEN     0      511                      *:13607                   *:*     users:(("node",pid=171954,fd=24))                                    
+tcp   LISTEN     0      511                      *:13606                   *:*     users:(("node",pid=1949,fd=24))                                      
+tcp   LISTEN     0      511                      *:14004                   *:*     users:(("node",pid=33901,fd=23))                                     
+tcp   LISTEN     0      511                      *:14007                   *:*     users:(("node",pid=171954,fd=23))                                    
+tcp   LISTEN     0      511                      *:14006                   *:*     users:(("node",pid=1949,fd=23))                                      
+tcp   TIME-WAIT  0      0      [::ffff:172.30.0.2]:1337  [::ffff:172.30.0.1]:40264                                                                      
+tcp   TIME-WAIT  0      0      [::ffff:172.30.0.2]:1337  [::ffff:172.30.0.1]:60472                                                                      
