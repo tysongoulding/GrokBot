@@ -1,0 +1,17 @@
+{
+  "updated": "2026-08-21",
+  "devices": [
+    {
+      "id": "core",
+      "name": "core.goulding.in",
+      "mgmt_ip": "192.168.144.1",
+      "vendor": "mikrotik",
+      "model": "CCR2004-1G-12S+2XS",
+      "role": "core-router",
+      "site": "home",
+      "username": "admin",
+      "auth": "secrets.json",
+      "notes": "RouterOS 7.23.3. LAN 192.168.144.0/24. Primary WAN Utopia on sfp-sfpplus1."
+    }
+  ]
+}

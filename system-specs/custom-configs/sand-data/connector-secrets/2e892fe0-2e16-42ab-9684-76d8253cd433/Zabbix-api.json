@@ -1,0 +1,5 @@
+{
+  "url": "http://zabbix.lattigo.com/api_jsonrpc.php",
+  "frontend": "http://zabbix.lattigo.com/zabbix.php",
+  "ZABBIX_API_TOKEN": "0d18c82dcee4c93b71c5501e2b5847aab578b356767fb0d17ce40f53c44f2e19"
+}

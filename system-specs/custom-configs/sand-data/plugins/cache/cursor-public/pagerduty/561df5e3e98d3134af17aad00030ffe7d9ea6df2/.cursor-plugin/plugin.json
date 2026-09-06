@@ -1,0 +1,31 @@
+{
+  "name": "pagerduty",
+  "displayName": "PagerDuty",
+  "version": "1.1.0",
+  "description": "PagerDuty MCP server for Cursor - manage incidents, services, schedules, on-call, and more directly from your IDE.",
+  "author": {
+    "name": "PagerDuty",
+    "email": "dev-platform@pagerduty.com"
+  },
+  "publisher": "PagerDuty",
+  "homepage": "https://developer.pagerduty.com/docs/mcp-tooling-remote-server",
+  "repository": "https://github.com/PagerDuty/cursor-plugin",
+  "license": "Apache-2.0",
+  "logo": "logo.svg",
+  "keywords": ["pagerduty", "incidents", "oncall", "mcp", "incident-management", "observability"],
+  "category": "developer-tools",
+  "tags": ["incident-management", "oncall", "mcp", "observability", "sre"],
+  "variables": {
+    "type": "object",
+    "properties": {
+      "PAGERDUTY_API_TOKEN": {
+        "type": "string",
+        "title": "PagerDuty API Token",
+        "description": "User API token from https://support.pagerduty.com/main/docs/pagerduty-mcp-server-integration-guide#generate-your-pagerduty-api-token. Only the token value is needed; the Authorization header already includes the `Token ` prefix.",
+        "writeOnly": true
+      }
+    },
+    "required": ["PAGERDUTY_API_TOKEN"]
+  },
+  "mcpServers": "mcp.json"
+}

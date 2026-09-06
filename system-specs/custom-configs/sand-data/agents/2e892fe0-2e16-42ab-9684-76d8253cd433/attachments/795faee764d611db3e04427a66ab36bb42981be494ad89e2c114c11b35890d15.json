@@ -1,0 +1,51 @@
+{
+  "updated": "2026-08-21",
+  "groups": {
+    "home": {
+      "username": "admin",
+      "auth": "group:home",
+      "notes": "Shared login for the home LAN."
+    }
+  },
+  "devices": [
+    {
+      "id": "core",
+      "group": "home",
+      "name": "core.goulding.in",
+      "mgmt_ip": "192.168.144.1",
+      "vendor": "mikrotik",
+      "model": "CCR2004-1G-12S+2XS",
+      "role": "core-router",
+      "notes": "RouterOS 7.23.3. LAN 192.168.144.0/24. Primary WAN Utopia on sfp-sfpplus1."
+    },
+    {
+      "id": "sw-office",
+      "group": "home",
+      "name": "sw-office.goulding.in",
+      "mgmt_ip": "192.168.144.33",
+      "role": "switch"
+    },
+    {
+      "id": "swi1",
+      "group": "home",
+      "name": "swi1.goulding.in",
+      "mgmt_ip": "192.168.144.30",
+      "mgmt_url": "https://swi1.goulding.in",
+      "role": "switch"
+    },
+    {
+      "id": "swi-shed",
+      "group": "home",
+      "name": "swi-shed.goulding.in",
+      "mgmt_ip": "192.168.144.254",
+      "role": "switch"
+    },
+    {
+      "id": "coreB",
+      "group": "home",
+      "name": "coreB.goulding.in",
+      "mgmt_ip": "192.168.144.253",
+      "role": "core-router"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Email",
+  "prompt": "Find critical unread emails that need Tyson's specific attention.\n\nAlways include the shared alias net-eng@optconnect.com. He wants eyes on that mail so nothing is missed. Treat net-eng@ as signal, never as NOISE. Do not skip, archive, mark read, or filter those threads.\n\nOn each run: look up Gmail tools first (schema may have changed), then check unread inbox plus anything To/Cc net-eng@optconnect.com since the last pass.\n\nSurface:\n- Mail that needs him specifically (customers, carriers, incidents, MFA/Secure Token, people writing him)\n- net-eng@ threads that look unowned, unanswered, sitting, or newly arrived from a customer/carrier/vendor\n- Anything asking him for action\n\nStay quiet if nothing new and nothing on net-eng@ looks at risk of being missed. No filler.",
+  "schedule": "0 6-18/2 * * *",
+  "triggerPresentation": {
+    "version": 1,
+    "trigger": {
+      "type": "cron",
+      "schedule": "0 6-18/2 * * *"
+    }
+  },
+  "enabled": false,
+  "provenance": "user",
+  "createdAt": 1787351635779,
+  "lastRunAt": 1788280849584
+}

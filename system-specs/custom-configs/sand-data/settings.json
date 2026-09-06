@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "mcpBoxServers": [],
+  "hasSeenOnboarding": true,
+  "hasSeenOnboardingAccountScope": "f661b1aaecbd19da6a3f2c7340c6acde4c4c492abaa40b8360df5d626f652686",
+  "autoUpdateWhenIdleOptIn": false,
+  "egressTunnelEnabled": false,
+  "webauthnProxyEnabled": true,
+  "botColorInChatEnabled": false,
+  "messagesEnabled": false,
+  "mcpCustomInstructions": {},
+  "mcpCustomInstructionsByServerId": {},
+  "mcpDisabledToolsByServerId": {},
+  "localToolPermission": "always",
+  "activeAccountScope": "f661b1aaecbd19da6a3f2c7340c6acde4c4c492abaa40b8360df5d626f652686",
+  "conciergeConsent": "unset",
+  "settingsMigrations": [
+    "downgrade-persisted-max-fast"
+  ],
+  "notifications": {
+    "isEnabled": false
+  },
+  "userTimeZone": "America/Denver",
+  "pinnedAgentIds": [
+    "ba250615-6833-4d60-b5ee-f004d2e115a4",
+    "6f3d232c-41cd-4eca-9bc9-b287df3ad53c",
+    "cfde06bf-ba71-4db5-b377-4a6904467ce6",
+    "45c829a1-d9cf-46e7-9623-7a725821488c",
+    "2e892fe0-2e16-42ab-9684-76d8253cd433",
+    "41ff967d-0781-409b-8030-5fe7e187c1fc"
+  ],
+  "localToolPermissionByMachineId": {
+    "ae3417a1-51e7-4953-8287-b6ebb3764eb8": "always"
+  },
+  "accountScopes": {}
+}

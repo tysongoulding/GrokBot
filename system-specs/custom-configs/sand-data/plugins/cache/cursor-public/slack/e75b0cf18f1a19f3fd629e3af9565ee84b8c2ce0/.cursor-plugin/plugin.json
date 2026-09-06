@@ -1,0 +1,10 @@
+{
+  "name": "slack",
+  "description": "Slack MCP server. Search channels, send messages, and perform other Slack actions through MCP-compatible clients.",
+  "version": "1.1.0",
+  "mcpServers": "../.cursor-mcp.json",
+  "author": {
+    "name": "Slack"
+  },
+  "skills": "./skills/"
+}

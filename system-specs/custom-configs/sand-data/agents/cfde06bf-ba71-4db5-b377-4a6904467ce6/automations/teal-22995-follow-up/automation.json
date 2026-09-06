@@ -1,0 +1,16 @@
+{
+  "name": "Teal 22995 follow-up",
+  "prompt": "Finite watch: Teal Support ticket 22995 / NETE-737 (Canada payment-terminal TLS on SIM 8901990000005060358, lattigopriv). Tyson sent the email 2026-08-21 ~5:10 PM MDT. Jacky at Teal already acknowledged and said they will investigate roaming/egress, public NAT IP, traffic to 51.143.124.200:443, and MTU/MSS/DPI.\n\nOn each run: look up Gmail tools first (schema may have changed), then search for new mail from Teal about this ticket (support@tealcom.freshdesk.com, tealcommunications, subject 22995 / NETE-737 / TLS / lattigopriv). Ignore the 2026-08-21 Jacky ack we already know about.\n\nIf Teal asks Tyson for more information, logs, a screenshot, a call, confirmation, or any other action — tell him immediately, with who asked, what they want, and the thread subject. Then delete this routine.\n\nIf Teal sends findings, a fix, or closes the ticket, tell him that too and delete this routine.\n\nIf nothing new, stay quiet. No filler.\n\nDeadline: if this is still running on 2026-09-04 (two weeks) with no ask and no resolution, tell Tyson the watch expired and delete this routine.\n\nReason this runs evenings and weekends: live vendor ticket with a 2-hour SLA on a customer outage.",
+  "schedule": "26 7-21/2 * * *",
+  "triggerPresentation": {
+    "version": 1,
+    "trigger": {
+      "type": "cron",
+      "schedule": "26 7-21/2 * * *"
+    }
+  },
+  "enabled": false,
+  "provenance": "user",
+  "createdAt": 1787362041004,
+  "lastRunAt": 1788284780750
+}

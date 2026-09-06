@@ -1,0 +1,16 @@
+{
+  "name": "Hydria follow-up",
+  "prompt": "Finite watch: Hydria / Composite Advanced Technology (via TAS). Tyson wants to know when they reply on the Gmail thread \"Re: No internet connection\" (thread id 19f6b3c1125d3bf8).\n\nLast known mail: Venkatesh Majeti (m.venkatesh@tasind.com) on 2026-07-31 said they are fine with Option 1 (enable internet egress) but Daniel Campos (dcampos@gohydria.com / dcampos@catecgases.com) has the final decision. Andy had sent two options on 2026-07-21 and chased on 2026-07-30. No mail since July 31.\n\nRelated tickets: NETE-740 Hydria Device Access (To Do, Andy; still describes the private-tunnel/OpenVPN path) and NETE-741 Respond to Customer w/ Options (Pending Review).\n\nOn each run: look up Gmail tools first (schema may have changed). Search for new mail on that thread or from m.venkatesh@tasind.com, suyash.bhongle@tasind.com, dcampos@gohydria.com, dcampos@catecgases.com, jvega@gohydria.com about Hydria / MQTT / 10.80.1 / no internet. Ignore everything through Venkatesh's 2026-07-31 Option 1 reply.\n\nIf they reply (Daniel's decision, more questions, a meeting, anything new), tell Tyson immediately: who wrote, what they said, and whether NETE-740/741 need an update. Then delete this routine.\n\nIf nothing new, stay quiet.\n\nDeadline: if this is still running on 2026-09-04 with no reply, tell Tyson the watch expired and delete this routine.",
+  "schedule": "56 8-18/2 * * 1-5",
+  "triggerPresentation": {
+    "version": 1,
+    "trigger": {
+      "type": "cron",
+      "schedule": "56 8-18/2 * * 1-5"
+    }
+  },
+  "enabled": false,
+  "provenance": "user",
+  "createdAt": 1787363772196,
+  "lastRunAt": 1788282004898
+}

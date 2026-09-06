@@ -1,0 +1,9 @@
+{
+  "pagerduty-mcp": {
+    "headers": {
+      "Authorization": "Token ${PAGERDUTY_API_TOKEN}"
+    },
+    "type": "streamable-http",
+    "url": "https://mcp.pagerduty.com/mcp"
+  }
+}
