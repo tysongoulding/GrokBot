@@ -1,0 +1,9 @@
+{
+  "startedAt": "2026-08-23T02:41:54.433Z",
+  "display": ":2",
+  "maxDurationMs": 600000,
+  "videoPath": "/workspace/teach-sessions/teach-20260823T024154Z-9c7f7fe7-b11f-4627-a86a-ca7b258b417b/demo.mp4",
+  "ffmpegPid": 78102,
+  "endedAt": "2026-08-23T02:41:59.954Z",
+  "endReason": "stopped"
+}
