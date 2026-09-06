@@ -4,13 +4,99 @@ Complete reverse-engineered replication archive for the autonomous cloud agent m
 
 ---
 
-## Repository Directory Layout
+## 🖥️ Live MicroVM Filesystem Map (`box@cursor:/workspace`)
+
+This map illustrates where every runtime daemon, IPC token, supervisor script, and profile lives on the actual microVM:
+
+```text
+/ (Root OverlayFS Mount on /dev/vda)
+├── workspace/                               # Primary Agent Working Directory ($CWD)
+│   └── [Active Git Workspaces & Projects]
+│
+├── exec-daemon/                             # Root-Owned Agent Execution Runtime
+│   ├── exec-daemon                          # Shell launcher wrapper
+│   ├── index.js                             # Core agent server bundle (14.3 MB)
+│   ├── cursorsandbox                         # Sandbox execution binary (4.7 MB)
+│   ├── node                                 # Standalone Node.js runtime (120 MB)
+│   ├── pty.node                             # Native node-pty terminal binding
+│   ├── polished-renderer.node               # Native WebP/frame compression addon
+│   ├── agent-sdk/                           # Canvas UI SDK (React types, DAG layout, diffs)
+│   ├── canvas-runtime/                      # Canvas execution runtime (canvas-runtime.esm.js)
+│   ├── tools/                               # Pre-installed agent CLI tools
+│   │   ├── origin                           # Origin CLI binary (104 MB)
+│   │   ├── rg                               # Ripgrep search binary
+│   │   ├── gh                               # GitHub CLI binary (41 MB)
+│   │   └── tmux                             # Custom tmux binary & tmux.portal.conf
+│   └── node_modules/                        # esbuild-wasm, tree-sitter, etc.
+│
+├── usr/
+│   ├── local/
+│   │   ├── bin/                             # Custom Process Supervisors & Launchers (40+ scripts)
+│   │   │   ├── sand-exit-watch              # PID 53 root subreaper (crash logging & liveness)
+│   │   │   ├── sand-window-router.mjs       # Port 1339 multi-screen HTTP/WS router
+│   │   │   ├── start-desktop.sh             # Turnkey headless desktop bringup
+│   │   │   ├── box-chrome                   # Managed Chrome launcher (CDP port, WebGL stubs)
+│   │   │   ├── box-chrome-policy            # ExtensionSettings policy generator
+│   │   │   ├── box-cgroups.sh               # Cgroups v2 scheduler (interactive vs agent)
+│   │   │   ├── box-doctor                   # 10-point health, skew & fd check
+│   │   │   ├── box-bounded-log / .mjs       # Circular in-memory RAM log ring (1MB limit)
+│   │   │   ├── link-chrome-session          # Multi-screen SQLite cookie/session linker
+│   │   │   ├── box-xvfb / box-x11vnc        # X11 virtual framebuffers with orphan reaping
+│   │   │   ├── box-xfwm4 / box-picom        # WM & compositor crash-loop defenses
+│   │   │   ├── box-plank                    # Dock launcher synchronized to _NET_WM_CM_S0
+│   │   │   ├── sand-webauthn-proxy-host     # Native messaging bridge for remote WebAuthn
+│   │   │   ├── sand-ua-governor.mjs         # User-Agent & fingerprint manager
+│   │   │   ├── sand-web-bot-auth.mjs        # Bot authentication coordinator
+│   │   │   └── sand-wallpaper               # Adaptive desktop wallpaper renderer
+│   │   └── share/
+│   │       ├── sand-webauthn-proxy/         # Inverted WebAuthn Chrome extension source
+│   │       │   ├── manifest.json
+│   │       │   └── background.js
+│   │       ├── sand-webauthn-proxy.crx      # Packed extension archive
+│   │       ├── sand-webauthn-proxy.id       # Extension ID (pkjakndclmokfbgfnpgjieoebnbghhgb)
+│   │       └── sand-webauthn-proxy.pem      # Extension signing private key
+│   └── share/
+│       └── backgrounds/                     # cursor-box-wallpaper.jpg, sand-wallpaper-*.png
+│
+├── etc/
+│   ├── machine-id                           # 32-char device ID (synced with chrome profile)
+│   ├── opt/chrome/policies/managed/         # sand.json, sand-webauthn.json, sand-webrtc.json
+│   └── opt/chrome/native-messaging-hosts/   # co.anysphere.sand.webauthn_proxy.json
+│
+├── home/box/                                # Non-Root User Workspace (UID 1000)
+│   ├── chrome-profile/                      # Master Chrome Profile (Screen 1)
+│   │   ├── Default/                         # Cookies, Login Data (Canonical SQLite stores)
+│   │   └── machine-id                       # Persisted device ID copy
+│   ├── chrome-profile-N/                    # Per-Screen Chrome Profiles (Screen :4, :6, :7)
+│   │   └── Default/                         # Cookies -> symlinked to master Default/
+│   ├── sand-data/                           # Persistent agent settings (settings.json)
+│   └── .config/                             # plank/, xfce4/, dconf/
+│
+├── tmp/                                     # Volatile Inter-Process IPC & Token Routing
+│   ├── .X11-unix/                           # X11 Display Sockets (X1, X4, X6, X7)
+│   ├── sand-novnc-tokens.d/                 # noVNC dynamic tokens (4 -> 5904, 7 -> 5907)
+│   ├── sand-window-tokens.d/                # Window router auth tokens per display
+│   ├── xdg-runtime-box/                     # Primary XDG runtime dir & DBus session bus
+│   ├── xdg-runtime-box-N/                   # Per-screen XDG runtime dirs
+│   ├── *.log & *.lock                       # Bounded RAM logs (xvfb, x11vnc, novnc)
+│   └── sand-box-telemetry.log               # Fault signal & crash telemetry ring
+│
+└── sys/fs/cgroup/                           # Cgroups v2 Dual Scheduling Slices
+    ├── interactive/                         # High-priority slice: Xvfb, VNC, WM, Compositor
+    └── agent/                               # Lower-priority slice: Compilers, agent workers
+```
+
+---
+
+## 📂 GrokBot Replication Repository Layout
+
+This map illustrates how the scraped assets are organized in this GitHub archive:
 
 ```text
 GrokBot/
 ├── README.md
 │
-├── exec-daemon/                          # Core Agent Runtime (@anysphere/exec-daemon-runtime)
+├── exec-daemon/                          # Scraped @anysphere/exec-daemon-runtime
 │   ├── index.js                          # Main agent server daemon bundle (14.3 MB)
 │   ├── cursorsandbox                     # Low-level sandbox execution binary (4.7 MB)
 │   ├── node.part.* / node.recombine.sh   # Node.js runtime (split for GitHub 100MB limit)
@@ -25,47 +111,14 @@ GrokBot/
 │   │   └── tmux                          # Managed tmux binary & configs
 │   └── node_modules/                     # Runtime dependencies (esbuild-wasm, tree-sitter, etc.)
 │
-├── usr-local-bin/                        # Process Supervisors & Custom Scripts (40+ scripts)
-│   ├── sand-exit-watch                   # Root subreaper (PID 53): crash logging & liveness
-│   ├── sand-window-router.mjs            # Port 1339 HTTP/WS multi-screen token router
-│   ├── start-desktop.sh                  # Turnkey headless desktop supervisor (Xvfb + VNC)
-│   ├── box-chrome                        # Managed Chrome launcher (CDP port, WebGL fallbacks)
-│   ├── box-chrome-policy                 # Inverted WebAuthn ExtensionSettings policy generator
-│   ├── box-cgroups.sh                    # Cgroup v2 scheduler (interactive vs agent slices)
-│   ├── box-doctor                        # 10-point health, skew, and open file-descriptor check
-│   ├── box-bounded-log.mjs               # Circular in-memory RAM log ring (1MB capped)
-│   ├── link-chrome-session               # Multi-monitor shared SQLite cookie/session linker
-│   ├── box-xvfb                          # Xvfb launcher with stale socket/lock orphan reaping
-│   ├── box-x11vnc                        # x11vnc launcher with port squatter reaping
-│   ├── box-xfwm4                         # Window manager launcher with duplicate process reaping
-│   ├── box-picom                         # Compositor launcher clearing _NET_WM_CM_S0 selection
-│   ├── box-plank                         # Dock launcher synchronized with compositor availability
-│   ├── sand-webauthn-proxy-host          # Native messaging bridge for remote WebAuthn
-│   ├── sand-ua-governor.mjs              # Browser User-Agent and fingerprint manager
-│   ├── sand-web-bot-auth.mjs             # Bot authentication coordinator
-│   └── sand-wallpaper                    # Adaptive desktop background manager
-│
-├── usr-local-share/                      # Inverted WebAuthn Proxy Chrome Extension
-│   ├── sand-webauthn-proxy/              # MV3 Extension source (intercepts navigator.credentials)
-│   │   ├── manifest.json
-│   │   └── background.js
-│   ├── sand-webauthn-proxy.crx           # Packed extension binary
-│   ├── sand-webauthn-proxy.id            # App ID (pkjakndclmokfbgfnpgjieoebnbghhgb)
-│   └── sand-webauthn-proxy.pem           # Extension signing key
-│
-├── etc-policies/                         # Chrome Managed Policies & Native Messaging
-│   ├── native-messaging-hosts/           # co.anysphere.sand.webauthn_proxy.json
-│   └── policies/managed/                 # Managed policy JSONs (sand.json, sand-webrtc.json)
-│
-├── home-box/                             # User Space Configuration & State
-│   ├── .config/                          # Plank dock items, XFCE XML channels, dconf DB
-│   ├── .local/                           # Custom .desktop launchers (box-chrome.desktop)
-│   ├── .bashrc / .profile                # User shell initialization
-│   └── sand-data/                        # Persistent agent settings (settings.json)
+├── usr-local-bin/                        # All 40+ process supervisor & daemon scripts
+├── usr-local-share/                      # Inverted WebAuthn proxy extension & signing keys
+├── etc-policies/                         # Chrome managed policies & native messaging JSONs
+├── home-box/                             # User configs, Plank dock setup, settings.json
 │
 └── system-specs/                         # Hardware, Kernel & OS Architecture Audit
-    ├── hardware/                         # lscpu, /proc/meminfo, lsblk, dmidecode, virt
-    ├── kernel/                           # Linux 6.12 monolithic /proc/cmdline, sysctl, dmesg
+    ├── hardware/                         # lscpu, memory, lsblk, dmidecode, virt
+    ├── kernel/                           # Linux 6.12 monolithic cmdline, sysctl, dmesg
     ├── systemd/                          # Active units, timers, and service definitions
     ├── cron/                             # System and user crontabs
     ├── libraries/                        # ldconfig shared library cache, dpkg manifest
@@ -75,7 +128,7 @@ GrokBot/
 
 ---
 
-## Network & Port Topology
+## 🌐 Network & Port Topology
 
 | Port | Protocol | Component | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -93,7 +146,7 @@ GrokBot/
 
 ---
 
-## Key Architectural Findings
+## 🔑 Key Architectural Findings
 
 1. **Kernel & Hypervisor**: Linux 6.12 monolithic kernel running under KVM with `nomodule`, fast failover panic handling, and overlayfs root branching.
 2. **Multi-Display Multiplexer**: Per-agent headless X11 virtual framebuffers (`1280x800x24`) mapped to dynamic WebSocket tokens via `websockify` on port `6081`.
