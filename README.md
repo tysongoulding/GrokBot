@@ -200,6 +200,7 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 | [**`side menu.png`**](screenshots/side%20menu.png) | Navigation | Sidebar agent navigation and workspace switching |
 | [**`settings computer.png`**](screenshots/settings%20computer.png) | Machine Settings | Computer connection and remote execution bindings |
 | [**`settings general.png`**](screenshots/settings%20general.png) | General | User profile, timezone, and global preferences |
+| [**`settings update.png`**](screenshots/settings%20update.png) | Updates | Auto-update preferences and idle update opt-in settings |
 | [**`settings uage and billing.png`**](screenshots/settings%20uage%20and%20billing.png) | Billing | MicroVM compute usage and subscription metrics |
 | [**`bottom left settings .png`**](screenshots/bottom%20left%20settings%20.png) | Preferences | Quick settings drawer and account switcher |
 | [**`bot view before import.png`**](screenshots/bot%20view%20before%20import.png) | Setup | Blank agent state prior to template import |
