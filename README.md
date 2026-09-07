@@ -115,6 +115,7 @@ GrokBot/
 ├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 674 markdown files
 ├── SKILLS_LIST.md                        # Master catalog & table of all 70 SKILL.md definitions
 ├── OAUTH_AND_APIS.md                     # Marketplace tools, OAuth & credential storage architecture
+├── screenshots/                          # UI screenshots (desktop, settings, marketplace, routines)
 │
 ├── exec-daemon/                          # Scraped @anysphere/exec-daemon-runtime
 │   ├── index.js                          # Main agent server daemon bundle (14.3 MB)
@@ -177,6 +178,33 @@ A complete indexed inventory with links to all 674 markdown files across the rep
 👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
 ⚡ *For the complete catalog and trigger table of all 70 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
 🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*
+
+---
+
+## 📸 GrokBot UI & Desktop Screenshots
+
+Visual captures of the running GrokBot desktop, agent controls, marketplace, routines, and settings:
+
+| Screenshot | Category | Description |
+| :--- | :--- | :--- |
+| [**`main.png`**](screenshots/main.png) | Main UI | Primary GrokBot chat and workspace interface |
+| [**`screen.png`**](screenshots/screen.png) | Virtual Desktop | Full cloud microVM desktop running Plank dock and XFCE |
+| [**`screen chrome.png`**](screenshots/screen%20chrome.png) | Browser | Headless Google Chrome instance (Display `:1`) |
+| [**`screen terminal.png`**](screenshots/screen%20terminal.png) | Terminal | Active virtual PTY multiplexer stream |
+| [**`screen filesystem.png`**](screenshots/screen%20filesystem.png) | Filesystem | In-box project workspace file tree |
+| [**`marketplace bots.png`**](screenshots/marketplace%20bots.png) | Marketplace | Curated bots and community agent directory |
+| [**`marketplace plugins.png`**](screenshots/marketplace%20plugins.png) | Marketplace | MCP connector and integration plugin store |
+| [**`bot rountines.png`**](screenshots/bot%20rountines.png) | Automation | Scheduled and recurring agent routines manager |
+| [**`bot seetings.png`**](screenshots/bot%20seetings.png) | Settings | Active bot configuration and scope parameters |
+| [**`teach a task.png`**](screenshots/teach%20a%20task.png) | Demonstration | Screen-recorded task teaching interface (`learn-from-demonstration`) |
+| [**`side menu.png`**](screenshots/side%20menu.png) | Navigation | Sidebar agent navigation and workspace switching |
+| [**`settings computer.png`**](screenshots/settings%20computer.png) | Machine Settings | Computer connection and remote execution bindings |
+| [**`settings general.png`**](screenshots/settings%20general.png) | General | User profile, timezone, and global preferences |
+| [**`settings uage and billing.png`**](screenshots/settings%20uage%20and%20billing.png) | Billing | MicroVM compute usage and subscription metrics |
+| [**`bottom left settings .png`**](screenshots/bottom%20left%20settings%20.png) | Preferences | Quick settings drawer and account switcher |
+| [**`bot view before import.png`**](screenshots/bot%20view%20before%20import.png) | Setup | Blank agent state prior to template import |
+
+👉 *All full-resolution screenshots are stored in [`screenshots/`](screenshots/).*
 
 ---
 
