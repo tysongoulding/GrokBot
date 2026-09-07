@@ -112,6 +112,7 @@ This map illustrates how the scraped assets are organized in this GitHub archive
 ```text
 GrokBot/
 ├── README.md
+├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 674 markdown files
 │
 ├── exec-daemon/                          # Scraped @anysphere/exec-daemon-runtime
 │   ├── index.js                          # Main agent server daemon bundle (14.3 MB)
@@ -155,6 +156,23 @@ GrokBot/
     ├── network/                          # IP interfaces, routing tables, firewall rules (iptables/nft)
     └── custom-configs/                   # dconf dump, hypervisor boot envs (PID 1/53), sudoers
 ```
+
+---
+
+## 📑 Markdown Files & Skills Directory
+
+A complete indexed inventory with links to all 674 markdown files across the repository is available in **[`MARKDOWN_INVENTORY.md`](MARKDOWN_INVENTORY.md)**.
+
+### Quick Links to Custom Skills & Workflows
+
+| Category | Description | Primary Links |
+| :--- | :--- | :--- |
+| **Custom Workflows** | Network ops, Cisco ACI, and alerts | [`optconnect-network-knowledge`](system-specs/custom-configs/sand-data/workflows/optconnect-network-knowledge/SKILL.md) • [`check-google-chat-net-eng-alerts`](system-specs/custom-configs/sand-data/workflows/check-google-chat-net-eng-alerts/SKILL.md) • [`aci-configure`](system-specs/custom-configs/sand-data/workflows/aci-configure/SKILL.md) • [`aci-troubleshoot`](system-specs/custom-configs/sand-data/workflows/aci-troubleshoot/SKILL.md) • [`aci-design`](system-specs/custom-configs/sand-data/workflows/aci-design/SKILL.md) |
+| **Managed Skills** | Bot system capabilities & automation | [`box-desktop`](system-specs/custom-configs/sand-data/managed-skills/skills/box-desktop/SKILL.md) • [`code-changes`](system-specs/custom-configs/sand-data/managed-skills/skills/code-changes/SKILL.md) • [`skill-authoring`](system-specs/custom-configs/sand-data/managed-skills/skills/skill-authoring/SKILL.md) • [`channels`](system-specs/custom-configs/sand-data/managed-skills/skills/channels/SKILL.md) • [`routines`](system-specs/custom-configs/sand-data/managed-skills/skills/routines/SKILL.md) • [`add-connector`](system-specs/custom-configs/sand-data/managed-skills/skills/add-connector/SKILL.md) • [View all 12...](MARKDOWN_INVENTORY.md#managed-skills) |
+| **Agent State & Memory** | Persistent memory logs & user profiles | [`user-memory profiles`](MARKDOWN_INVENTORY.md#user-profiles) • [`agent memory logs`](MARKDOWN_INVENTORY.md#agent-memory-logs--profiles) • [`agent attachments`](MARKDOWN_INVENTORY.md#agent-attachments) |
+| **Plugin Docs & Tools** | Cached skills and tool reference guides | [`aws-core` (305 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`slack` (27 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`atlassian` (18 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`context-mode` (46 files)](MARKDOWN_INVENTORY.md#cachecontext-mode) |
+
+👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*
 
 ---
 
