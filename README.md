@@ -113,6 +113,7 @@ This map illustrates how the scraped assets are organized in this GitHub archive
 GrokBot/
 ├── README.md
 ├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 674 markdown files
+├── SKILLS_LIST.md                        # Master catalog & table of all 70 SKILL.md definitions
 ├── OAUTH_AND_APIS.md                     # Marketplace tools, OAuth & credential storage architecture
 │
 ├── exec-daemon/                          # Scraped @anysphere/exec-daemon-runtime
@@ -174,6 +175,7 @@ A complete indexed inventory with links to all 674 markdown files across the rep
 | **Plugin Docs & Tools** | Cached skills and tool reference guides | [`aws-core` (305 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`slack` (27 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`atlassian` (18 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`context-mode` (46 files)](MARKDOWN_INVENTORY.md#cachecontext-mode) |
 
 👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
+⚡ *For the complete catalog and trigger table of all 70 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
 🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*
 
 ---

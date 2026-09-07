@@ -30,6 +30,7 @@ Complete directory and inventory of all unique `.md` files captured in this repo
 
 - [`README.md`](README.md) - Primary microVM architecture & replication specification
 - [`MARKDOWN_INVENTORY.md`](MARKDOWN_INVENTORY.md) - Complete directory & links to all markdown files
+- [`SKILLS_LIST.md`](SKILLS_LIST.md) - Master catalog & table of all 70 SKILL.md definitions
 - [`OAUTH_AND_APIS.md`](OAUTH_AND_APIS.md) - Marketplace tools, OAuth & credential storage architecture
 
 ### Custom Workflows
