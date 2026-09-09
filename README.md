@@ -177,7 +177,8 @@ A complete indexed inventory with links to all 674 markdown files across the rep
 
 👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
 ⚡ *For the complete catalog and trigger table of all 70 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
-🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*
+🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*  
+🏗️ *For the deep microVM agent execution architecture, IPC protocols, and conversation storage schemas, see [**ARCHITECTURE.md**](ARCHITECTURE.md).*
 
 ---
 
