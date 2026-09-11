@@ -305,3 +305,96 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 * Partitions processes into two cgroups:
   * `interactive`: Higher `cpu.weight` allocated to UI, Xvfb, window manager, compositor, and VNC daemons to ensure silky 60 FPS remote interaction.
   * `agent`: Lower priority slice where heavy compilers, LLM workers, test runners, and background subagents execute, preventing compute-heavy tasks from lagging the desktop stream.
+
+---
+
+## 🧭 Product Replication Guide: Knowns vs. Unknowns
+
+Comprehensive architectural gap analysis for replicating this cloud agent microVM platform:
+
+### 1. The Knowns (Fully Extracted in This Repository)
+
+The in-guest execution environment, protocols, and data models are fully captured:
+
+| Subsystem | Technical Implementation & Source Evidence |
+| :--- | :--- |
+| **Hypervisor Contract** | AWS Firecracker KVM; Linux 6.12 kernel; cmdline (`console=ttyS0`, `nomodule`, `i8042` flags, `kvm-clock`); sub-5ms memory snapshot fork-and-resume. |
+| **In-Guest Supervisor** | `/pod-daemon` (PID 1 under `/tini`) listening on `AF_VSOCK` port 52 for host RPC. |
+| **Multi-Display Routing** | [`sand-window-router.mjs`](usr-local-bin/sand-window-router.mjs) on port 1339; constant-time header auth (`x-sand-display`, `x-sand-window-owner`); deterministic port offsets (`14000+N`, `13600+N`, `5900+N`, `9222+N`). |
+| **GUI Desktop Pipeline** | `Xvfb` framebuffers (`:1`, `:N`), `xfwm4`, `picom`, `x11vnc`, and `websockify` (noVNC canvas on ports 6080/6081). |
+| **Anti-Bot & CDP Stealth** | [`sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs) (100ms CDP poll); [`sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs) (Canvas/WebGL/Audio spoofing); Google DICE suppression via [`sand.json`](etc-policies/policies/managed/sand.json) (`BrowserSignin: 0`). |
+| **Zero-Reauth State Sync** | [`ensure-machine-id`](usr-local-bin/ensure-machine-id) (locks `/etc/machine-id` to keep Chrome OSCrypt master key static); [`persist-cli-auth`](usr-local-bin/persist-cli-auth) (30s mirror loop for `gh`, `aws`, `npm`, `gcloud`); [`sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs) (live V8 cookie and SPA `localStorage` injection). |
+| **WebAuthn / MFA Relay** | [`webauthn-proxy-host.mjs`](usr-local-bin/webauthn-proxy-host.mjs) native-messaging bridge proxying FIDO2 challenges to port 1340. |
+| **In-Guest Agent Daemons** | `exec-daemon` (:1337) + native addons (`pty.node`, `tree-chunk-napi`, `cursor-proclist`, `polished-renderer`); `sand-host` (:1340 Connect-RPC). |
+| **Data & Persistence** | SQLite dual-engine: `store.db` (metadata/WAL) + `conversation-blobs.db` (compressed chunk store); streaming JSONL transcripts. |
+| **Agent Data Schemas** | `profile.json`, `group.json` (max 6 members), `active-agent.json`, 70 `SKILL.md` specifications. |
+
+---
+
+### 2. The Unknowns (Missing Infrastructure to Build)
+
+The repository contains the in-guest runtime (`sand`). To replicate the full product, the host-side infrastructure and central cloud services must be engineered from scratch:
+
+1. **Host Hypervisor Orchestrator & Snapshot Pool Manager**:
+   - *The Gap*: The host-side orchestrator running on bare-metal that manages Firecracker processes, creates Linux TAP interfaces, pre-warms snapshot pools, and clones copy-on-write RAM in <10ms.
+   - *To Build*: A custom Firecracker controller (Go or Rust) managing VM allocations, TAP network bridges (`172.30.0.0/24`), and `/dev/kvm` scheduling.
+
+2. **Host-Side `AF_VSOCK` Server Companion (`pod-daemon` Host Peer)**:
+   - *The Gap*: The external listener on the host end of Firecracker's virtual socket (Port 52). `/pod-daemon` inside the guest expects an external peer to handle `anyrun.v1` Protobuf RPCs (`CreateProcess`, `AttachProcess`, `StreamMetrics`) and SSH authentication forwarding.
+   - *To Build*: A host-side VSOCK daemon that interfaces between the host orchestrator and `/pod-daemon`.
+
+3. **Central AI Gateway & Prompt Router (`api2.cursor.sh` Equivalent)**:
+   - *The Gap*: The remote backend that `host-main.cjs` connects to. The microVM contains zero raw LLM API keys. It streams Connect-RPC requests to `https://api2.cursor.sh/aiserver.v1.*`.
+   - *To Build*: A central API gateway managing user JWT authentication, rate limits, token billing, context compaction triggers, and routing calls to upstream LLM providers (xAI Grok 4.5, Gemini 2.5 Flash, Claude 3.5 Sonnet).
+
+4. **FUSE Cloud Sync Protocol (`cursor-agent-store-fuse` Backend)**:
+   - *The Gap*: The storage backend backing client binary `cursor-agent-store-fuse`. While the binary mounts `/home/box/sand-data` and downloads from S3, the live bi-directional block/object sync protocol that snapshots user workspaces back to S3 on hibernate is proprietary.
+   - *To Build*: An S3/R2-backed volume synchronizer (or network storage like NFS/Ceph/JuiceFS) that hydrates `/home/box/sand-data` on boot and snapshots on shutdown.
+
+5. **Egress IP Proxy & Anti-Ban Network**:
+   - *The Gap*: Cloud datacenters (AWS EC2) get immediately CAPTCHA-blocked when headless Chrome connects. GrokBot tunnels egress through Cloudflare WARP (`104.30.180.109` via `sand-egress-tunnel` on port 8791).
+   - *To Build*: A WireGuard/WARP sidecar or residential proxy pool gateway attached to the VM's TAP interface to disguise datacenter traffic.
+
+6. **Client Application & Frontend Shell**:
+   - *The Gap*: The outer Electron/React desktop client. The repo includes the in-box canvas runtime (`canvas-runtime.esm.js`) and SDK types (`agent-sdk`), but lacks the outer frontend wrapper containing the split chat window, noVNC canvas viewer, xterm.js terminal, and WebAuthn client-side listener.
+   - *To Build*: A web or Electron UI integrating `xterm.js` for the terminal, `@novnc/novnc` for display streaming, and a streaming chat interface.
+
+---
+
+### 3. Architecture Blueprint for Reproduction
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ 1. CLIENT FRONTEND (Electron or React Web App)                                 │
+│    - Chat UI + Tool Timeline (HTTP/WS)                                         │
+│    - noVNC Canvas Component (WebSocket -> websockify :6080)                    │
+│    - xterm.js Terminal (WebSocket -> pty :1338)                                │
+│    - WebAuthn Local Relay (navigator.credentials -> Proxy)                     │
+└──────────────────────────────────────┬─────────────────────────────────────────┘
+                                       │ Public Internet (TLS / WSS)
+                                       ▼
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ 2. CONTROL PLANE & AI ROUTER (Central Server)                                  │
+│    - Auth / Session State / User DB                                            │
+│    - LLM Gateway: Routes requests to xAI/Anthropic/OpenAI                      │
+│    - VM Allocator: Dispatches user requests to bare-metal worker nodes         │
+└──────────────────────────────────────┬─────────────────────────────────────────┘
+                                       │ Private Mesh / gRPC
+                                       ▼
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ 3. BARE-METAL KVM HOST (AWS Metal / Hetzner / Equinix)                         │
+│    ┌────────────────────────────────────────────────────────────────────────┐  │
+│    │ Host Manager (Go/Python): Manages Firecracker API sockets & TAP bridges│  │
+│    └───────────────────────────────────┬────────────────────────────────────┘  │
+│                                        │ VSOCK + TAP                           │
+│                                        ▼                                       │
+│    ┌────────────────────────────────────────────────────────────────────────┐  │
+│    │ GUEST FIRECRACKER MICROVM (Cloneable Docker-based rootfs.ext4)         │  │
+│    │  - /pod-daemon / Supervisor (In-guest process manager)                 │  │
+│    │  - Exec Daemon (:1337) & Window Router (:1339) (Copied from GrokBot)  │  │
+│    │  - Xvfb + xfwm4 + x11vnc + websockify (:6080)                          │  │
+│    │  - Chrome Headless (:9222 CDP) + sand-ua-governor anti-bot             │  │
+│    │  - Persistent Cookie / Machine-ID / Auth Mirroring                     │  │
+│    └────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
