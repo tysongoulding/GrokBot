@@ -350,7 +350,7 @@ To deploy this autonomous agent microVM platform independently, the components a
 | **Dual-Tier SQLite Workers** | **KNOWN** | [`home-box/sand-host/agent-isolation/`](home-box/sand-host/agent-isolation) | `agent-store-worker.cjs` (64 threads) and `transcript-mirror-worker.cjs` |
 | **Native FUSE Driver** | **KNOWN** | [`usr-local-bin/cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (8.9 MB ELF) | ELF FUSE filesystem driver mounting `/agent-stores` |
 | **System Diagnostics** | **KNOWN** | [`usr-local-bin/box-doctor`](usr-local-bin/box-doctor) | 10-point test suite for machine-id, display, VNC, and egress |
-| **Rust Host VM Manager** | **UNKNOWN** | None | **Must Build**: Host daemon in Rust managing Firecracker, TAP, and jailer |
+| **Rust Host VM Manager (AWS)** | **UNKNOWN** | None | **Must Build**: Host daemon in Rust managing Firecracker (POC on `c6i.xlarge` Spot @ ~$4.98/mo or Prod on `c6a.metal` Fleet) |
 | **Host-to-Guest VSOCK Bridge** | **UNKNOWN** | None | **Must Build**: Host-side VSOCK port 52 listener and SSH auth bridge |
 | **Kernel .config Build File** | **UNKNOWN** | Empty `system-specs/kernel/kernel-config.txt` | **Must Configure**: Linux 6.12 Kconfig with VirtIO/VSOCK built in |
 | **Rootfs Build Pipeline** | **UNKNOWN** | None | **Must Build**: Debootstrap/Packer script creating `/dev/vda` ext4 image |
@@ -413,9 +413,10 @@ To deploy this autonomous agent microVM platform independently, the components a
                                           │ Internal Cloud Network / WireGuard
                                           ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        CATEGORY 2: CLOUD INFRA (HYPERVISOR & MICROVM)                  │
-│                                                                                        │
-│   Bare-Metal Host Hypervisor (Rust Manager: grok-hypervisor)                           │
+│                        CATEGORY 2: CLOUD INFRA (AWS FIRECRACKER HOST)                  │
+│   Host Hypervisor Daemon (grok-hypervisor):                                            │
+│   ├── POC Profile: AWS EC2 c6i.xlarge Spot with Nested KVM (~$4.98/mo personal target) │
+│   └── Prod Profile: AWS EC2 c6a.metal Bare-Metal Fleet (Multi-AZ Spot Failover)        │
 │   ├── Firecracker Process & Jailer chroot (/dev/kvm)                                   │
 │   ├── TAP Network Interface (172.30.0.1/24) + Host NAT masquerade                      │
 │   ├── AF_VSOCK Listener (Port 52 SSH Auth -> /run/host-services/ssh-auth.sock)         │

@@ -9,7 +9,10 @@ This document is the exhaustive, production-grade build manual to reconstruct, c
 ---
 
 ## 📋 Table of Contents
-- [1. Host Environment Prerequisites](#1-host-environment-prerequisites)
+- [1. Host Environment Prerequisites & Deployment Profiles](#1-host-environment-prerequisites--deployment-profiles)
+  - [1.1 Single-User POC Profile: Low-Cost AWS EC2 Spot with Nested KVM (~$4.98/mo)](#11-single-user-poc-profile-low-cost-aws-ec2-spot-with-nested-kvm-498mo)
+  - [1.2 Production Multi-Tenant Architecture (AWS Bare-Metal Fleet)](#12-production-multi-tenant-architecture-aws-bare-metal-fleet)
+  - [1.3 Host Dependencies & Toolchain Installation](#13-host-dependencies--toolchain-installation)
 - [2. Phase 1: Cloud Infra (Kernel, Rootfs & Firecracker Hypervisor)](#2-phase-1-cloud-infra-kernel-rootfs--firecracker-hypervisor)
   - [2.1 Monolithic Linux 6.12 Kernel Build](#21-monolithic-linux-612-kernel-build)
   - [2.2 Debian 13 (Trixie) Rootfs Appliance Pipeline](#22-debian-13-trixie-rootfs-appliance-pipeline)
@@ -44,15 +47,102 @@ This document is the exhaustive, production-grade build manual to reconstruct, c
 
 ---
 
-## 1. Host Environment Prerequisites
+## 1. Host Environment Prerequisites & Deployment Profiles
 
-The hypervisor host requires bare-metal x86_64 hardware with hardware virtualization extensions enabled (Intel VT-x or AMD-V). Nested virtualization inside cloud instances (e.g., AWS `c5.metal`, `c6i.metal`, or GCP bare-metal) is fully supported.
+Firecracker is the hypervisor that powers **AWS Lambda** and **AWS Fargate**. While AWS Lambda execution sandboxes do not expose `/dev/kvm` to guest containers, GrokBot runs as a **Lambda-style microVM fleet engine** deployed directly on **AWS EC2**.
+
+Depending on your target scale and budget, select between the **Single-User POC Profile** (~$4.98/mo) and the **Production Multi-Tenant Fleet Profile**.
+
+---
+
+### 1.1 Single-User POC Profile: Low-Cost AWS EC2 Spot with Nested KVM (~$4.98/mo)
+
+For personal development, experimentation, and single-seat proof-of-concept testing, do **not** run an expensive 128-core bare-metal instance 24/7. Instead, deploy a lightweight AWS EC2 Nitro instance with **Nested Virtualization enabled**, running on **EC2 Spot**:
+
+* **Target Profile**: 1 active developer running 1 full GrokBot Firecracker MicroVM (X11 GUI, Chrome, Node daemons, tools).
+* **Instance Type**: `c6i.xlarge` or `c6a.xlarge` (4 vCPUs, 8 GiB RAM, Nitro hardware virtualization with nested `/dev/kvm`).
+* **AWS Spot Pricing**: **~$0.058 / hour** (~68% discount off on-demand).
+* **Monthly Cost Model**:
+  * **Compute (Active on-demand)**: 60 active coding hours/month × \$0.058 = **\$3.48 / month**.
+  * **Model Inference (Tiered LiteLLM Router)**: DeepSeek-V3 / Gemini 2.5 Flash for routine tasks + Grok-4.5 for planning = **~\$1.50 / month**.
+  * **Total Personal POC Cost**: **~\$4.98 / month**.
+
+#### Step 1: Launch the POC Instance via AWS CLI
+```bash
+# 1. Create a minimal Security Group opening SSH, noVNC, and the Window Router
+VPC_ID=$(aws ec2 describe-vpcs --filter "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text)
+SG_ID=$(aws ec2 create-security-group \
+  --group-name grokbot-poc-sg \
+  --description "GrokBot POC Ports" \
+  --vpc-id "${VPC_ID}" \
+  --output text)
+
+# Open SSH (22), Window Router (1339), and noVNC (6080) to your IP
+MY_IP=$(curl -s https://checkip.amazonaws.com)/32
+aws ec2 authorize-security-group-ingress --group-id "${SG_ID}" --protocol tcp --port 22 --cidr "${MY_IP}"
+aws ec2 authorize-security-group-ingress --group-id "${SG_ID}" --protocol tcp --port 1339 --cidr "${MY_IP}"
+aws ec2 authorize-security-group-ingress --group-id "${SG_ID}" --protocol tcp --port 6080 --cidr "${MY_IP}"
+
+# 2. Launch c6i.xlarge on EC2 Spot with 50 GB gp3 storage
+aws ec2 run-instances \
+  --image-id resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \
+  --instance-type c6i.xlarge \
+  --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"persistent","InstanceInterruptionBehavior":"stop"}}' \
+  --key-name my-ec2-key \
+  --security-group-ids "${SG_ID}" \
+  --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":50,"VolumeType":"gp3","DeleteOnTermination":false}}]' \
+  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=grokbot-poc-host}]'
+```
+
+#### Step 2: Configure Auto-Idle Shutdown (Guarantees <$5/mo)
+To ensure you never get billed if you leave the instance unattended, add an automatic idle-shutdown daemon on the host:
 
 ```bash
-# Verify KVM hardware virtualization support
+# /etc/cron.d/grokbot-auto-idle: shuts down instance if idle for >20 mins
+cat << 'EOF' | sudo tee /usr/local/bin/check-idle-shutdown.sh
+#!/usr/bin/env bash
+# If no active connections on SSH (22) or noVNC (6080) for 20 mins, stop instance
+ACTIVE_CONNS=$(ss -nt '( sport = :22 or sport = :6080 )' | grep -v "State" | wc -l)
+if [ "${ACTIVE_CONNS}" -eq 0 ]; then
+    IDLE_MINS=$(cat /tmp/grokbot_idle_counter 2>/dev/null || echo 0)
+    IDLE_MINS=$((IDLE_MINS + 5))
+    echo "${IDLE_MINS}" > /tmp/grokbot_idle_counter
+    if [ "${IDLE_MINS}" -ge 20 ]; then
+        echo "[grokbot] Idle for 20 minutes, stopping EC2 Spot instance..."
+        sudo shutdown -h now
+    fi
+else
+    echo 0 > /tmp/grokbot_idle_counter
+fi
+EOF
+sudo chmod +x /usr/local/bin/check-idle-shutdown.sh
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/check-idle-shutdown.sh") | crontab -
+```
+
+---
+
+### 1.2 Production Multi-Tenant Architecture (AWS Bare-Metal Fleet)
+
+For multi-seat organizations, SaaS deployments, or concurrent teams (200–500 developers):
+
+* **Instance Types**: `c6a.metal` or `c6ad.metal` (128 vCPUs, 256 GiB RAM, 2x 1.9 TB NVMe local SSDs, direct bare-metal `/dev/kvm`).
+* **Multi-AZ Spot Failover**: Auto Scaling Group spanning 3 Availability Zones (`us-east-1a`, `1b`, `1c`). The hypervisor daemon catches the 2-minute AWS Spot Interruption notice (`/latest/meta-data/spot/instance-action`), flushes dirty memory snapshots to S3 in < 45 seconds, and a replacement Spot node resumes active VMs via `PUT /snapshot/load` in < 350ms.
+* **AWS Dependencies**:
+  * **VPC & Subnet**: Private compute subnet with NAT Gateway for outbound egress.
+  * **EBS gp3 Storage**: 6,000 IOPS / 500 MB/s for base `rootfs.ext4` and instance CoW disk pools.
+  * **Amazon S3**: Snapshot storage bucket (`s3://grokbot-snapshots`) for pre-warmed memory state images (`vm.snap`, `vm.mem`).
+  * **AWS NLB**: Network Load Balancer forwarding TCP traffic to VM ports `1339` (router) and `6080` (noVNC).
+
+---
+
+### 1.3 Host Dependencies & Toolchain Installation
+
+```bash
+# Verify KVM hardware virtualization support on EC2
 ls -l /dev/kvm
 # Verify user permissions
 sudo usermod -aG kvm $USER
+sudo chmod 666 /dev/kvm
 
 # Install system dependencies (Debian/Ubuntu host)
 sudo apt-get update && sudo apt-get install -y \
