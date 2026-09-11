@@ -235,166 +235,192 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 ## 🔑 Key Architectural Findings
 
 ### 1. The Sand Host Gateway & Multi-Threaded Worker Pool (`home-box/sand-host/`)
-* **Core Engine**: Running as PID 608 on port `1340` via [`host-main.cjs`](home-box/sand-host/host-main.cjs).
-* **Connect-RPC / Protobuf Transport**: Full Connect-RPC and Protobuf implementation handling in-box agent service routing.
-* **Worker Offloading via `piscina`**: Offloads compute-heavy tasks onto separate V8 worker threads:
-  * [`diff-worker.js`](home-box/sand-host/diff-worker.js) & [`unified-diff-worker.js`](home-box/sand-host/unified-diff-worker.js): Parallelized diff generation and atomic patch validation.
-  * [`agent-isolation/agent-store-worker.cjs`](home-box/sand-host/agent-isolation/agent-store-worker.cjs): Per-agent filesystem sandbox and state isolation.
-  * [`agent-isolation/transcript-mirror-worker.cjs`](home-box/sand-host/agent-isolation/transcript-mirror-worker.cjs): Real-time agent transcript mirroring.
-  * [`extensions/content-search/search-index-worker.cjs`](home-box/sand-host/extensions/content-search/search-index-worker.cjs): Background full-text code indexer feeding SQLite WAL search databases.
-  * [`pdf-worker.js`](home-box/sand-host/pdf-worker.js): Background PDF text extraction and document parsing.
+* **Core Engine**: Running as PID 608 on port `1340` via [`host-main.cjs`](home-box/sand-host/host-main.cjs) (28.8 MB bundle).
+* **Connect-RPC & Protobuf Transport**: Implements Connect-RPC and Protobuf for in-box agent service routing, collective management (`createGroup`, `setGroupMembers`), and prompt execution.
+* **Worker Offloading & Memory Isolation**:
+  * [`agent-isolation/agent-store-worker.cjs`](home-box/sand-host/agent-isolation/agent-store-worker.cjs): Dedicated pool of up to 64 V8 worker threads bound 1:1 to agent `conversation-blobs.db` SQLite stores, executing binary blob transfers via zero-copy `postMessage([buf.buffer])` and containing SQLite faults to individual workers.
+  * [`agent-isolation/transcript-mirror-worker.cjs`](home-box/sand-host/agent-isolation/transcript-mirror-worker.cjs): 2-thread pool streaming conversation turns to append-only JSONL files using strict read-only SQLite handles (`DatabaseSync(dbPath, { readOnly: true })`) without locking the database.
+  * [`diff-worker.js`](home-box/sand-host/diff-worker.js) & [`unified-diff-worker.js`](home-box/sand-host/unified-diff-worker.js): Multi-threaded diff generation and patch validation.
+  * [`extensions/content-search/search-index-worker.cjs`](home-box/sand-host/extensions/content-search/search-index-worker.cjs): Background full-text code indexer feeding SQLite WAL search databases (`search-index.db`).
 
-### 2. Native Code Intelligence & Semantic Chunking Engine (`home-box/deps/`)
-* **Rust Semantic Chunker**: [`@anysphere/tree-chunk-napi`](home-box/deps/@anysphere/tree-chunk-napi) compiles a custom Rust binary (`tree-chunk-napi.linux-x64-gnu.node`) providing sub-millisecond semantic code chunking for LLM context windows.
-* **Kernel Process Inspector**: [`cursor-proclist`](home-box/deps/cursor-proclist) uses a native C++ addon (`cursor_proclist.node`) to inspect process trees without spawning expensive shell forks (`ps`/`pgrep`).
-* **WebAssembly AST Parsing**: Ships `web-tree-sitter` (`tree-sitter.wasm`) for fast syntax tree generation across 10+ programming languages.
+### 2. Multi-Display Virtualization, Port Formulas & Anti-Usurpation
+* **Deterministic Arithmetic Port Offsets** ([`usr-local-bin/box-contract.generated.mjs`](usr-local-bin/box-contract.generated.mjs)):
+  $$\text{Exec-Daemon} = 14000 + N, \quad \text{PTY} = 13600 + N, \quad \text{VNC} = 5900 + N, \quad \text{CDP} = 9222 + N$$
+* **Token-Authenticated Routing Proxy** ([`usr-local-bin/sand-window-router.mjs`](usr-local-bin/sand-window-router.mjs)):
+  Listens on port `1339` fronting all exec daemons. Routes requests using header `x-sand-display: N` and validates session token `x-sand-window-owner` via `crypto.timingSafeEqual` against `/tmp/sand-window-tokens.d/N`.
+* **Anti-Usurpation & Ungraceful Crash Reaping** ([`usr-local-bin/start-window`](usr-local-bin/start-window) & [`box-xvfb`](usr-local-bin/box-xvfb)):
+  * Detects collisions when an agent attempts to claim an active display bound to another session token, exiting with **Exit Code 75** (`WINDOW_UNAVAILABLE`).
+  * `host-main.cjs` catches 75, calls `forgetForeignFork()`, leaves the running display intact, and allocates the next available index.
+  * `box-xvfb` unlinks stale `/tmp/.X${N}-lock` files and probes abstract sockets via `ss -lpxH "src = @/tmp/.X11-unix/X${N}"` with progressive SIGTERM/SIGKILL escalation.
 
-### 3. Server-Side Skia 2D Canvas Engine
-* **File**: `home-box/sand-host/node_modules/@napi-rs/canvas`
-* Employs a native Linux x64 Skia engine (`skia.linux-x64-gnu.node`) enabling the server daemon to render diagrams, canvas primitives, and images server-side without an active GPU.
+### 3. Dual-Tier Session Sync: Cold SQLite Linker + Live CDP Sync
+* **Cold Disk Symlinker** ([`usr-local-bin/link-chrome-session`](usr-local-bin/link-chrome-session)): Hardlinks and symlinks `Cookies` and `Login Data` SQLite stores from `/home/box/chrome-profile/Default` into forked monitor profiles (`chrome-profile-N/Default`).
+* **Live In-Memory CDP Sync** ([`usr-local-bin/sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs)): Background daemon polling Chrome DevTools Protocol ports (`9222 + N`) every 1,500ms via [`usr-local-bin/cdp-cookies.mjs`](usr-local-bin/cdp-cookies.mjs), mirroring cookies and `localStorage` across memory heaps.
+* **Google DICE Account Wipe Suppression**: Enterprise policy `BrowserSignin: 0` in [`etc-policies/policies/managed/sand.json`](etc-policies/policies/managed/sand.json) prevents Google's Device and Identity Consistency Engine from triggering global session logout when multi-monitor cookies coexist.
+* **Fill-Gap Rotation Safety**: Avoids race conditions on rotating auth cookies (`__Secure-1PSIDTS`, `SIDCC`) by only seeding missing keys (`selectCookieSeed`), allowing each display's browser to advance its own rotation token with Google servers.
 
-### 4. Dual-Tier Session Sync: Cold Disk SQLite + Live CDP Sync
-* **The Problem**: Chrome loads cookies into memory at startup and never re-reads on-disk SQLite files while running. Writing to a shared disk database only affects *future* browser launches; a user logging in on Screen 1 leaves Screen 4 logged out.
-* **The Solution** ([`sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs) & [`link-chrome-session`](usr-local-bin/link-chrome-session)):
-  1. **Cold Disk Linker**: Symlinks `Cookies` and `Login Data` SQLite databases from the primary profile (`/home/box/chrome-profile/Default`) into forked monitor profiles (`chrome-profile-N/Default`).
-  2. **Live RAM CDP Sync**: Background daemon polls Chrome DevTools Protocol ports (`9222 + N`) every 1,500ms, pushing `httpOnly` and `Secure` session cookies across all active browser processes.
-  3. **SPA `localStorage` Sync**: Mirrors `localStorage` keys across origins (specifically Slack `xoxc-` tokens) so single-page apps stay authenticated across all screens without page reload.
-  4. **Zero-Automation Tell**: Attaches transiently via CDP for a single tick and detaches immediately without enabling `Runtime` or `Page` domains, keeping `navigator.webdriver` false and undetected by anti-bot systems.
+### 4. SPA Nonce Dampening & OAuth Circuit Breaker (`ReloadBreaker`)
+* **Sliding Window Dampening** ([`usr-local-bin/sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs)):
+  Prevents infinite reload loops when SPAs (Okta, Auth0, Ashby) mint fresh anti-CSRF nonces on page load. Enforces a 60-second rolling window with a maximum of 3 reloads per `(port, host)`.
+* **Decoupled Seeding**: When the breaker trips (`state.open = true`), cookie and storage replication continues uninterrupted while page reloads are suppressed.
+* **Single Deferred Reload**: Once quiet for 20 seconds (`RELOAD_QUIET_MS`), flushes exactly one consolidated page reload to apply changes safely without crashing OAuth handshakes.
 
-### 5. Inverted WebAuthn / Passkey Hardware Key Bridge
-* **The Problem**: A headless cloud VM cannot physically access the developer's local USB YubiKey, Apple Touch ID, or Windows Hello biometric sensor.
-* **The Solution** ([`usr-local-share/sand-webauthn-proxy/`](usr-local-share/sand-webauthn-proxy)):
-  1. Chrome managed policy (`ExtensionSettings` in [`sand-webauthn.json`](etc-policies/policies/managed/sand-webauthn.json)) force-installs the proxy extension `pkjakndclmokfbgfnpgjieoebnbghhgb`.
-  2. The extension uses Chrome's `chrome.webAuthenticationProxy` API to intercept `navigator.credentials.get` and `create` calls.
-  3. Forwards ceremonies via Native Messaging ([`sand-webauthn-proxy-host`](usr-local-bin/sand-webauthn-proxy-host)) to the host gateway on port `1340`.
-  4. The host gateway reverse-tunnels the ceremony back to the user's local machine to be signed by their hardware key, completing cloud authentication without exposing private keys to the cloud VM.
+### 5. Inverted WebAuthn / Hardware Passkey Bridge
+* Chrome enterprise policy ([`etc-policies/policies/managed/sand-webauthn.json`](etc-policies/policies/managed/sand-webauthn.json)) forces installation of the proxy extension `pkjakndclmokfbgfnpgjieoebnbghhgb`.
+* Intercepts `navigator.credentials.get` / `create` calls via `chrome.webAuthenticationProxy`.
+* Uses Chrome Native Messaging ([`usr-local-bin/sand-webauthn-proxy-host`](usr-local-bin/sand-webauthn-proxy-host)) with 4-byte little-endian framing to relay FIDO2 challenges to port `1340`, reverse-tunneling the ceremony to the user's local YubiKey or Touch ID.
 
-### 6. Self-Updating Host Runtime & Protected Deny-List
-* **The Architecture** ([`sand-supervisor.mjs`](usr-local-bin/sand-supervisor.mjs)):
-  * On boot, `sand-supervisor.mjs` probes an S3 bucket (`public-asphr-vm-daemon-bucket.s3.us-east-1.amazonaws.com/sand-host-bundle`) within a strict 20-second budget.
-  * Pulls dynamic updates to `/home/box/sand-host/host-main.cjs` and syncs supervisor scripts into `/usr/local/bin`.
-  * **Protected Deny-List (`BOX_SCRIPTS_DENY`)**: Explicitly blocks remote updates from overwriting core hypervisor/init scripts (`start-sand-box`, `sand-exit-watch`, `box-cgroups.sh`, `box-xvfb`, `box-x11vnc`), preventing bad remote updates from bricking the microVM.
+### 6. Cgroups v2 Dual-Slice Prioritization
+* Configured by [`usr-local-bin/box-cgroups.sh`](usr-local-bin/box-cgroups.sh):
+  * `/sys/fs/cgroup/interactive`: Higher `cpu.weight` allocated to UI processes (`Xvfb`, `xfwm4`, `picom`, `x11vnc`, `websockify`, Chrome) to guarantee 60 FPS remote desktop responsiveness.
+  * `/sys/fs/cgroup/agent`: Low-priority batch slice housing compilers, test runners, and tool daemons (`exec-daemon`), ensuring heavy compute workloads cannot lag the interactive desktop stream.
+* Supervised by [`usr-local-bin/sand-supervisor.mjs`](usr-local-bin/sand-supervisor.mjs) sampling Pressure Stall Information (PSI) metrics.
 
-### 7. Remote Cloud Storage Mount via FUSE
-* **File**: [`cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (referenced in `cursor_agent_store_fuse_version`).
-* Mounts a remote agent storage filesystem via FUSE (`agent-store-fuse` binary from `public-asphr-vm-daemon-bucket`), allowing massive multi-gigabyte project workspaces and checkpoints to be mounted on-demand without exhausting the microVM's local disk.
+### 7. Declarative Environment Convergence & Receipts
+* [`usr-local-bin/sand-team-converge.mjs`](usr-local-bin/sand-team-converge.mjs) executes declarative team provisioning against `/opt/sand-managed/manifests/`.
+* Mutual exclusion enforced by atomic POSIX `/run/sand/managed-setup-converge.lock` directory creation with PID liveness validation.
+* Verifies environment state via SHA-256 content hashes, executing `check` scripts and storing deterministic execution receipts in `/opt/sand-managed/receipts/`.
 
-### 8. Developer Credential Persistence Across Hibernations
-* **File**: [`persist-cli-auth`](usr-local-bin/persist-cli-auth)
-* Solves credential loss when ephemeral containers stop or wake:
-  * Mirrors `~/.ssh`, `~/.gnupg`, `~/.config/gh`, `~/.config/gcloud`, `~/.aws`, `~/.npmrc`, and `~/.gitconfig`.
-  * Strips volatile cache folders (`cache/`, `logs/`) on the fly during copy to keep mirrors small.
-  * Computes deterministic SHA-256 hashes (`content_sig`) to avoid unnecessary disk writes.
-  * **Permission Hardening**: Enforces `0700` for directories and `0600` for private keys upon restoration so `ssh` does not reject loose permissions.
+### 8. Native Code Intelligence & Process Inspection
+* **Rust Semantic Chunker**: [`home-box/deps/@anysphere/tree-chunk-napi`](home-box/deps/@anysphere/tree-chunk-napi) compiles a custom native Rust N-API addon (`tree-chunk-napi.linux-x64-gnu.node`) for sub-millisecond AST semantic code chunking.
+* **Kernel Process Inspector**: [`home-box/deps/cursor-proclist`](home-box/deps/cursor-proclist) uses a native C++ addon (`cursor_proclist.node`) to inspect process trees without spawning expensive shell forks (`ps`/`pgrep`).
+* **Wasm AST Parser**: Ships `web-tree-sitter` for cross-language syntax parsing.
 
-### 9. Anti-Bot Fingerprint Spoofing
-* **Files**: [`sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs) & [`sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs)
-* Anti-bot platforms (Cloudflare Turnstile, DataDome, Akamai) look for Linux Xvfb signatures.
-* The governor injects `Page.addScriptToEvaluateOnNewDocument` scripts over CDP to spoof Windows/macOS hardware properties (screen color depth, hardware concurrency, WebGL renderer stubs, platform strings) so headless browser automation appears as real desktop users.
+### 9. Ephemeral-to-Durable Storage & FUSE Mounting
+* **FUSE Filesystem**: [`usr-local-bin/cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (8.9 MB ELF) exposes virtual partition `/agent-stores/{self,peer,share,user,team}`.
+* **CLI Credential Vault** ([`usr-local-bin/persist-cli-auth`](usr-local-bin/persist-cli-auth)): Mirrors `~/.ssh`, `~/.gnupg`, `~/.config/gh`, `~/.config/gcloud`, and `~/.aws` with strict permission sanitization (`0700` dirs, `0600` keys) and SHA-256 signature hashing (`content_sig`).
+* **Database Cloaking**: Direct file access to `.db`, `.db-wal`, and `.db-shm` is blocked for models via `isModelReadableStorePath()`.
 
-### 10. Compositor Synchronization & Collision Defenses
-* **File**: [`box-plank`](usr-local-bin/box-plank)
-  * Uses Python ctypes with `libX11.so.6` to query `XGetSelectionOwner(dpy, "_NET_WM_CM_S0")`. Delays starting Plank until the window compositor is verified active, eliminating the bug where Plank paints an opaque black box.
-* **File**: [`box-picom`](usr-local-bin/box-picom)
-  * Reaps stale compositor processes holding `_NET_WM_CM_S0` before launch to fix `SAND-161` (fleet-wide compositor crash-loops).
-* **File**: [`box-bounded-log.mjs`](usr-local-bin/box-bounded-log.mjs)
-  * High-performance circular in-memory buffer ring capped at 1 MB. Logs rotate in RAM, preventing long-running agent workflows from filling up the root overlayfs.
+### 10. Anti-Bot Stealth & Memory Logging
+* **Fingerprint Spoofing** ([`usr-local-bin/sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs) & [`sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs)): Spoofs hardware concurrency, WebGL renderer stubs, platform strings, and audio properties over CDP to defeat Cloudflare Turnstile and DataDome.
+* **Bounded RAM Ring Buffer** ([`usr-local-bin/box-bounded-log.mjs`](usr-local-bin/box-bounded-log.mjs)): Circular in-memory logging capped at 1 MB per daemon, preventing runaway processes from filling rootfs OverlayFS.
 
-### 11. Cgroups v2 Dual-Slice Prioritization
-* **File**: [`box-cgroups.sh`](usr-local-bin/box-cgroups.sh)
-* Partitions processes into two cgroups:
-  * `interactive`: Higher `cpu.weight` allocated to UI, Xvfb, window manager, compositor, and VNC daemons to ensure silky 60 FPS remote interaction.
-  * `agent`: Lower priority slice where heavy compilers, LLM workers, test runners, and background subagents execute, preventing compute-heavy tasks from lagging the desktop stream.
-
----
-
-## 🧭 Product Replication Guide: Knowns vs. Unknowns
-
-Comprehensive architectural gap analysis for replicating this cloud agent microVM platform:
-
-### 1. The Knowns (Fully Extracted in This Repository)
-
-The in-guest execution environment, protocols, and data models are fully captured:
-
-| Subsystem | Technical Implementation & Source Evidence |
-| :--- | :--- |
-| **Hypervisor Contract** | AWS Firecracker KVM; Linux 6.12 kernel; cmdline (`console=ttyS0`, `nomodule`, `i8042` flags, `kvm-clock`); sub-5ms memory snapshot fork-and-resume. |
-| **In-Guest Supervisor** | `/pod-daemon` (PID 1 under `/tini`) listening on `AF_VSOCK` port 52 for host RPC. |
-| **Multi-Display Routing** | [`sand-window-router.mjs`](usr-local-bin/sand-window-router.mjs) on port 1339; constant-time header auth (`x-sand-display`, `x-sand-window-owner`); deterministic port offsets (`14000+N`, `13600+N`, `5900+N`, `9222+N`). |
-| **GUI Desktop Pipeline** | `Xvfb` framebuffers (`:1`, `:N`), `xfwm4`, `picom`, `x11vnc`, and `websockify` (noVNC canvas on ports 6080/6081). |
-| **Anti-Bot & CDP Stealth** | [`sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs) (100ms CDP poll); [`sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs) (Canvas/WebGL/Audio spoofing); Google DICE suppression via [`sand.json`](etc-policies/policies/managed/sand.json) (`BrowserSignin: 0`). |
-| **Zero-Reauth State Sync** | [`ensure-machine-id`](usr-local-bin/ensure-machine-id) (locks `/etc/machine-id` to keep Chrome OSCrypt master key static); [`persist-cli-auth`](usr-local-bin/persist-cli-auth) (30s mirror loop for `gh`, `aws`, `npm`, `gcloud`); [`sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs) (live V8 cookie and SPA `localStorage` injection). |
-| **WebAuthn / MFA Relay** | [`webauthn-proxy-host.mjs`](usr-local-bin/webauthn-proxy-host.mjs) native-messaging bridge proxying FIDO2 challenges to port 1340. |
-| **In-Guest Agent Daemons** | `exec-daemon` (:1337) + native addons (`pty.node`, `tree-chunk-napi`, `cursor-proclist`, `polished-renderer`); `sand-host` (:1340 Connect-RPC). |
-| **Data & Persistence** | SQLite dual-engine: `store.db` (metadata/WAL) + `conversation-blobs.db` (compressed chunk store); streaming JSONL transcripts. |
-| **Agent Data Schemas** | `profile.json`, `group.json` (max 6 members), `active-agent.json`, 70 `SKILL.md` specifications. |
+### 11. 10-Point Operational Diagnostic Health Suite (`box-doctor`)
+* [`usr-local-bin/box-doctor`](usr-local-bin/box-doctor) gates microVM readiness across 10 critical operational health checks:
+  1. `machine-id`: Validates 32 lowercase hex characters in `/etc/machine-id` matching `/var/lib/dbus/machine-id`.
+  2. `chrome`: Verifies `google-chrome-stable` availability on PATH.
+  3. `chrome-fds`: Ensures Chrome open file descriptors remain below 90% of soft limits (`EMFILE` protection).
+  4. `egress`: Validates HTTP reachability to `https://www.google.com/generate_204`.
+  5. `clock`: Enforces system clock skew < 60s against remote HTTP date headers.
+  6. `dbus`: Verifies D-Bus session bus connectivity.
+  7. `xvfb`: Probes X11 server responsiveness via `xdpyinfo -display :1`.
+  8. `x11vnc`: Probes loopback RFB socket on port 5900.
+  9. `novnc`: Probes Websockify daemon on port 6080 (and port 6081 if subagents are active).
+  10. `compositor`: Verifies both `xfwm4` and `picom` are running.
 
 ---
 
-### 2. The Unknowns (Missing Infrastructure to Build)
+## 🧭 Self-Hosted Deployment Inventory: Knowns vs. Unknowns
 
-The repository contains the in-guest runtime (`sand`). To replicate the full product, the host-side infrastructure and central cloud services must be engineered from scratch:
+To deploy this autonomous agent microVM platform independently, the components are partitioned into three distinct tiers:
 
-1. **Host Hypervisor Orchestrator & Snapshot Pool Manager**:
-   - *The Gap*: The host-side orchestrator running on bare-metal that manages Firecracker processes, creates Linux TAP interfaces, pre-warms snapshot pools, and clones copy-on-write RAM in <10ms.
-   - *To Build*: A custom Firecracker controller (Go or Rust) managing VM allocations, TAP network bridges (`172.30.0.0/24`), and `/dev/kvm` scheduling.
+### 1. Category 1: Application (Desktop & Mobile Applications)
 
-2. **Host-Side `AF_VSOCK` Server Companion (`pod-daemon` Host Peer)**:
-   - *The Gap*: The external listener on the host end of Firecracker's virtual socket (Port 52). `/pod-daemon` inside the guest expects an external peer to handle `anyrun.v1` Protobuf RPCs (`CreateProcess`, `AttachProcess`, `StreamMetrics`) and SSH authentication forwarding.
-   - *To Build*: A host-side VSOCK daemon that interfaces between the host orchestrator and `/pod-daemon`.
+| Subsystem | Status | Details & Repo Evidence | Deployment Requirement / Gap |
+| :--- | :--- | :--- | :--- |
+| **Canvas UI Runtime** | **KNOWN** | [`exec-daemon/canvas-runtime/canvas-runtime.esm.js`](exec-daemon/canvas-runtime/canvas-runtime.esm.js) (2.1 MB ESM bundle) | Ready to embed in webview; renders dynamic agent cards and DAGs |
+| **Canvas TypeScript Types** | **KNOWN** | [`exec-daemon/agent-sdk/cursor/canvas/ui-primitives.d.ts`](exec-daemon/agent-sdk/cursor/canvas/ui-primitives.d.ts) | UI contracts for callouts, buttons, forms, diffs |
+| **UI Screen Specifications** | **KNOWN** | [`screenshots/*.png`](screenshots/) (17 reference captures) | Reference design for chat feed, canvas, VNC viewer, and settings |
+| **Client-to-VM API Contracts** | **KNOWN** | [`usr-local-bin/box-contract.generated.mjs`](usr-local-bin/box-contract.generated.mjs) | Exact port table, auth headers, and socket addresses |
+| **WebAuthn Passkey Protocol** | **KNOWN** | [`usr-local-share/sand-webauthn-proxy/`](usr-local-share/sand-webauthn-proxy) | Native messaging extension & bridge specification |
+| **Tauri Application Shell** | **UNKNOWN** | None | **Must Build**: Desktop application wrapper in Tauri + Rust |
+| **Client Frontend App** | **UNKNOWN** | None | **Must Build**: React/TypeScript frontend hosting the Canvas runtime |
+| **Embedded noVNC Player** | **UNKNOWN** | None | **Must Build**: RFB canvas player with mouse, keyboard, and clipboard sync |
+| **Client Auth & Session Store** | **UNKNOWN** | None | **Must Build**: Local secure storage for user tokens and VM endpoints |
+| **Client Voice & Audio Layer** | **UNKNOWN** | None | **Must Build**: Audio capture/playback for `nudge_voice_agent` |
 
-3. **Central AI Gateway & Prompt Router (`api2.cursor.sh` Equivalent)**:
-   - *The Gap*: The remote backend that `host-main.cjs` connects to. The microVM contains zero raw LLM API keys. It streams Connect-RPC requests to `https://api2.cursor.sh/aiserver.v1.*`.
-   - *To Build*: A central API gateway managing user JWT authentication, rate limits, token billing, context compaction triggers, and routing calls to upstream LLM providers (xAI Grok 4.5, Gemini 2.5 Flash, Claude 3.5 Sonnet).
+### 2. Category 2: Cloud Infra (User MicroVMs & Virtualization)
 
-4. **FUSE Cloud Sync Protocol (`cursor-agent-store-fuse` Backend)**:
-   - *The Gap*: The storage backend backing client binary `cursor-agent-store-fuse`. While the binary mounts `/home/box/sand-data` and downloads from S3, the live bi-directional block/object sync protocol that snapshots user workspaces back to S3 on hibernate is proprietary.
-   - *To Build*: An S3/R2-backed volume synchronizer (or network storage like NFS/Ceph/JuiceFS) that hydrates `/home/box/sand-data` on boot and snapshots on shutdown.
+| Subsystem | Status | Details & Repo Evidence | Deployment Requirement / Gap |
+| :--- | :--- | :--- | :--- |
+| **Hypervisor Contract & Boot** | **KNOWN** | [`system-specs/kernel/cmdline.txt`](system-specs/kernel/cmdline.txt) & [`dmesg.txt`](system-specs/kernel/dmesg.txt) | Firecracker KVM; monolithic Linux 6.12 (`nomodule`, `rw`, `vda`) |
+| **OS Packages & Filesystem** | **KNOWN** | [`system-info/installed-packages.txt`](system-info/installed-packages.txt) | Complete Debian 13 package list (1,000+ deb packages) |
+| **Supervisor Hierarchy** | **KNOWN** | [`system-info/processes.txt`](system-info/processes.txt), [`start-sand-box`](usr-local-bin/start-sand-box) | `/pod-daemon` (PID 1/7), `sand-exit-watch` (PID 53), `sand-supervisor` |
+| **Multi-Display Virtualization**| **KNOWN** | [`usr-local-bin/start-desktop.sh`](usr-local-bin/start-desktop.sh), [`box-xvfb`](usr-local-bin/box-xvfb), [`box-x11vnc`](usr-local-bin/box-x11vnc) | Virtual X11 display stacks (:1 to :32) and websockify (6080/6081) |
+| **Window Router Reverse Proxy** | **KNOWN** | [`usr-local-bin/sand-window-router.mjs`](usr-local-bin/sand-window-router.mjs) | Port 1339 reverse proxy with timing-safe header validation |
+| **CDP Session Synchronizer** | **KNOWN** | [`usr-local-bin/sand-session-sync.mjs`](usr-local-bin/sand-session-sync.mjs), [`cdp-cookies.mjs`](usr-local-bin/cdp-cookies.mjs) | Live cookie/storage mirroring, DICE bypass, ReloadBreaker |
+| **Agent Daemons & Runtimes** | **KNOWN** | [`exec-daemon/index.js`](exec-daemon/index.js), [`home-box/sand-host/host-main.cjs`](home-box/sand-host/host-main.cjs) | Exec-daemon (1337) and Sand Host (1340 Connect-RPC gateway) |
+| **Dual-Tier SQLite Workers** | **KNOWN** | [`home-box/sand-host/agent-isolation/`](home-box/sand-host/agent-isolation) | `agent-store-worker.cjs` (64 threads) and `transcript-mirror-worker.cjs` |
+| **Native FUSE Driver** | **KNOWN** | [`usr-local-bin/cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (8.9 MB ELF) | ELF FUSE filesystem driver mounting `/agent-stores` |
+| **System Diagnostics** | **KNOWN** | [`usr-local-bin/box-doctor`](usr-local-bin/box-doctor) | 10-point test suite for machine-id, display, VNC, and egress |
+| **Rust Host VM Manager** | **UNKNOWN** | None | **Must Build**: Host daemon in Rust managing Firecracker, TAP, and jailer |
+| **Host-to-Guest VSOCK Bridge** | **UNKNOWN** | None | **Must Build**: Host-side VSOCK port 52 listener and SSH auth bridge |
+| **Kernel .config Build File** | **UNKNOWN** | Empty `system-specs/kernel/kernel-config.txt` | **Must Configure**: Linux 6.12 Kconfig with VirtIO/VSOCK built in |
+| **Rootfs Build Pipeline** | **UNKNOWN** | None | **Must Build**: Debootstrap/Packer script creating `/dev/vda` ext4 image |
+| **Host FUSE Server Backend** | **UNKNOWN** | None | **Must Build**: Host service backing `cursor-agent-store-fuse` |
+| **MicroVM Snapshot Engine** | **UNKNOWN** | None | **Must Build**: Firecracker dirty-page snapshot and resume automation |
 
-5. **Egress IP Proxy & Anti-Ban Network**:
-   - *The Gap*: Cloud datacenters (AWS EC2) get immediately CAPTCHA-blocked when headless Chrome connects. GrokBot tunnels egress through Cloudflare WARP (`104.30.180.109` via `sand-egress-tunnel` on port 8791).
-   - *To Build*: A WireGuard/WARP sidecar or residential proxy pool gateway attached to the VM's TAP interface to disguise datacenter traffic.
+### 3. Category 3: Cloud Services (Outside Application & MicroVM)
 
-6. **Client Application & Frontend Shell**:
-   - *The Gap*: The outer Electron/React desktop client. The repo includes the in-box canvas runtime (`canvas-runtime.esm.js`) and SDK types (`agent-sdk`), but lacks the outer frontend wrapper containing the split chat window, noVNC canvas viewer, xterm.js terminal, and WebAuthn client-side listener.
-   - *To Build*: A web or Electron UI integrating `xterm.js` for the terminal, `@novnc/novnc` for display streaming, and a streaming chat interface.
+| Subsystem | Status | Details & Repo Evidence | Deployment Requirement / Gap |
+| :--- | :--- | :--- | :--- |
+| **Remote MCP Matrix** | **KNOWN** | [`OAUTH_AND_APIS.md`](OAUTH_AND_APIS.md) | Protocols and endpoints for Google Workspace, Slack, Jira, AWS |
+| **Egress Tunnel Client** | **KNOWN** | [`usr-local-bin/sand-egress-tunnel`](usr-local-bin/sand-egress-tunnel) (2.3 MB ELF) | Outbound WebSocket tunnel client on port 8790 via bearer auth |
+| **Egress Supervisor** | **KNOWN** | [`usr-local-bin/supervise-egress-tunnel`](usr-local-bin/supervise-egress-tunnel) | Process supervisor with port reaping and backoff |
+| **Persistent Data Schema** | **KNOWN** | [`system-specs/custom-configs/sand-data/`](system-specs/custom-configs/sand-data) | Layout for agents, memory, workflows, plugins, transcripts |
+| **Telemetry Event Schema** | **KNOWN** | Captured in `sand-box-telemetry.log` references | Structured JSON telemetry for boot stages and failures |
+| **Cloud Ingress & Auth Proxy** | **UNKNOWN** | None | **Must Build**: Envoy/Traefik reverse proxy routing to VM ports 1339/6080 |
+| **Multi-Tenant Fleet Scheduler**| **UNKNOWN** | None | **Must Build**: Fleet orchestrator allocating microVMs per user demand |
+| **Central LLM Model Router** | **UNKNOWN** | None | **Must Build**: API gateway injecting keys for OpenAI/Anthropic/xAI |
+| **Egress Server Gateway** | **UNKNOWN** | None | **Must Build**: Server daemon terminating port 8790 WebSocket tunnel |
+| **Marketplace Catalog API** | **UNKNOWN** | None | **Must Build**: Registry API for SearchPlugins and GetPlugin |
+| **Cloud Object Storage Sync** | **UNKNOWN** | None | **Must Build**: S3/GCS sync daemon backing up `/home/box/sand-data` |
 
 ---
 
-### 3. Architecture Blueprint for Reproduction
+## 🏗️ Self-Hosted Replication Blueprint (Rust & Tauri)
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ 1. CLIENT FRONTEND (Electron or React Web App)                                 │
-│    - Chat UI + Tool Timeline (HTTP/WS)                                         │
-│    - noVNC Canvas Component (WebSocket -> websockify :6080)                    │
-│    - xterm.js Terminal (WebSocket -> pty :1338)                                │
-│    - WebAuthn Local Relay (navigator.credentials -> Proxy)                     │
-└──────────────────────────────────────┬─────────────────────────────────────────┘
-                                       │ Public Internet (TLS / WSS)
-                                       ▼
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ 2. CONTROL PLANE & AI ROUTER (Central Server)                                  │
-│    - Auth / Session State / User DB                                            │
-│    - LLM Gateway: Routes requests to xAI/Anthropic/OpenAI                      │
-│    - VM Allocator: Dispatches user requests to bare-metal worker nodes         │
-└──────────────────────────────────────┬─────────────────────────────────────────┘
-                                       │ Private Mesh / gRPC
-                                       ▼
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ 3. BARE-METAL KVM HOST (AWS Metal / Hetzner / Equinix)                         │
-│    ┌────────────────────────────────────────────────────────────────────────┐  │
-│    │ Host Manager (Go/Python): Manages Firecracker API sockets & TAP bridges│  │
-│    └───────────────────────────────────┬────────────────────────────────────┘  │
-│                                        │ VSOCK + TAP                           │
-│                                        ▼                                       │
-│    ┌────────────────────────────────────────────────────────────────────────┐  │
-│    │ GUEST FIRECRACKER MICROVM (Cloneable Docker-based rootfs.ext4)         │  │
-│    │  - /pod-daemon / Supervisor (In-guest process manager)                 │  │
-│    │  - Exec Daemon (:1337) & Window Router (:1339) (Copied from GrokBot)  │  │
-│    │  - Xvfb + xfwm4 + x11vnc + websockify (:6080)                          │  │
-│    │  - Chrome Headless (:9222 CDP) + sand-ua-governor anti-bot             │  │
-│    │  - Persistent Cookie / Machine-ID / Auth Mirroring                     │  │
-│    └────────────────────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CATEGORY 1: APPLICATION (TAURI + RUST)                          │
+│                                                                                        │
+│   Tauri Desktop Shell (Rust)                                                           │
+│   ├── Native Window, Tray, Keyboard/Mouse capture, Secure Token Storage                │
+│   └── Webview Frontend (React / TypeScript)                                            │
+│       ├── Canvas UI Runtime (bundled exec-daemon/canvas-runtime/canvas-runtime.esm.js) │
+│       ├── Streaming Chat & Action Timeline (Connect-RPC to Port 1340)                  │
+│       └── noVNC Remote Desktop Canvas (WebSocket to Ports 6080 / 6081)                 │
+└─────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                          │ HTTPS / WSS / gRPC (TLS)
+                                          ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CATEGORY 3: CLOUD SERVICES (CONTROL PLANE)                      │
+│                                                                                        │
+│   Cloud Ingress & Auth Proxy (Envoy / Traefik)                                         │
+│   ├── Validates user session tokens                                                    │
+│   ├── Routes API calls -> User MicroVM Port 1339 (sand-window-router)                  │
+│   └── Proxies RFB WebSockets -> User MicroVM Ports 6080 / 6081 (websockify)            │
+│                                                                                        │
+│   Central LLM Model Router                                                             │
+│   ├── Receives inference requests from guest daemons                                   │
+│   └── Injects API keys & streams responses (Anthropic, OpenAI, xAI Grok, vLLM)         │
+│                                                                                        │
+│   Egress Proxy Gateway Server (Terminating WebSocket from Guest Port 8790)             │
+│                                                                                        │
+│   Cloud Storage Sync Engine (S3 / GCS)                                                 │
+│   └── Hydrates and backs up /home/box/sand-data across VM lifecycles                   │
+└─────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                          │ Internal Cloud Network / WireGuard
+                                          ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CATEGORY 2: CLOUD INFRA (HYPERVISOR & MICROVM)                  │
+│                                                                                        │
+│   Bare-Metal Host Hypervisor (Rust Manager: grok-hypervisor)                           │
+│   ├── Firecracker Process & Jailer chroot (/dev/kvm)                                   │
+│   ├── TAP Network Interface (172.30.0.1/24) + Host NAT masquerade                      │
+│   ├── AF_VSOCK Listener (Port 52 SSH Auth -> /run/host-services/ssh-auth.sock)         │
+│   └── Rootfs Block Device (/dev/vda ext4 with OverlayFS)                               │
+│         │                                                                              │
+│         │ Boots vmlinux-6.12 monolithic kernel                                         │
+│         ▼                                                                              │
+│   Guest MicroVM (Debian 13 Trixie, UID 1000 'box')                                     │
+│   ├── Supervisor Stack: /pod-daemon (PID 1/7) -> sand-exit-watch (PID 53) -> /tini     │
+│   ├── Resource Slices: /sys/fs/cgroup/interactive (High) vs agent (Batch)              │
+│   ├── Gateway: sand-host (PID 608, Port 1340 Connect-RPC)                              │
+│   ├── Router: sand-window-router.mjs (Port 1339 Reverse Proxy)                         │
+│   ├── Headless Displays: Displays :1..:32 (Xvfb + xfwm4 + picom + x11vnc + websockify) │
+│   ├── Browser Engine: Chrome profiles + sand-session-sync.mjs (CDP + DICE bypass)      │
+│   ├── Storage Engine: SQLite store.db + conversation-blobs.db via Worker Isolates      │
+│   └── Diagnostics: box-doctor (10-point automated pass/fail verification)              │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
