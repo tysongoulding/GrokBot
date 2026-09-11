@@ -28,6 +28,19 @@ This document is the exhaustive, production-grade build manual to reconstruct, c
 - [5. Phase 4: End-to-End Boot & Verification Playbook](#5-phase-4-end-to-end-boot--verification-playbook)
   - [5.1 Step-by-Step Bring-Up](#51-step-by-step-bring-up)
   - [5.2 Automated Health Diagnostics (`box-doctor`)](#52-automated-health-diagnostics-box-doctor)
+- [6. Category 1 Gap Playbooks: Application Tier](#6-category-1-gap-playbooks-application-tier)
+  - [6.1 Canvas Interactive Action Dispatcher](#61-canvas-interactive-action-dispatcher)
+  - [6.2 Bidirectional Clipboard & File Drag-and-Drop Bridge](#62-bidirectional-clipboard--file-drag-and-drop-bridge)
+  - [6.3 Low-Latency Voice Pipeline (Audio Streamer)](#63-low-latency-voice-pipeline-audio-streamer)
+- [7. Category 2 Gap Playbooks: Cloud Infra Tier](#7-category-2-gap-playbooks-cloud-infra-tier)
+  - [7.1 Sub-Second Cold Starts (Snapshot & Memory Restore API)](#71-sub-second-cold-starts-snapshot--memory-restore-api)
+  - [7.2 Persistent FUSE Filesystem Backend (`/agent-stores`)](#72-persistent-fuse-filesystem-backend-agent-stores)
+  - [7.3 Ephemeral CoW Disk Overlays per MicroVM](#73-ephemeral-cow-disk-overlays-per-microvm)
+  - [7.4 Dynamic Subagent Display Allocation Lifecycle](#74-dynamic-subagent-display-allocation-lifecycle)
+- [8. Category 3 Gap Playbooks: Cloud Services Tier](#8-category-3-gap-playbooks-cloud-services-tier)
+  - [8.1 MicroVM Warm-Pool Fleet Autoscaler](#81-microvm-warm-pool-fleet-autoscaler)
+  - [8.2 Remote MCP OAuth Credential Vault & Rotation](#82-remote-mcp-oauth-credential-vault--rotation)
+  - [8.3 Private Marketplace Catalog API & Telemetry Sink](#83-private-marketplace-catalog-api--telemetry-sink)
 
 ---
 
@@ -1068,3 +1081,309 @@ Expected diagnostic output:
 [✓] 10. compositor: xfwm4 and picom processes active
 ALL 10 CHECKS PASSED: MicroVM is ready for autonomous agent execution.
 ```
+
+---
+
+## 6. Category 1 Gap Playbooks: Application Tier
+
+### 6.1 Canvas Interactive Action Dispatcher
+[`canvas-runtime.esm.js`](exec-daemon/canvas-runtime/canvas-runtime.esm.js) dispatches UI events (`button_click`, `form_submit`, `apply_diff`) through DOM custom events on the mounted container. The React shell captures these and dispatches Connect-RPC mutations to port `1340` (`agent.v1.AgentService.Run`):
+
+```typescript
+// src/components/CanvasHost.tsx
+useEffect(() => {
+  const container = containerRef.current;
+  if (!container) return;
+
+  const handleCanvasAction = async (e: Event) => {
+    const customEvent = e as CustomEvent<{ actionType: string; payload: any }>;
+    const { actionType, payload } = customEvent.detail;
+
+    // Dispatch Connect-RPC message to in-box gateway (Port 1340)
+    await fetch("http://127.0.0.1:1340/agent.v1.AgentService/Run", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/connect+proto",
+        "Authorization": `Bearer ${vmToken}`,
+      },
+      body: JSON.stringify({
+        userAction: {
+          type: actionType,
+          data: payload,
+        },
+      }),
+    });
+  };
+
+  container.addEventListener("canvas-action", handleCanvasAction);
+  return () => container.removeEventListener("canvas-action", handleCanvasAction);
+}, [vmToken]);
+```
+
+### 6.2 Bidirectional Clipboard & File Drag-and-Drop Bridge
+To sync the native host clipboard with X11 in the guest VM via noVNC:
+1. **Clipboard Sync (Tauri to RFB)**:
+   ```typescript
+   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+
+   // Sync host OS clipboard into guest noVNC
+   window.addEventListener("focus", async () => {
+     const text = await readText();
+     if (text && rfbInstance) {
+       rfbInstance.clipboardPasteFrom(text);
+     }
+   });
+
+   // Sync guest selection to host OS clipboard
+   rfbInstance.addEventListener("clipboard", async (e: any) => {
+     if (e.detail?.text) {
+       await writeText(e.detail.text);
+     }
+   });
+   ```
+2. **File Drag-and-Drop Upload**:
+   Files dragged over the window are intercepted by Tauri and streamed via multipart POST to the primary exec-daemon on port `1337`:
+   ```typescript
+   async function uploadFileToGuest(filePath: string, destPath: string) {
+     const fileBytes = await window.__TAURI__.fs.readFile(filePath);
+     await fetch("http://127.0.0.1:1337/api/fs/write", {
+       method: "POST",
+       headers: {
+         "Authorization": "Bearer local",
+         "x-dest-path": destPath,
+         "Content-Type": "application/octet-stream",
+       },
+       body: fileBytes,
+     });
+   }
+   ```
+
+### 6.3 Low-Latency Voice Pipeline (Audio Streamer)
+For voice agent interaction referenced in `search-index-worker.cjs` ([`grok-bot-voice-call-harness`](home-box/sand-host/extensions/content-search/search-index-worker.cjs#L373)):
+```typescript
+// Capture 16kHz PCM audio and stream binary frames over WebSocket
+export class VoiceAudioStreamer {
+  private ws: WebSocket;
+  private audioContext: AudioContext;
+
+  constructor(endpoint: string) {
+    this.ws = new WebSocket(endpoint);
+    this.audioContext = new AudioContext({ sampleRate: 16000 });
+  }
+
+  async start() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = this.audioContext.createMediaStreamSource(stream);
+    const processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+    processor.onaudioprocess = (e) => {
+      const inputData = e.inputBuffer.getChannelData(0);
+      const pcm16 = new Int16Array(inputData.length);
+      for (let i = 0; i < inputData.length; i++) {
+        pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7fff;
+      }
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(pcm16.buffer);
+      }
+    };
+
+    source.connect(processor);
+    processor.connect(this.audioContext.destination);
+  }
+}
+```
+
+---
+
+## 7. Category 2 Gap Playbooks: Cloud Infra Tier
+
+### 7.1 Sub-Second Cold Starts (Snapshot & Memory Restore API)
+To achieve sub-350ms boot times, pre-warm a master VM and dump its memory pages:
+
+1. **Create Master Snapshot**:
+   ```rust
+   // Pause the microVM via Firecracker API
+   client.request(Request::builder()
+       .method(Method::PATCH)
+       .uri(uds_uri("/vm"))
+       .body(Body::from(json!({ "state": "Paused" }).to_string()))?
+   ).await?;
+
+   // Dump snapshot state and dirty memory pages
+   client.request(Request::builder()
+       .method(Method::PUT)
+       .uri(uds_uri("/snapshot/create"))
+       .body(Body::from(json!({
+           "snapshot_type": "Diff",
+           "snapshot_path": "/var/lib/grokbot/snapshots/vm.snap",
+           "mem_file_path": "/var/lib/grokbot/snapshots/vm.mem"
+       }).to_string()))?
+   ).await?;
+   ```
+2. **Instant MicroVM Resume**:
+   ```rust
+   // Boot new microVM instantly from memory snapshot
+   client.request(Request::builder()
+       .method(Method::PUT)
+       .uri(uds_uri("/snapshot/load"))
+       .body(Body::from(json!({
+           "snapshot_path": "/var/lib/grokbot/snapshots/vm.snap",
+           "mem_file_path": "/var/lib/grokbot/snapshots/vm.mem",
+           "enable_diff_dump": false,
+           "resume_vm": true
+       }).to_string()))?
+   ).await?;
+   ```
+
+### 7.2 Persistent FUSE Filesystem Backend (`/agent-stores`)
+The guest binary [`usr-local-bin/cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) mounts shared storage over `/agent-stores/{self,peer,share,user,team}`. 
+
+To back this on the bare-metal host using **Virtio-FS**:
+1. Run `virtiofsd` daemon on the host:
+   ```bash
+   /usr/libexec/virtiofsd \
+     --socket-path=/tmp/virtiofs-agent-store.sock \
+     --shared-dir=/var/lib/grokbot/agent-stores \
+     --sandbox=chroot \
+     --announce-submounts
+   ```
+2. In the guest startup script ([`usr-local-bin/start-sand-box`](usr-local-bin/start-sand-box)):
+   ```bash
+   mkdir -p /agent-stores
+   mount -t virtiofs agent-store /agent-stores
+   ```
+
+### 7.3 Ephemeral CoW Disk Overlays per MicroVM
+Never bind multiple Firecracker instances to the same raw `rootfs.ext4`. Create a thin copy-on-write overlay per session:
+
+```bash
+#!/usr/bin/env bash
+VM_ID="$1" # e.g. "vm-worker-01"
+BASE_IMG="/var/lib/grokbot/base/rootfs.ext4"
+VM_DISK="/var/lib/grokbot/instances/${VM_ID}/disk.qcow2"
+
+mkdir -p "$(dirname "${VM_DISK}")"
+qemu-img create -f qcow2 -b "${BASE_IMG}" -F raw "${VM_DISK}"
+
+# Attach ${VM_DISK} to Firecracker /drives/rootfs
+```
+
+### 7.4 Dynamic Subagent Display Allocation Lifecycle
+When an agent forks a new subagent display `:N`, [`usr-local-bin/start-window`](usr-local-bin/start-window) writes token `/tmp/sand-window-tokens.d/N`.
+The host hypervisor monitors this directory via Linux `inotify`:
+
+```rust
+use notify::{Watcher, RecursiveMode, Result};
+use std::path::Path;
+
+pub fn watch_window_tokens() -> Result<()> {
+    let mut watcher = notify::recommended_watcher(|res| {
+        match res {
+            Ok(event) => {
+                // When /tmp/sand-window-tokens.d/N is created:
+                // 1. Calculate Port: 14000 + N (Exec) and 13600 + N (PTY)
+                // 2. Punch through local host NAT port forwards
+                println!("New subagent window allocated: {:?}", event.paths);
+            }
+            Err(e) => println!("watch error: {:?}", e),
+        }
+    })?;
+
+    watcher.watch(Path::new("/tmp/sand-window-tokens.d"), RecursiveMode::NonRecursive)?;
+    Ok(())
+}
+```
+
+---
+
+## 8. Category 3 Gap Playbooks: Cloud Services Tier
+
+### 8.1 MicroVM Warm-Pool Fleet Autoscaler
+Maintain a standby pool of warm, snapshot-paused microVMs in Redis to achieve instant session acquisition:
+
+```rust
+// Cloud Fleet Scheduler (Rust)
+pub struct FleetPoolManager {
+    redis_client: redis::Client,
+    target_warm_count: usize,
+}
+
+impl FleetPoolManager {
+    pub async fn acquire_vm(&self, user_id: &str) -> anyhow::Result<VmInstance> {
+        let mut con = self.redis_client.get_async_connection().await?;
+        // Pop pre-warmed VM instance ID from FIFO queue
+        let vm_id: String = redis::cmd("RPOP").arg("grokbot:warm_vms").query_async(&mut con).await?;
+        
+        // Bind to user session
+        redis::cmd("SET").arg(format!("grokbot:active:{}", user_id)).arg(&vm_id).query_async(&mut con).await?;
+        
+        // Trigger background refill
+        tokio::spawn(async move {
+            refill_warm_pool().await;
+        });
+
+        Ok(VmInstance { id: vm_id })
+    }
+}
+```
+
+### 8.2 Remote MCP OAuth Credential Vault & Rotation
+The cloud gateway mints fresh OAuth access tokens for external MCP tools (Google Workspace, Slack, Jira) and pushes them to the in-guest gateway:
+
+```typescript
+// Central OAuth Refresh Service
+async function pushRefreshedMcpCredentials(vmIp: string, credentials: { google?: string; slack?: string }) {
+  await fetch(`http://${vmIp}:1340/agent.v1.AgentService/UpdateCredentials`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${MASTER_HOST_TOKEN}`,
+    },
+    body: JSON.stringify({
+      credentials: [
+        { name: "GOOGLE_WORKSPACE_ACCESS_TOKEN", token: credentials.google },
+        { name: "SLACK_BOT_TOKEN", token: credentials.slack },
+      ],
+    }),
+  });
+}
+```
+
+### 8.3 Private Marketplace Catalog API & Telemetry Sink
+`sand-host` queries plugins via `SearchPlugins` and `GetOfficialPluginConfig` ([`host-main.cjs:L446298`](home-box/sand-host/host-main.cjs#L446298)). Provide a lightweight Express / Connect-RPC service:
+
+```javascript
+// Private Marketplace Catalog Service
+import express from "express";
+const app = express();
+app.use(express.json());
+
+const PLUGIN_REGISTRY = {
+  "aws-core": {
+    pluginId: "26098678",
+    name: "AWS Core",
+    skills: ["aws-storage", "aws-networking"],
+  },
+  "context-mode": {
+    pluginId: "276c2ad9",
+    name: "Context Mode",
+    skills: ["ctx_execute", "ctx_search"],
+  }
+};
+
+app.post("/aiserver.v1.DashboardService/SearchMarketplacePlugins", (req, res) => {
+  const query = req.body.query?.toLowerCase() || "";
+  const matches = Object.values(PLUGIN_REGISTRY).filter(p => p.name.toLowerCase().includes(query));
+  res.json({ plugins: matches });
+});
+
+// Telemetry Sink (UploadConversationBlobs / diagnostics)
+app.post("/agent.v1.AgentService/UploadConversationBlobs", (req, res) => {
+  console.log(`>>> Received conversation blobs from session ${req.body.conversationId}`);
+  // Ingest into ClickHouse / MinIO
+  res.json({ success: true });
+});
+
+app.listen(8081, () => console.log(">>> Marketplace & Telemetry Service listening on :8081"));
+```
+
