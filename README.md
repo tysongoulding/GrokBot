@@ -308,6 +308,13 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
   9. `novnc`: Probes Websockify daemon on port 6080 (and port 6081 if subagents are active).
   10. `compositor`: Verifies both `xfwm4` and `picom` are running.
 
+### 12. Multi-Model Routing Topology & Hybrid Execution Matrix
+* **Primary Agent & Reasoning**: Dispatches `grok-4.5` ([`home-box/sand-host/host-main.cjs:L333239`](home-box/sand-host/host-main.cjs#L333239)) with `maxMode: true` and parameters `[{ "id": "effort", "value": "high" }, { "id": "fast", "value": "true" }]`. Internal Anysphere development codenames alias this model family as `vega`, `v9`, and `XAIEXTERNAL--...` ([`host-main.cjs:L733671`](home-box/sand-host/host-main.cjs#L733671)).
+* **Codebase Exploration Subagent (`explore-subagent`)**: Spawns `cursor-grok-4.5-high-fast` ([`host-main.cjs:L586924`](home-box/sand-host/host-main.cjs#L586924)) to perform rapid regex grep, glob matching, and multi-file code exploration without consuming the main chat turn budget.
+* **Context Compaction & Summarization**: Evaluates `shouldUseSandSelfSummary(modelId)` ([`host-main.cjs:L733667-733672`](home-box/sand-host/host-main.cjs#L733667-L733672)). If true (Grok models), the model summarizes itself. If false (external/fallback models), context compaction is delegated to `gemini-2.5-flash` ([`host-main.cjs:L333264`](home-box/sand-host/host-main.cjs#L333264)) with a 2,800,000 character prompt limit (`SAND_SUMMARIZATION_MAX_PROMPT_CHARS = 28e5`) and 32,000 max output tokens via [`createSandSummarizationHandler`](home-box/sand-host/host-main.cjs#L733674-L733681).
+* **Virtual Desktop Interaction (`computer-use`)**: Routes GUI interactions on Xvfb `:1` (mouse clicks, typing, coordinate selection via `xdotool`, and WebP screenshots via `polished-renderer`) to the dedicated `sand-cua` model profile ([`host-main.cjs:L333265`](home-box/sand-host/host-main.cjs#L333265)).
+* **Upstream Ingress & Lineage**: Streams through `DEFAULT_CURSOR_BACKEND_URL = "https://api2.cursor.sh"` ([`host-main.cjs:L302037`](home-box/sand-host/host-main.cjs#L302037)) using Connect-RPC (`aiserver.v1.InferenceService/Stream`), injecting hierarchical lineage headers `x-parent-request-id`, `x-root-parent-request-id`, and `x-parent-agent-tool-call-id` ([`host-main.cjs:L333298-333311`](home-box/sand-host/host-main.cjs#L333298-L333311)). Authenticated with user JWTs with 5-minute renewal leeway (`TOKEN_REFRESH_LEEWAY_MS = 300000`).
+
 ---
 
 ## 🧭 Self-Hosted Deployment Inventory: Knowns vs. Unknowns
@@ -354,6 +361,7 @@ To deploy this autonomous agent microVM platform independently, the components a
 
 | Subsystem | Status | Details & Repo Evidence | Deployment Requirement / Gap |
 | :--- | :--- | :--- | :--- |
+| **Model Routing Topology** | **KNOWN** | [`home-box/sand-host/host-main.cjs`](home-box/sand-host/host-main.cjs) | Exact Connect-RPC proto contract, parameter maps (`effort: high`, `fast: true`), `sand-cua`, `cursor-grok-4.5-high-fast`, and `gemini-2.5-flash` fallback |
 | **Remote MCP Matrix** | **KNOWN** | [`OAUTH_AND_APIS.md`](OAUTH_AND_APIS.md) | Protocols and endpoints for Google Workspace, Slack, Jira, AWS |
 | **Egress Tunnel Client** | **KNOWN** | [`usr-local-bin/sand-egress-tunnel`](usr-local-bin/sand-egress-tunnel) (2.3 MB ELF) | Outbound WebSocket tunnel client on port 8790 via bearer auth |
 | **Egress Supervisor** | **KNOWN** | [`usr-local-bin/supervise-egress-tunnel`](usr-local-bin/supervise-egress-tunnel) | Process supervisor with port reaping and backoff |
@@ -361,7 +369,7 @@ To deploy this autonomous agent microVM platform independently, the components a
 | **Telemetry Event Schema** | **KNOWN** | Captured in `sand-box-telemetry.log` references | Structured JSON telemetry for boot stages and failures |
 | **Cloud Ingress & Auth Proxy** | **UNKNOWN** | None | **Must Build**: Envoy/Traefik reverse proxy routing to VM ports 1339/6080 |
 | **Multi-Tenant Fleet Scheduler**| **UNKNOWN** | None | **Must Build**: Fleet orchestrator allocating microVMs per user demand |
-| **Central LLM Model Router** | **UNKNOWN** | None | **Must Build**: API gateway injecting keys for OpenAI/Anthropic/xAI |
+| **Self-Hosted LLM Model Router**| **UNKNOWN** | None | **Must Build**: Stateless Rust/Axum translation shim + LiteLLM/vLLM backend to supply provider API keys & stream Protobuf frames |
 | **Egress Server Gateway** | **UNKNOWN** | None | **Must Build**: Server daemon terminating port 8790 WebSocket tunnel |
 | **Marketplace Catalog API** | **UNKNOWN** | None | **Must Build**: Registry API for SearchPlugins and GetPlugin |
 | **Cloud Object Storage Sync** | **UNKNOWN** | None | **Must Build**: S3/GCS sync daemon backing up `/home/box/sand-data` |
@@ -391,9 +399,11 @@ To deploy this autonomous agent microVM platform independently, the components a
 │   ├── Routes API calls -> User MicroVM Port 1339 (sand-window-router)                  │
 │   └── Proxies RFB WebSockets -> User MicroVM Ports 6080 / 6081 (websockify)            │
 │                                                                                        │
-│   Central LLM Model Router                                                             │
-│   ├── Receives inference requests from guest daemons                                   │
-│   └── Injects API keys & streams responses (Anthropic, OpenAI, xAI Grok, vLLM)         │
+│   Self-Hosted LLM Model Router (Stateless Rust Shim + LiteLLM/vLLM)                    │
+│   ├── Primary Agent: grok-4.5 (effort: high, fast: true) / xAI Grok                    │
+│   ├── Exploration Subagent: cursor-grok-4.5-high-fast                                  │
+│   ├── Context Compaction: grok-4.5 self-summary (fallback: gemini-2.5-flash)           │
+│   └── Computer Use: sand-cua (Vision/Coordinate grounding on Xvfb :1)                  │
 │                                                                                        │
 │   Egress Proxy Gateway Server (Terminating WebSocket from Guest Port 8790)             │
 │                                                                                        │
