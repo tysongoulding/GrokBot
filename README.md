@@ -433,4 +433,9 @@ To deploy this autonomous agent microVM platform independently, the components a
 │   ├── Storage Engine: SQLite store.db + conversation-blobs.db via Worker Isolates      │
 │   └── Diagnostics: box-doctor (10-point automated pass/fail verification)              │
 └────────────────────────────────────────────────────────────────────────────────────────┘
-```
+```
+
+---
+
+## 🛠️ Step-by-Step Implementation & Build Manual
+For the complete, copy-pasteable build instructions covering all three tiers (kernel compilation, rootfs debootstrap, Rust hypervisor, Connect-RPC model router shim, Docker Compose control plane, and Tauri desktop client), see **[`INSTRUCTIONS.md`](INSTRUCTIONS.md)**.
