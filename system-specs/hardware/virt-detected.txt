@@ -1,0 +1,13 @@
+Hypervisor: KVM (AWS Nitro System / Firecracker MicroVM)
+Host Platform: AWS EC2 c7i.2xlarge (Compute-Optimized)
+Host Microarchitecture: 5th Generation Intel Xeon Scalable (Emerald Rapids)
+CPU Identification: Family 6, Model 207, Stepping 2, BogoMIPS 4800.00
+Compute Allocation: 8 vCPUs (1 thread/core, dedicated physical core mapping)
+L3 Cache: 320 MiB (1 shared instance across socket)
+AI & Vector Extensions: Intel AMX (amx_tile, amx_int8, amx_bf16), AVX-512 (avx512f, avx512_bf16, avx512_fp16, avx512_vnni), AVX2, SHA-NI
+Memory: 16 GB Total (16,397,616 kB, 15 GiB usable), 0B Swap
+Root Storage: 128 GB OverlayFS on /dev/vda, backed by 16 GB read-only golden base image on /dev/vdb (LABEL="ext4-writer")
+Datacenter Region: AWS us-east-1 (N. Virginia / Ashburn, VA, USA)
+Autonomous System: AS14618 (Amazon.com, Inc.)
+Primary Public Egress IP: 184.193.214.38
+Secondary Egress / WARP Gateway: 104.30.180.109 (Cloudflare, Inc. AS13335, Seattle/Kent WA)

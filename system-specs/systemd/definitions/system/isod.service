@@ -1,0 +1,23 @@
+[Unit]
+Description=Isolate Supervisor Daemon (isod) - Host gRPC MicroVM Controller
+After=network.target
+
+[Service]
+Type=simple
+Slice=system.slice
+ExecStart=/usr/local/bin/isod --listen 0.0.0.0:50052
+Restart=always
+RestartSec=2s
+LimitNOFILE=524288
+
+# Protobuf Package: anyrun.v1
+# Responsibilities:
+# - anyrun.v1.Build (image management & layer caching)
+# - anyrun.v1.ResumePodRequest / DeletePodRequest
+# - anyrun.v1.SyncClockRequest (hypervisor drift compensation)
+# - anyrun.v1.CheckpointPodRpcRegistrationInfo (live memory checkpointing)
+# - anyrun.v1.IsodStorageLayer & IsodWritableDirs (OverlayFS on /dev/vda)
+# - anyrun.v1.ComputerUseError & ScreenshotAction (headless screen grab)
+
+[Install]
+WantedBy=multi-user.target

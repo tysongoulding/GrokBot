@@ -233,20 +233,21 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 | :--- | :--- | :--- | :--- |
 | `1337` | HTTP/WS | Primary Exec Daemon | Primary agent control endpoint (Display `:1`) |
 | `1338` | WebSocket | Primary PTY | Primary terminal multiplexer stream (Display `:1`) |
-| `1339` | HTTP/WS | `sand-window-router` | Multi-screen tokenized router (`x-sand-display` header) |
-| `1340` | HTTP/RPC | `sand-host` (PID 608) | **Host Gateway**: Connect-RPC, WebAuthn & credential broker |
+| `1339` | HTTP/WS | `sand-window-router` | Multi-screen capability router (`x-sand-display` & `timingSafeEqual` token) |
+| `1340` | HTTP/RPC | `sand-host` (PID 362987 / 608) | **Host Gateway**: Connect-RPC, WebAuthn & credential broker |
 | `2375` | TCP | Docker Bridge | Docker daemon socket bridge |
 | `5900` | RFB/TCP | `x11vnc` Display `:1` | Local virtual VNC server (Screen 1) |
-| `5900 + N` | RFB/TCP | `x11vnc` Display `:N` | Forked virtual VNC servers (`5904`, `5906`, `5907`, `5908`, `5910`, `5911`) |
+| `5900 + N` | RFB/TCP | `x11vnc` Display `:N` | Forked virtual VNC servers (`5902`–`5911`) |
 | `6080` | HTTP/WS | `websockify` | Default noVNC direct proxy to port `5900` |
 | `6081` | HTTP/WS | `websockify` | Token-multiplexed noVNC proxy (`/tmp/sand-novnc-tokens.d`) |
-| `8790` | WebSocket | `sand-egress-tunnel` | Egress reverse WebSocket tunnel (compiled with `tokio-tungstenite`) |
-| `8791` | HTTP/TCP | `sand-egress-tunnel` | HTTP CONNECT proxy for outbound traffic filtering |
-| `9222 + N` | HTTP/WS | Chrome CDP & Playwright | Chrome DevTools Protocol & Playwright MCP debugging per display |
+| `8790` | WebSocket | `sand-egress-tunnel` (PID 358) | Outbound WebSocket tunnel router (`SAND_HTTP_PROXY_NAME=fastly-prod-xai-1`) |
+| `8791` | HTTP/TCP | `sand-egress-tunnel` (PID 358) | Local HTTP CONNECT proxy (`127.0.0.1:8791`) |
+| `9222 + N` | HTTP/WS | Chrome CDP & Playwright | Chrome DevTools Protocol & Playwright MCP debugging (`9223`–`9233`) |
 | `13600 + N`| WebSocket | Per-Screen PTY | Virtual terminal stream for agent screens (active up to `13611`) |
 | `14000 + N`| HTTP/RPC | Per-Screen Daemon | Agent command executor for screens (active up to `14011`) |
-| `50052` | gRPC | In-Box RPC Service | In-box cloud coordination gRPC channel |
-| `VSOCK:52`| AF_VSOCK | `pod-daemon` SSH Auth | Hypervisor hardware socket bridge (`/dev/vsock` guest CID 3) |
+| `26500` | gRPC/TCP | `/pod-daemon` (PID 1/7) | Container init & supervisor daemon (`0.0.0.0:26500`) |
+| `50052` | gRPC | `isod.service` (`/system.slice`) | Host-facing gRPC MicroVM controller (`anyrun.v1` protocol) |
+| `VSOCK:52`| AF_VSOCK | `pod-daemon` SSH Auth | Hypervisor hardware socket bridge (`/run/host-services/ssh-auth.sock`) |
 | `VSOCK:26500`| AF_VSOCK | `pod-daemon` Control | Hypervisor-to-guest execution control channel |
 
 ---
@@ -520,8 +521,92 @@ cd ~
 rm -rf "$WORKDIR"
 ```
 
-### Security Guarantees:
+### Security & Extraction Guarantees:
 - **`unset HISTFILE`**: Bypasses `~/.bash_history`—none of the commands, paths, or tokens are logged.
 - **`/dev/shm`**: Backed by `tmpfs` (volatile RAM). Zero sectors are committed to `/dev/vda` or OverlayFS upper layers.
 - **`trap ... EXIT`**: Guarantees complete self-destruct and cleanup even if a command aborts or encounters an error.
+- **Dynamic In-Guest Probing**: Extraction scripts interrogate running processes via `/proc`, Unix domain sockets, and `/tmp` IPC markers without installing intrusive agent hooks.
+
+---
+
+### 🖥️ Empirical Target MicroVM Profile & Compute Topology
+
+Forensic analysis extracted from the live microVM guest (`box@grok-bot-vm-318947476:/workspace`) revealed the exact production hypervisor and bare-metal specifications:
+
+* **Cloud Provider & Region**: **Amazon Web Services (AWS)** in `us-east-1` (Ashburn, Virginia, USA - Autonomous System: `AS14618 Amazon.com, Inc.`).
+* **EC2 Instance Mapping**: **AWS EC2 `c7i.2xlarge`** (Compute-Optimized, 7th Gen Intel).
+* **CPU Microarchitecture**: **5th Generation Intel Xeon Scalable (code-named Emerald Rapids)**:
+  * `CPU family: 6`, `Model: 207`, `Stepping: 2`, `BogoMIPS: 4800.00`.
+  * **8 vCPUs** (cores 0–7) with 1 thread per core (dedicated 1:1 physical core mapping, Hyper-Threading suppressed).
+  * **320 MiB L3 Cache**: Demonstrates a unified multi-chip enterprise socket cache module.
+* **AI & Accelerator Instruction Sets**:
+  * **Intel AMX (Advanced Matrix Extensions)**: `amx_tile`, `amx_int8`, `amx_bf16` active for deep learning matrix acceleration.
+  * **AVX-512 & AVX-VNNI**: Full 512-bit vector processing (`avx512f`, `avx512_bf16`, `avx512_fp16`, `avx512_vnni`).
+* **Virtualization & Kernel**:
+  * **Hypervisor**: AWS Nitro Hypervisor running Firecracker / KVM.
+  * **Kernel**: `Linux 6.12.94+ #1 SMP PREEMPT_DYNAMIC` booted with monolithic parameters (`nomodule`, `console=ttyS0`, `clocksource=kvm-clock`).
+  * **RAM**: **16 GB Total** (15 GiB usable), 0B Swap.
+* **Dual-Tier Block Storage**:
+  * **`/dev/vda` (128 GB)**: Ephemeral Copy-on-Write rootfs formatted with OverlayFS (`upperdir=/var/lib/isod/containers/.../host_image/diff`).
+  * **`/dev/vdb` (16 GB)**: Unmounted golden base seed disk (`LABEL="ext4-writer"`, UUID `00000000-0000-0000-0000-000000000004`, ext4).
+* **Network & Dual-Egress Routing**:
+  * Direct Public Egress IP: `184.193.214.38` (AWS EC2 us-east-1).
+  * Secondary Outbound Gateway: Routed via `sand-egress-tunnel` (PID 358) tagged with `SAND_HTTP_PROXY_NAME=fastly-prod-xai-1` to Cloudflare WARP (`104.30.180.109`, AS13335, Seattle/Kent WA) for direct high-throughput peering with xAI (Grok).
+
+---
+
+### ⚙️ In-Guest Daemon Architecture & AF_VSOCK Control Plane
+
+1. **`/pod-daemon` (PID 1 / PID 7) & Hypervisor AF_VSOCK**:
+   * Root init daemon running under `/tini` with config:
+     ```text
+     Config { listen_addr: "0.0.0.0:26500", ssh_auth_sock_path: "/run/host-services/ssh-auth.sock", ssh_auth_vsock_port: 52 }
+     ```
+   * Bridges SSH agent requests directly across **Linux AF_VSOCK (Port 52)** to the host machine. **Private SSH keys never touch the VM filesystem**.
+2. **`isod.service` (Port 50052 gRPC Controller)**:
+   * Root systemd service in `/system.slice/isod.service` serving gRPC with protobuf package **`anyrun.v1`**:
+     * `anyrun.v1.Build`: Container image & layer management.
+     * `ResumePodRequest` / `DeletePodRequest`: Live pod lifecycle coordination.
+     * `SyncClockRequest`: Host-to-guest clock synchronization.
+     * `CheckpointPodRpcRegistrationInfo`: Live memory snapshotting.
+     * `IsodStorageLayer` & `IsodWritableDirs`: OverlayFS mount orchestration.
+     * `ComputerUseError` & `ScreenshotAction`: Native screenshot hooks.
+3. **Cursor Origin CLI (`origin`)**:
+   * Massive 105 MB binary at `/exec-daemon/tools/origin` (Build `2026.09.24-20-34-11-8ed25e0`).
+   * Manages Cursor Origin repositories, pull requests (`origin pr`), rulesets (`origin ruleset`), and namespaces (`origin namespace`) calling `api.cursor.com/v1/origin`.
+   * Stored logins are disabled: *"Stored logins are disabled on hosted agent VMs (cloud agent / Grok Bot box); the host injects a CURSOR_AUTH_TOKEN session (or set CURSOR_API_KEY)"*.
+
+---
+
+### 🎭 Production Anti-Bot Camouflage & Injected JavaScript
+
+Inside [`usr-local-bin/sand-fingerprint-profiles.mjs`](usr-local-bin/sand-fingerprint-profiles.mjs) and [`sand-ua-governor.mjs`](usr-local-bin/sand-ua-governor.mjs), Cursor deploys production anti-bot evasion:
+
+* **`Function.prototype.toString` Camouflage**:
+  Uses a `WeakSet` registry so that inspection of patched methods always returns `"function ...() { [native code] }"`.
+* **WebGL Hardware Spoofing**:
+  Intercepts `WebGLRenderingContext.prototype.getParameter` and `WebGL2RenderingContext.prototype.getParameter` for `0x9245` (`UNMASKED_VENDOR_WEBGL`) and `0x9246` (`UNMASKED_RENDERER_WEBGL`) to mask SwiftShader and report physical GPUs (`ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11)`).
+* **Navigator Property Pinning**:
+  Pins `navigator.hardwareConcurrency = 8`, `deviceMemory = 8`, and `maxTouchPoints = 0`.
+* **100ms CDP Injection Loop**:
+  `sand-ua-governor.mjs` polls Chrome DevTools Protocol ports every 100ms, hooking every target on creation (`applyDesktopUaToTarget`) to inject `buildNewDocumentScript()` prior to DOM evaluation.
+
+---
+
+### 🔀 Capability-Based Token Router & Active Swarm Topology
+
+1. **`sand-window-router.mjs` (Port 1339)**:
+   * Fronts all agent window daemons.
+   * Reads header `x-sand-display` and `x-sand-window-owner`.
+   * If `display <= 1`, routes to `1337` (primary agent).
+   * If `display > 1`, reads `/tmp/sand-window-tokens.d/<display>` and performs **`crypto.timingSafeEqual`** constant-time validation. Rejects mismatches with `HTTP 403 Forbidden` and proxies authenticated requests to port $14000 + \text{display}$.
+2. **Active 10-Agent Swarm**:
+   * Telemetry in `.sand-window-assignments.json` confirms **10 concurrent subagents** operating simultaneously inside the single microVM:
+     * Agents assigned to displays `:2` through `:11` (Ports `14002`–`14011`, VNC `5902`–`5911`, PTY `13602`–`13611`).
+   * **46 Monitored GUI Components (100% Up)**:
+     * Each display runs an isolated GUI stack (`xvfb`, `xfwm4`, `picom`, `plank` dock, `x11vnc`, `websockify`), while sharing `egress-proxy`, `fork-router`, `fork-websockify`, `ua-governor`, and `web-bot-auth`.
+3. **Live Chrome Credential Harvester (`chrome-session-stage`)**:
+   * Bypasses Chrome’s exclusive SQLite locks on `Login Data` and `Login Data For Account` using a `raw-copy fallback`.
+   * Replicates live cookies across display profiles every 5,000ms via `cdp-cookies.mjs` (`SAND_COOKIE_PERSIST_INTERVAL_MS`), updating `/home/box/sand-data/chrome-cookie-seed.json` for bidirectional replication across the swarm.
+
 
