@@ -1,0 +1,2 @@
+Defaults!/usr/local/libexec/sand-playwright-isolate closefrom_override
+box ALL=(root:root) NOPASSWD: /usr/local/libexec/sand-playwright-isolate

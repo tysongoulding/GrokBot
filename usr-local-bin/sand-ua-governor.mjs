@@ -1,13 +1,14 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+import { BROWSER_FINGERPRINT_SPOOF_MARKER_PATH } from "./box-contract.generated.mjs";
 import {
-  BROWSER_FINGERPRINT_SPOOF_MARKER_PATH,
-  UA_OWNER_STAMP_LENGTH,
-  UA_OWNER_STAMP_PATH,
-  UA_TOKEN_DISABLED_MARKER_PATH,
-} from "./box-contract.generated.mjs";
-import { connectBrowser, discoverMonitorPorts, getBrowserVersion } from "./cdp-cookies.mjs";
+  connectBrowser,
+  discoverMonitorPorts,
+  getBrowserVersion,
+  isCdpTargetGone,
+  isConnectionRefused,
+} from "./cdp-cookies.mjs";
 import {
   PROFILES,
   SPOOF_PROFILE_NAMES,
@@ -17,31 +18,17 @@ import {
 } from "./sand-fingerprint-profiles.mjs";
 
 const POLL_INTERVAL_MS = 100;
-const DESKTOP_UA_TEMPLATE =
-  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{MAJOR}.0.0.0 Safari/537.36";
 
-export function grokAgentUaToken(
-  ownerStampFile = UA_OWNER_STAMP_PATH,
-  tokenDisabledFile = UA_TOKEN_DISABLED_MARKER_PATH,
-) {
-  if (existsSync(tokenDisabledFile)) return "";
-  let raw = "";
-  try {
-    raw = readFileSync(ownerStampFile, "utf8");
-  } catch {}
-  const owner = (raw.split("\n", 1)[0] ?? "")
-    .replace(/[^0-9a-f]/g, "")
-    .slice(0, UA_OWNER_STAMP_LENGTH);
-  return owner === "" ? "GrokAgent/1.0" : `GrokAgent/1.0 (u:${owner})`;
+function errorClass(error) {
+  return error?.code ?? error?.cause?.code ?? (error instanceof Error ? error.name : typeof error);
 }
 
-function chromeMajorOf(chromeVersion) {
-  return chromeVersion.split(".", 1)[0];
-}
+const reportedOnce = new Set();
 
-function userAgentFromTemplate(template, chromeVersion, uaToken) {
-  const base = template.replace("{MAJOR}", chromeMajorOf(chromeVersion));
-  return uaToken === "" ? base : `${base} ${uaToken}`;
+function reportOnce(message) {
+  if (reportedOnce.has(message)) return;
+  reportedOnce.add(message);
+  console.error(message);
 }
 
 export function liveChromeProduct(browser) {
@@ -50,26 +37,10 @@ export function liveChromeProduct(browser) {
   return "Chrome/0.0.0.0";
 }
 
-export function desktopUserAgent(chromeVersion, uaToken = grokAgentUaToken()) {
-  return userAgentFromTemplate(DESKTOP_UA_TEMPLATE, chromeVersion, uaToken);
-}
-
-export function desktopUserAgentOverride(browser, uaToken = grokAgentUaToken()) {
-  const override = buildUserAgentOverride(liveChromeProduct(browser), PROFILES.linux);
-  return {
-    ...override,
-    userAgent: uaToken === "" ? override.userAgent : `${override.userAgent} ${uaToken}`,
-  };
-}
-
-export async function applyDesktopUaToTarget(
-  browser,
-  sessionId,
-  uaToken = grokAgentUaToken(),
-) {
+export async function applyDesktopUaToTarget(browser, sessionId) {
   await browser.send(
     "Emulation.setUserAgentOverride",
-    desktopUserAgentOverride(browser, uaToken),
+    buildUserAgentOverride(liveChromeProduct(browser), PROFILES.linux),
     sessionId,
   );
 }
@@ -97,14 +68,6 @@ export function resolveOsSpoofProfileName({
   }
 }
 
-export function osSpoofUserAgentOverride(browser, profile, uaToken = grokAgentUaToken()) {
-  const override = buildUserAgentOverride(liveChromeProduct(browser), profile);
-  return {
-    ...override,
-    userAgent: uaToken === "" ? override.userAgent : `${override.userAgent} ${uaToken}`,
-  };
-}
-
 export function spoofDocumentScriptMap(browser) {
   if (browser.spoofDocumentScripts == null) {
     browser.spoofDocumentScripts = new Map();
@@ -125,15 +88,13 @@ export async function removeSpoofDocumentScript(browser, sessionId) {
   spoofDocumentScriptMap(browser).delete(sessionId);
 }
 
-export async function applyOsSpoofToTarget(
-  browser,
-  sessionId,
-  profile,
-  uaToken = grokAgentUaToken(),
-) {
+export async function applyOsSpoofToTarget(browser, sessionId, profile) {
   const script = buildNewDocumentScript(profile);
-  const override = osSpoofUserAgentOverride(browser, profile, uaToken);
-  await browser.send("Emulation.setUserAgentOverride", override, sessionId);
+  await browser.send(
+    "Emulation.setUserAgentOverride",
+    buildUserAgentOverride(liveChromeProduct(browser), profile),
+    sessionId,
+  );
   try {
     await removeSpoofDocumentScript(browser, sessionId);
     await browser.send("Runtime.evaluate", { expression: script }, sessionId);
@@ -148,7 +109,7 @@ export async function applyOsSpoofToTarget(
     }
   } catch (error) {
     try {
-      await applyDesktopUaToTarget(browser, sessionId, uaToken);
+      await applyDesktopUaToTarget(browser, sessionId);
     } catch (rollbackError) {
       console.error(
         `os spoof rollback failed: ${rollbackError instanceof Error ? rollbackError.name : typeof rollbackError}`,
@@ -158,19 +119,19 @@ export async function applyOsSpoofToTarget(
   }
 }
 
-export async function applyUaTreatmentToTarget(browser, sessionId, uaToken = grokAgentUaToken()) {
+export async function applyUaTreatmentToTarget(browser, sessionId) {
   const spoofName = browser.osSpoofProfile ?? resolveOsSpoofProfileName();
   if (spoofName != null && SPOOF_PROFILE_NAMES.includes(spoofName)) {
-    await applyOsSpoofToTarget(browser, sessionId, PROFILES[spoofName], uaToken);
+    await applyOsSpoofToTarget(browser, sessionId, PROFILES[spoofName]);
     return;
   }
   await removeSpoofDocumentScript(browser, sessionId);
-  await applyDesktopUaToTarget(browser, sessionId, uaToken);
+  await applyDesktopUaToTarget(browser, sessionId);
 }
 
 export async function configureUaGovernorBrowser(browser) {
   browser.attachedSessions = new Set();
-  browser.onEvent(message => {
+  browser.onEvent((message) => {
     const sessionId = message.params?.sessionId;
     if (typeof sessionId !== "string") return;
     if (message.method === "Target.detachedFromTarget") {
@@ -179,12 +140,16 @@ export async function configureUaGovernorBrowser(browser) {
     }
     if (message.method !== "Target.attachedToTarget") return;
     browser.attachedSessions.add(sessionId);
+    const reportUnlessGone = (step) => (error) => {
+      if (isCdpTargetGone(error)) return;
+      console.error(`${step} failed port=${browser.port}: ${errorClass(error)}`);
+    };
     void applyUaTreatmentToTarget(browser, sessionId)
-      .catch(() => {})
+      .catch(reportUnlessGone("ua apply"))
       .finally(() => {
         void browser
           .send("Runtime.runIfWaitingForDebugger", {}, sessionId)
-          .catch(() => {});
+          .catch(reportUnlessGone("resume"));
       });
   });
   await browser.send("Target.setAutoAttach", {
@@ -195,11 +160,11 @@ export async function configureUaGovernorBrowser(browser) {
   });
 }
 
-export async function reapplyUaTreatment(browsers, uaToken) {
+export async function reapplyUaTreatment(browsers) {
   for (const browser of browsers.values()) {
     if (browser.isClosed) continue;
     for (const sessionId of browser.attachedSessions ?? []) {
-      await applyUaTreatmentToTarget(browser, sessionId, uaToken).catch((error) => {
+      await applyUaTreatmentToTarget(browser, sessionId).catch((error) => {
         console.error(
           `ua re-apply failed port=${browser.port}: ${error instanceof Error ? error.name : typeof error}`,
         );
@@ -210,7 +175,6 @@ export async function reapplyUaTreatment(browsers, uaToken) {
 
 async function main() {
   const browsers = new Map();
-  let lastUaToken = grokAgentUaToken();
   let lastSpoofName = resolveOsSpoofProfileName();
   for (;;) {
     for (const port of discoverMonitorPorts()) {
@@ -223,29 +187,28 @@ async function main() {
         browser.osSpoofProfile = resolveOsSpoofProfileName();
         await configureUaGovernorBrowser(browser);
         browsers.set(port, browser);
-      } catch {}
+      } catch (error) {
+        if (!isConnectionRefused(error)) {
+          reportOnce(`monitor on CDP port ${port} not governed: ${errorClass(error)}`);
+        }
+      }
     }
     for (const [port, browser] of browsers) {
       if (!browser.isClosed) continue;
       browsers.delete(port);
     }
-    const uaToken = grokAgentUaToken();
     const spoofName = resolveOsSpoofProfileName();
-    if (uaToken !== lastUaToken || spoofName !== lastSpoofName) {
-      lastUaToken = uaToken;
+    if (spoofName !== lastSpoofName) {
       lastSpoofName = spoofName;
       for (const browser of browsers.values()) {
         browser.osSpoofProfile = spoofName;
       }
-      await reapplyUaTreatment(browsers, uaToken);
+      await reapplyUaTreatment(browsers);
     }
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 }
 
-if (
-  process.argv[1] != null &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

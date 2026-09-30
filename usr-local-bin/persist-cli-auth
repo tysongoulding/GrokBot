@@ -6,24 +6,24 @@ if [ -n "${CLI_AUTH_HOME:-}" ]; then
 fi
 CLI_AUTH_HOMES="${CLI_AUTH_HOMES:-/home/box}"
 MIRROR_DIR="${CLI_AUTH_MIRROR:-/home/box/cli-config}"
-CLI_AUTH_DIR_CAP_BYTES="${CLI_AUTH_DIR_CAP_BYTES:-52428800}" # 50 MiB
+CLI_AUTH_DIR_CAP_BYTES="${CLI_AUTH_DIR_CAP_BYTES:-52428800}"
 CLI_AUTH_SAVE_INTERVAL_S="${CLI_AUTH_SAVE_INTERVAL_S:-30}"
 CLI_AUTH_VERBOSE="${CLI_AUTH_VERBOSE:-0}"
 CLI_AUTH_CONFIG_SWEEP="${CLI_AUTH_CONFIG_SWEEP:-1}"
 
 CLI_AUTH_TARGETS=(
-	.config/gh        # GitHub CLI (gh auth login -> hosts.yml + config.yml)
-	.aws              # AWS CLI (credentials + config — must travel together)
-	.config/gcloud    # gcloud (credentials.db + access_tokens.db + configs)
-	.ssh              # SSH keys / known_hosts / config
-	.docker           # docker login (config.json auths)
-	.vercel           # Vercel CLI
-	.fly              # Fly.io CLI (legacy ~/.fly)
-	.config/fly       # Fly.io CLI (XDG)
-	.netrc            # curl / git / many tools' machine logins (file)
-	.npmrc            # npm login token (file)
-	.gitconfig        # git identity + credential.helper (file)
-	.git-credentials  # git `store` credential helper (file)
+	.config/gh
+	.aws
+	.config/gcloud
+	.ssh
+	.docker
+	.vercel
+	.fly
+	.config/fly
+	.netrc
+	.npmrc
+	.gitconfig
+	.git-credentials
 )
 CLI_AUTH_PRUNE_NAMES=(Cache cache GPUCache logs buildx scout)
 
@@ -32,12 +32,6 @@ vlog() { if [ "${CLI_AUTH_VERBOSE}" = "1" ]; then log "$*"; fi; }
 
 home_tag() { printf '%s' "$1" | tr -c '[:alnum:]' '_'; }
 
-# The mirror subdir a home's creds live in. The FIRST home (/home/box, the agent
-# shell's home) maps to the mirror ROOT — which is also where the pre-non-root
-# era mirrored the then-root agent shell's creds, so an upgraded box's mirror
-# restores those into the agent's new home with no migration step. Every OTHER
-# home maps to a reserved `.by-home/<tag>` namespace so two homes' creds never
-# collide and a home's creds only ever restore back to that same home.
 home_mirror() {
 	local home="$1" first
 	# shellcheck disable=SC2086
@@ -50,11 +44,6 @@ home_mirror() {
 	fi
 }
 
-# Whether a credential path holds REAL content: a non-empty file, or a dir with at
-# least one non-empty file OUTSIDE the cache/log subdirs copy_pruned strips. An
-# absent, empty, or cache-only path has none — so it is treated as "no credential"
-# (its mirror copy is pruned, and a cache-only dir like .docker/buildx never
-# masquerades as a login).
 has_content() {
 	local path="$1"
 	[ -e "$path" ] || return 1
@@ -84,7 +73,6 @@ home_targets() {
 		for d in "${home}/.config"/*/; do
 			[ -d "$d" ] || continue
 			name="$(basename "$d")"
-			# Never mirror the Origin CLI stored login; box origin auth is env-injected only.
 			[ "$name" = "origin-cli" ] && continue
 			rel=".config/${name}"
 			case "$seen" in *" ${rel} "*) continue ;; esac
@@ -94,11 +82,6 @@ home_targets() {
 	fi
 }
 
-# RESTORE targets for ONE home's mirror namespace: every tool present in it
-# (top-level entries + one level under .config), skipping this tool's own metadata
-# and the per-home namespace dir. Derived from the mirror — NOT the live tree — so a
-# tool persisted on a prior boot is restored even when nothing on the fresh rootfs
-# hints at it.
 mirror_targets() {
 	local mdir="$1" e name
 	[ -d "$mdir" ] || return 0
@@ -114,7 +97,6 @@ mirror_targets() {
 	if [ -d "${mdir}/.config" ]; then
 		for e in "${mdir}/.config"/*; do
 			[ -e "$e" ] || continue
-			# Never restore a mirrored Origin CLI login; the exec-daemon scrubs leftovers.
 			[ "$(basename "$e")" = "origin-cli" ] && continue
 			printf '.config/%s\n' "$(basename "$e")"
 		done
@@ -129,10 +111,9 @@ pruned_size() {
 	du -sb "${ex[@]}" "$path" 2>/dev/null | cut -f1
 }
 
-# Copy src (dir or file) into tmpd as a pruned snapshot, dropping the cache subdirs
-# DURING the copy (so a huge cache is never even read), preserving perms. Echoes
-# the staged payload path. tar's --exclude matches the trailing path component, so
-# a named cache dir is dropped wherever it sits in the tree.
+# GNU tar exclusion patterns are unanchored by default, so `--exclude=NAME`
+# matches that name at any depth of the tree
+# (https://www.gnu.org/software/tar/manual/html_node/controlling-pattern_002dmatching.html).
 copy_pruned() {
 	local src="$1" tmpd="$2"
 	local parent base ex=() n
@@ -154,10 +135,6 @@ content_sig() {
 	fi
 }
 
-# Lock owner-only perms on a restored tree/file (dirs 700, files 600). The durable
-# store restores blobs world-readable (0644) and without the exec bit, which breaks
-# ssh (it refuses a 0644 private key); this puts the tight perms these tools expect
-# back, regardless of how the bytes arrived.
 harden_perms() { chmod -R go-rwx "$1" 2>/dev/null || true; }
 
 save_one() {
@@ -221,19 +198,10 @@ save_one() {
 	fi
 }
 
-# Restore ONE mirrored credential into its OWN home only (never another home), so
-# root authority is never installed into the box account. LOCAL WINS per home (a
-# wake keeps the live creds), and the restored tree is chowned to the home's owner
-# so that user (e.g. the box user) can read its own creds.
 restore_one() {
 	local home="$1" hmir="$2" rel="$3"
 	local msrc="${hmir}/${rel}" dst="${home}/${rel}"
 	[ -e "$msrc" ] || return
-	# LOCAL WINS only when the live copy holds REAL creds (same has_content test
-	# `save` uses). An empty or cache-only live dir is NOT a credential, so it must
-	# NOT block restoring the mirror's valid copy — otherwise the live empty dir
-	# would shadow the restore, and the next `save` (seeing no live content) would
-	# prune the mirror, losing the persisted auth.
 	if has_content "$dst"; then
 		vlog "restore: kept local ${home}:${rel}"
 		KEPT=$((KEPT + 1))
@@ -293,17 +261,6 @@ do_restore() {
 	log "restore: done restored=${RESTORED} kept_local=${KEPT}"
 }
 
-# So the mirror is CONSUMED, per target and verified: restore fans it out (LOCAL
-# WINS, hardening what it installs), and a mirror entry is removed only once the
-# live side provably holds that credential (the same has_content test restore
-# uses) — a target whose fan-out failed keeps its mirror copy AND its durable key,
-# and the next boot retires it instead. Once the tree empties, the cli-config
-# category's walk prunes its durable keys, which is how the folder retires itself.
-#
-# The homes are also re-hardened whether or not restore installed anything: the
-# durable store keeps no file modes, so a hydrated ~/.ssh lands 0644 and ssh
-# refuses such keys; restore only hardens what IT copies, and in enabled mode
-# the key may have arrived as a synced home file instead.
 retire_mirror() {
 	do_restore || true
 	local home hmir rel

@@ -7,7 +7,6 @@ export const PROFILES = {
     architecture: "x86",
     bitness: "64",
     wow64: false,
-    mobile: false,
     webglVendor: "Google Inc. (Google)",
     webglRenderer:
       "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 16.0.0) (0x0000C0DE)), SwiftShader driver)",
@@ -20,7 +19,6 @@ export const PROFILES = {
     architecture: "x86",
     bitness: "64",
     wow64: false,
-    mobile: false,
     webglVendor: "Google Inc. (Intel)",
     webglRenderer:
       "ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -36,7 +34,6 @@ export const PROFILES = {
     architecture: "x86",
     bitness: "64",
     wow64: false,
-    mobile: false,
     webglVendor: "Google Inc. (Intel)",
     webglRenderer:
       "ANGLE (Intel, ANGLE Metal Renderer: Intel(R) Iris(TM) Plus Graphics 640, Unspecified Version)",
@@ -57,20 +54,17 @@ export function resolveProfileName(raw) {
   return null;
 }
 
-export const ANDROID_PROFILE = {
-  uaPlatformToken: "Linux; Android 15; Pixel 9 Pro",
-  navigatorPlatform: "Android",
-  metadataPlatform: "Android",
-  platformVersion: "15.0.0",
-  architecture: "",
-  bitness: "",
-  wow64: false,
-  mobile: true,
-  model: "Pixel 9 Pro",
-};
-
-const DESKTOP_GREASE = { brand: "Not=A?Brand", short: "99", full: "99.0.0.0" };
-const ANDROID_GREASE = { brand: "Not_A Brand", short: "99", full: "99.0.0.0" };
+// Chromium seeds the GREASE brand, its version, and the brand order with the major version (https://chromium.googlesource.com/chromium/src/+/refs/tags/154.0.8037.57/components/embedder_support/user_agent_utils.cc).
+const GREASE_CHARS = [" ", "(", ":", "-", ".", "/", ")", ";", "=", "?", "_"];
+const GREASE_VERSIONS = ["8", "99", "24"];
+const BRAND_ORDERS = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0],
+];
 
 export function chromeProductFromUserAgentProduct(product) {
   const m = /Chrome\/(\d+)\.(\d+)\.(\d+)\.(\d+)/.exec(product ?? "");
@@ -78,31 +72,39 @@ export function chromeProductFromUserAgentProduct(product) {
   return { major: m[1], full: `${m[1]}.${m[2]}.${m[3]}.${m[4]}` };
 }
 
-function chromeBrandList(major, full, grease, chromeBeforeChromium) {
-  const greaseShort = { brand: grease.brand, version: grease.short };
-  const greaseFull = { brand: grease.brand, version: grease.full };
-  const chromeShort = { brand: "Google Chrome", version: major };
-  const chromeFull = { brand: "Google Chrome", version: full };
-  const chromiumShort = { brand: "Chromium", version: major };
-  const chromiumFull = { brand: "Chromium", version: full };
-  if (chromeBeforeChromium) {
-    return {
-      brands: [greaseShort, chromeShort, chromiumShort],
-      fullVersionList: [greaseFull, chromeFull, chromiumFull],
-    };
-  }
+export function greaseBrandVersion(major) {
+  const seed = Number.parseInt(major, 10);
+  const brand = `Not${GREASE_CHARS[seed % GREASE_CHARS.length]}A${GREASE_CHARS[(seed + 1) % GREASE_CHARS.length]}Brand`;
+  const short = GREASE_VERSIONS[seed % GREASE_VERSIONS.length];
+  return { brand, short, full: `${short}.0.0.0` };
+}
+
+function shuffleBrands(major, entries) {
+  const order = BRAND_ORDERS[Number.parseInt(major, 10) % BRAND_ORDERS.length];
+  const shuffled = new Array(entries.length);
+  for (let i = 0; i < order.length; i++) shuffled[order[i]] = entries[i];
+  return shuffled;
+}
+
+function chromeBrandList(major, full) {
+  const grease = greaseBrandVersion(major);
   return {
-    brands: [greaseShort, chromiumShort, chromeShort],
-    fullVersionList: [greaseFull, chromiumFull, chromeFull],
+    brands: shuffleBrands(major, [
+      { brand: grease.brand, version: grease.short },
+      { brand: "Chromium", version: major },
+      { brand: "Google Chrome", version: major },
+    ]),
+    fullVersionList: shuffleBrands(major, [
+      { brand: grease.brand, version: grease.full },
+      { brand: "Chromium", version: full },
+      { brand: "Google Chrome", version: full },
+    ]),
   };
 }
 
-export function buildUserAgentMetadata(product, profile, style = "desktop") {
+function buildUserAgentMetadata(product, profile) {
   const { major, full } = chromeProductFromUserAgentProduct(product);
-  const { brands, fullVersionList } =
-    style === "android"
-      ? chromeBrandList(major, full, ANDROID_GREASE, false)
-      : chromeBrandList(major, full, DESKTOP_GREASE, true);
+  const { brands, fullVersionList } = chromeBrandList(major, full);
   return {
     brands,
     fullVersionList,
@@ -110,8 +112,8 @@ export function buildUserAgentMetadata(product, profile, style = "desktop") {
     platform: profile.metadataPlatform,
     platformVersion: profile.platformVersion,
     architecture: profile.architecture,
-    model: profile.model ?? "",
-    mobile: profile.mobile === true,
+    model: "",
+    mobile: false,
     bitness: profile.bitness,
     wow64: profile.wow64,
   };
@@ -195,67 +197,4 @@ export function buildNewDocumentScript(profile) {
   } catch (e) {}
 ${hardwarePins.join("")}
 })();`;
-}
-
-const OS_FAMILY = {
-  linux: {
-    ua: /Linux/i,
-    nav: /^Linux\b/,
-    meta: "Linux",
-    gpu: /SwiftShader/i,
-    forbiddenGpu: /Direct3D11|D3D11|Metal/i,
-  },
-  windows: {
-    ua: /Windows/i,
-    nav: /^Win32$/,
-    meta: "Windows",
-    gpu: /Direct3D11|D3D11/i,
-    forbiddenGpu: /SwiftShader|Metal/i,
-  },
-  mac: {
-    ua: /Mac/i,
-    nav: /^MacIntel$/,
-    meta: "macOS",
-    gpu: /Metal/i,
-    forbiddenGpu: /SwiftShader|Direct3D11|D3D11/i,
-  },
-};
-
-export function profileConsistencyErrors(name, profile, extras = {}) {
-  const errors = [];
-  const family = OS_FAMILY[name];
-  if (family == null) {
-    errors.push(`unknown profile ${name}`);
-    return errors;
-  }
-  if (!family.ua.test(profile.uaPlatformToken)) {
-    errors.push(`${name}: uaPlatformToken is not a ${family.meta} token`);
-  }
-  if (!family.nav.test(profile.navigatorPlatform)) {
-    errors.push(`${name}: navigatorPlatform is not the ${family.meta} navigator.platform`);
-  }
-  if (profile.metadataPlatform !== family.meta) {
-    errors.push(`${name}: metadataPlatform ${profile.metadataPlatform} != ${family.meta}`);
-  }
-  if (!family.gpu.test(profile.webglRenderer)) {
-    errors.push(`${name}: webglRenderer is not plausible for ${family.meta}`);
-  }
-  if (family.forbiddenGpu.test(profile.webglRenderer)) {
-    errors.push(`${name}: webglRenderer is forbidden on ${family.meta}`);
-  }
-  if (name !== "linux" && /SwiftShader/i.test(profile.webglRenderer)) {
-    errors.push(`${name}: spoof profile must not keep SwiftShader`);
-  }
-  if (profile.mobile === true && !/Android|iPhone|Mobile/i.test(profile.uaPlatformToken)) {
-    errors.push(`${name}: mobile viewport paired with a desktop UA`);
-  }
-  if (extras.userAgentMetadataPlatform != null && extras.userAgentMetadataPlatform !== profile.metadataPlatform) {
-    errors.push(
-      `${name}: UA-CH platform ${extras.userAgentMetadataPlatform} disagrees with ${profile.metadataPlatform}`,
-    );
-  }
-  if (extras.deviceMetricsMobile === true && profile.mobile !== true) {
-    errors.push(`${name}: mobile viewport paired with a desktop profile`);
-  }
-  return errors;
 }

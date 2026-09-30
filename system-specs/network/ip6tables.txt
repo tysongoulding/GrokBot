@@ -1,1 +1,0 @@
-sudo: ip6tables-save: command not found

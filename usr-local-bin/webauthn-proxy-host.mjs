@@ -1,145 +1,134 @@
-// Native-messaging host for the box's WebAuthn proxy extension. Chrome spawns
-// this per ceremony and speaks native-messaging framing on stdio: a 4-byte
-// little-endian length, then that many bytes of UTF-8 JSON. It exists because
-// an extension fetch always carries an `Origin` header the Sand gateway 403s
-// (rejectUntrustedBrowserRequest). A pure relay: it never parses the options
-// or the credential, so it cannot drop a field between the page and the key.
-
 import { Buffer } from "node:buffer";
 import { readFileSync } from "node:fs";
 
+import { isWebAuthnArmed, SAND_WEBAUTHN_STALE_TAB_MESSAGE } from "./webauthn-arm.mjs";
+
+// Chrome starts a new native messaging host process for each sendNativeMessage, frames every message on stdio as a 32-bit native-byte-order (little-endian here) length followed by that many bytes of UTF-8 JSON, and takes the host's first message as the response: https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging#native-messaging-host-protocol
 const HEADER_BYTES = 4;
-// Chrome's own cap on a native message.
+// Chrome caps a message sent to a native messaging host at 64 MiB: https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging#native-messaging-host-protocol
 const MAX_MESSAGE_BYTES = 64 * 1024 * 1024;
 
 // >>> box port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
 const SAND_BOX_PORT_HOST_GATEWAY = "1340";
+const SAND_BOX_WEBAUTHN_PROXY_CREDENTIAL_PATH = "/run/sand-webauthn-proxy/credential";
 // <<< box port table <<<
 
 function readEnv(name, fallback) {
-	const value = process.env[name];
-	return value === undefined || value === "" ? fallback : value;
+  const value = process.env[name];
+  return value === undefined || value === "" ? fallback : value;
 }
 
-function credentialFile() {
-	const primaryDir = readEnv(
-		"SAND_PRIMARY_XDG_RUNTIME_DIR",
-		"/tmp/xdg-runtime-box"
-	);
-	for (const runtimeDir of [readEnv("XDG_RUNTIME_DIR", undefined), primaryDir]) {
-		if (runtimeDir === undefined) {
-			continue;
-		}
-		try {
-			const [token, port] = readFileSync(
-				`${runtimeDir}/sand-gateway-credential`,
-				"utf8"
-			).split("\n");
-			if (token !== undefined && token !== "") {
-				return { token, port };
-			}
-		} catch {}
-	}
-	return undefined;
-}
-
-function gatewayBaseUrl(credential) {
-	const port = readEnv("SAND_HOST_PORT", undefined) ?? credential?.port ?? SAND_BOX_PORT_HOST_GATEWAY;
-	return `http://127.0.0.1:${port}`;
+function readCredential() {
+  const path = readEnv(
+    "SAND_WEBAUTHN_PROXY_CREDENTIAL_PATH",
+    SAND_BOX_WEBAUTHN_PROXY_CREDENTIAL_PATH,
+  );
+  try {
+    const [token, port] = readFileSync(path, "utf8").split("\n");
+    return token === undefined || token === "" ? undefined : { token, port: port || undefined };
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      console.error(`webauthn-proxy-host: credential file ${path} unreadable: ${String(error)}`);
+    }
+    return undefined;
+  }
 }
 
 function writeMessage(payload) {
-	const body = Buffer.from(JSON.stringify(payload), "utf8");
-	const header = Buffer.alloc(HEADER_BYTES);
-	header.writeUInt32LE(body.length, 0);
-	process.stdout.write(Buffer.concat([header, body]));
+  const body = Buffer.from(JSON.stringify(payload), "utf8");
+  const header = Buffer.alloc(HEADER_BYTES);
+  header.writeUInt32LE(body.length, 0);
+  process.stdout.write(Buffer.concat([header, body]));
 }
 
 function failure(name, message) {
-	return { ok: false, error: { name, message } };
+  return { ok: false, error: { name, message } };
 }
 
 async function readMessage() {
-	const chunks = [];
-	let total = 0;
-	for await (const chunk of process.stdin) {
-		chunks.push(chunk);
-		total += chunk.length;
-		if (total > MAX_MESSAGE_BYTES) {
-			throw new Error("native message exceeded the maximum size");
-		}
-		const buffered = Buffer.concat(chunks, total);
-		if (buffered.length < HEADER_BYTES) {
-			continue;
-		}
-		const length = buffered.readUInt32LE(0);
-		if (buffered.length >= HEADER_BYTES + length) {
-			return JSON.parse(
-				buffered.subarray(HEADER_BYTES, HEADER_BYTES + length).toString("utf8")
-			);
-		}
-	}
-	return undefined;
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+    total += chunk.length;
+    if (total > MAX_MESSAGE_BYTES) {
+      throw new Error("native message exceeded the maximum size");
+    }
+    const buffered = Buffer.concat(chunks, total);
+    if (buffered.length < HEADER_BYTES) {
+      continue;
+    }
+    const length = buffered.readUInt32LE(0);
+    if (buffered.length >= HEADER_BYTES + length) {
+      return JSON.parse(buffered.subarray(HEADER_BYTES, HEADER_BYTES + length).toString("utf8"));
+    }
+  }
+  return undefined;
+}
+
+function webAuthnArmPaths() {
+  return {
+    armDir: readEnv("SAND_WEBAUTHN_ARM_DIR", undefined),
+    armUntilPath: readEnv("SAND_WEBAUTHN_ARM_UNTIL_PATH", undefined),
+    handoffArmUntilPath: readEnv("SAND_WEBAUTHN_HANDOFF_ARM_UNTIL_PATH", undefined),
+  };
 }
 
 async function requestCeremony(message) {
-	const credential = credentialFile();
-	const token = readEnv("SAND_GATEWAY_TOKEN", undefined) ?? credential?.token;
-	if (token === undefined) {
-		return failure(
-			"NotAllowedError",
-			"Sand's in-box gateway token is not available to the browser bridge."
-		);
-	}
+  if (!isWebAuthnArmed(Date.now(), webAuthnArmPaths())) {
+    return failure("NotAllowedError", SAND_WEBAUTHN_STALE_TAB_MESSAGE);
+  }
 
-	const response = await fetch(
-		`${gatewayBaseUrl(credential)}/api/requestWebAuthnCeremony`,
-		{
-			method: "POST",
-			headers: {
-				"content-type": "application/json",
-				authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({
-				kind: message.kind,
-				origin: message.origin,
-				optionsJson: message.optionsJson,
-			}),
-		}
-	);
-	if (!response.ok) {
-		return failure(
-			"NotAllowedError",
-			`Sand's in-box host refused the ceremony (HTTP ${response.status}).`
-		);
-	}
-	return await response.json();
+  const credential = readCredential();
+  if (credential === undefined) {
+    return failure(
+      "NotAllowedError",
+      "Sand's WebAuthn proxy credential is not available to the browser bridge.",
+    );
+  }
+
+  const port = credential.port ?? SAND_BOX_PORT_HOST_GATEWAY;
+  const response = await fetch(`http://127.0.0.1:${port}/api/requestWebAuthnCeremony`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${credential.token}`,
+    },
+    body: JSON.stringify({
+      kind: message.kind,
+      origin: message.origin,
+      optionsJson: message.optionsJson,
+    }),
+  });
+  if (!response.ok) {
+    return failure(
+      "NotAllowedError",
+      `Sand's in-box host refused the ceremony (HTTP ${response.status}).`,
+    );
+  }
+  return await response.json();
 }
 
 async function main() {
-	let message;
-	try {
-		message = await readMessage();
-	} catch (error) {
-		writeMessage(failure("DataError", `unreadable native message: ${error}`));
-		return;
-	}
-	if (message === undefined) {
-		// Chrome waits on exactly one reply; never return silently.
-		writeMessage(failure("DataError", "no native message was received"));
-		return;
-	}
+  let message;
+  try {
+    message = await readMessage();
+  } catch (error) {
+    writeMessage(failure("DataError", `unreadable native message: ${error}`));
+    return;
+  }
+  if (message === undefined) {
+    writeMessage(failure("DataError", "no native message was received"));
+    return;
+  }
 
-	try {
-		writeMessage(await requestCeremony(message));
-	} catch (error) {
-		writeMessage(
-			failure(
-				"NotAllowedError",
-				`could not reach Sand's in-box host: ${error?.message ?? error}`
-			)
-		);
-	}
+  try {
+    writeMessage(await requestCeremony(message));
+  } catch (error) {
+    writeMessage(
+      failure("NotAllowedError", `could not reach Sand's in-box host: ${error?.message ?? error}`),
+    );
+  }
 }
 
 await main();

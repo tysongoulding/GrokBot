@@ -14,14 +14,6 @@ resolve_plan() {
 	timeout 10 "${NODE_BIN}" "${TONE_SCRIPT}" "${SETTINGS_PATH}" 2>/dev/null
 }
 
-resolve_zone() {
-	[ -x "${NODE_BIN}" ] || return 1
-	[ -r "${TONE_SCRIPT}" ] || return 1
-	timeout 10 "${NODE_BIN}" "${TONE_SCRIPT}" zone "${SETTINGS_PATH}" 2>/dev/null
-}
-
-# Sets TONE, empty when no usable plan. The helper prints "<tone> <seconds>";
-# the seconds are for the host scheduler's timer, not for anything here.
 read_tone() {
 	local tone
 	tone="$(resolve_plan || true)"
@@ -56,11 +48,8 @@ paint)
 	fi
 	paint_root "${target}"
 	;;
-zone)
-	resolve_zone
-	;;
 *)
-	echo "usage: sand-wallpaper paint|zone [display]" >&2
+	echo "usage: sand-wallpaper paint [display]" >&2
 	exit 2
 	;;
 esac

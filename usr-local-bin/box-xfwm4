@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Reap an untracked xfwm4 that still owns this exact DISPLAY, then exec the
-# replacement. A failed supervisor relaunch can overwrite the tracked pid while
-# the older window manager remains alive; every later plain xfwm4 then exits with
-# "Another Window Manager ... is already running" and the display crashloops.
-#
-# `xfwm4 --replace` handles a responsive owner, but waits indefinitely for a
-# wedged owner to exit. This launcher instead gives an exact-display owner a
-# bounded SIGTERM grace period, revalidates its identity before SIGKILL, and then
-# starts normally. `exec` preserves the launcher's pid for supervisor tracking.
 set -uo pipefail
 
 display="${DISPLAY:-}"
@@ -17,8 +8,7 @@ process_starttime() {
 	local -a stat_fields
 	stat="$( (cat "/proc/${pid}/stat") 2>/dev/null || true)"
 	[ -n "${stat}" ] || return 1
-	# Drop pid + `(comm)` (fields 1-2). starttime is field 22, hence item 20
-	# in the remainder beginning at process state (field 3).
+	# starttime is field 22, item 20 after pid and (comm). https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html
 	rest="${stat##*) }"
 	read -r -a stat_fields <<<"${rest}"
 	[ -n "${stat_fields[19]:-}" ] || return 1
@@ -32,8 +22,7 @@ process_exe_identity() {
 
 process_display_matches() {
 	local pid="$1" environ
-	# A process can be between exec and its new environ becoming readable. Retry
-	# only an empty read; a non-empty environ naming another display is definitive.
+	# environ can be empty before exec sets env_end. https://github.com/torvalds/linux/blob/v6.12/fs/proc/base.c#L1008
 	for _ in 1 2 3; do
 		environ="$( (tr '\0' '\n' <"/proc/${pid}/environ") 2>/dev/null || true)"
 		if [ -n "${environ}" ]; then

@@ -1,19 +1,21 @@
 # shellcheck shell=bash
 
-# Every function is best-effort and returns 0: callers run under `set -e`, so a
-# helper must never fail its caller.
-
 SAND_CGROUP_ROOT="${SAND_CGROUP_ROOT:-/sys/fs/cgroup}"
-# Keep leaf names in sync with sand-supervisor.mjs (SAND_CGROUP_INTERACTIVE),
-# which places a RELAUNCHED desktop component back into the interactive leaf.
 SAND_CGROUP_INTERACTIVE_NAME="interactive"
 SAND_CGROUP_AGENT_NAME="agent"
+SAND_CGROUP_BACKGROUND_NAME="background"
+
+SAND_CGROUP_BACKGROUND_READY=0
 
 sand_cgroups_enabled() {
 	case "$(printf '%s' "${SAND_BOX_CGROUPS_DISABLED:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')" in
 	1 | true | yes) return 1 ;;
 	*) return 0 ;;
 	esac
+}
+
+sand_cgroup_background_ready() {
+	[[ "${SAND_CGROUP_BACKGROUND_READY}" == "1" ]]
 }
 
 sand_cgroup_log() {
@@ -33,11 +35,11 @@ sand_cgroup_v2_cpu_available() {
 	return 0
 }
 
-# A child of a threaded cgroup is threaded too (the dev-box case; see
-# sand/scripts/dev-box-docker.mjs). A threaded cgroup manages THREADS via
-# cgroup.threads — writing cgroup.procs fails with ENOTSUP and the domain-only
-# PSI files are not created — yet `+cpu` is still accepted, so setup would
-# appear to succeed while placing and measuring nothing.
+# A cgroup created under a threaded cgroup is "domain invalid": it cannot be
+# populated or have controllers enabled until its cgroup.type is written
+# "threaded", and operations on it fail with EOPNOTSUPP
+# (https://docs.kernel.org/admin-guide/cgroup-v2.html#threads), so setup is
+# skipped when the box's own cgroup is threaded (the dev-box case).
 sand_cgroup_is_threaded() {
 	local type_file="${SAND_CGROUP_ROOT}/cgroup.type"
 	[ -r "${type_file}" ] || return 1
@@ -47,10 +49,12 @@ sand_cgroup_is_threaded() {
 	esac
 }
 
-# The cgroup v2 "no internal processes" rule: a non-root cgroup may only enable
-# a domain controller in cgroup.subtree_control when it holds NO processes of
-# its own. Inside a cgroup namespace the box's cgroup is displayed as "/" but
-# is a non-root cgroup to the kernel, so the rule applies.
+# Non-root cgroups can enable a domain controller in cgroup.subtree_control
+# only while they hold no processes of their own
+# (https://docs.kernel.org/admin-guide/cgroup-v2.html#no-internal-process-constraint),
+# and the box's cgroup, shown as "/" inside its cgroup namespace, is the cgroupns
+# root and a non-root cgroup to the kernel (https://docs.kernel.org/admin-guide/cgroup-v2.html#namespace),
+# so sand_cgroup_migrate_root_procs moves its processes to a leaf before +cpu is written.
 sand_cgroup_migrate_root_procs() {
 	local group="$1"
 	local dest="${SAND_CGROUP_ROOT}/${group}/cgroup.procs"
@@ -58,8 +62,9 @@ sand_cgroup_migrate_root_procs() {
 	[ -r "${src}" ] || return 0
 	[ -d "${SAND_CGROUP_ROOT}/${group}" ] || return 0
 	local pid
-	# Read the whole list first: writing to cgroup.procs mutates the file we are
-	# iterating, so streaming it can skip entries.
+	# cgroup.procs is a live listing whose PIDs are unordered and may repeat when a
+	# process moves during the read (https://docs.kernel.org/admin-guide/cgroup-v2.html#core-interface-files),
+	# so the list is snapshotted before the migration writes.
 	local pids
 	pids="$(cat "${src}" 2>/dev/null || true)"
 	for pid in ${pids}; do
@@ -71,8 +76,6 @@ sand_cgroup_migrate_root_procs() {
 	return 0
 }
 
-# Empty/unset means leave cpu.weight alone; out-of-range values are ignored
-# rather than clamped.
 sand_cgroup_apply_weight() {
 	local group="$1" weight="$2"
 	[ -n "${weight}" ] || return 0
@@ -92,7 +95,39 @@ sand_cgroup_apply_weight() {
 	return 0
 }
 
+sand_cgroup_configure_background() {
+	local weight="${SAND_CGROUP_BACKGROUND_WEIGHT:-10}"
+	local background_dir="${SAND_CGROUP_ROOT}/${SAND_CGROUP_BACKGROUND_NAME}"
+	local disabled_reason=""
+
+	case "${weight}" in
+	'' | *[!0-9]*)
+		disabled_reason="invalid cpu.weight '${weight}'"
+		;;
+	*)
+		if ((10#${weight} < 1 || 10#${weight} > 10000)); then
+			disabled_reason="cpu.weight ${weight} is outside 1..10000"
+		elif [[ ! -e "${background_dir}/cpu.weight" ]]; then
+			disabled_reason="cpu controller is not enabled for ${background_dir}"
+		elif ! sand_cgroup_write "${weight}" "${background_dir}/cpu.weight"; then
+			disabled_reason="could not set cpu.weight=${weight}"
+		fi
+		;;
+	esac
+
+	if [[ -n "${disabled_reason}" ]]; then
+		sand_cgroup_log "background disabled: ${disabled_reason}"
+		rmdir "${background_dir}" 2>/dev/null || true
+		return 0
+	fi
+
+	SAND_CGROUP_BACKGROUND_READY=1
+	sand_cgroup_log "background: cpu.weight=${weight}"
+	return 0
+}
+
 sand_cgroup_setup() {
+	SAND_CGROUP_BACKGROUND_READY=0
 	sand_cgroups_enabled || {
 		sand_cgroup_log "disabled by SAND_BOX_CGROUPS_DISABLED; skipping"
 		return 0
@@ -106,7 +141,10 @@ sand_cgroup_setup() {
 		return 0
 	fi
 	local group
-	for group in "${SAND_CGROUP_INTERACTIVE_NAME}" "${SAND_CGROUP_AGENT_NAME}"; do
+	for group in \
+		"${SAND_CGROUP_INTERACTIVE_NAME}" \
+		"${SAND_CGROUP_AGENT_NAME}" \
+		"${SAND_CGROUP_BACKGROUND_NAME}"; do
 		if ! mkdir -p "${SAND_CGROUP_ROOT}/${group}" 2>/dev/null; then
 			sand_cgroup_log "cannot create ${SAND_CGROUP_ROOT}/${group} (read-only cgroupfs?); skipping"
 			return 0
@@ -118,6 +156,7 @@ sand_cgroup_setup() {
 	fi
 	sand_cgroup_apply_weight "${SAND_CGROUP_INTERACTIVE_NAME}" "${SAND_CGROUP_INTERACTIVE_WEIGHT:-}"
 	sand_cgroup_apply_weight "${SAND_CGROUP_AGENT_NAME}" "${SAND_CGROUP_AGENT_WEIGHT:-}"
+	sand_cgroup_configure_background
 	sand_cgroup_log "ready: cpu.stat=$(
 		[ -r "${SAND_CGROUP_ROOT}/${SAND_CGROUP_INTERACTIVE_NAME}/cpu.stat" ] && echo yes || echo no
 	) cpu.pressure=$(
@@ -126,12 +165,12 @@ sand_cgroup_setup() {
 		cat "${SAND_CGROUP_ROOT}/${SAND_CGROUP_INTERACTIVE_NAME}/cpu.weight" 2>/dev/null || echo unset
 	) agent.weight=$(
 		cat "${SAND_CGROUP_ROOT}/${SAND_CGROUP_AGENT_NAME}/cpu.weight" 2>/dev/null || echo unset
+	) background.weight=$(
+		cat "${SAND_CGROUP_ROOT}/${SAND_CGROUP_BACKGROUND_NAME}/cpu.weight" 2>/dev/null || echo unset
 	)"
 	return 0
 }
 
-# Children inherit their parent's cgroup on fork, so placing a LAUNCHER covers
-# its whole process tree with no per-process bookkeeping.
 sand_cgroup_place() {
 	local group="$1" pid="$2"
 	sand_cgroups_enabled || return 0

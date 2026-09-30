@@ -79,7 +79,9 @@ if ! daemon_alive; then
 		--auth-token local \
 		--rg-path /exec-daemon/rg \
 		--computer-use-enabled \
+		--mcp-meta-tool-enabled \
 		--origin-cli-enabled \
+		--orbitd-proxy-socket /run/orbitd-proxy/rpc.sock \
 		>"${LOG_DIR}/exec-daemon.log" 2>&1 &
 
 	for _ in $(seq 1 150); do

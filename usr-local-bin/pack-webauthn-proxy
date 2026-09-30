@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Packs the WebAuthn proxy extension into a CRX at image build time and writes
-# every artifact that has to agree on its ID. A CRX because managed Chrome
-# silently ignores --load-extension; a force-install policy entry is the only
-# way in. The signing key is generated per build, so the extension ID changes
-# every build — safe only because every consumer of the ID is generated below
-# from the same key. A new consumer must be templated here too.
+# Chrome 137 removed --load-extension: https://developer.chrome.com/blog/extension-news-june-2025
 
 EXT_SRC=/usr/local/share/sand-webauthn-proxy
 CRX=/usr/local/share/sand-webauthn-proxy.crx
 UPDATE_XML=/usr/local/share/sand-webauthn-proxy-update.xml
 POLICY_DIR=/etc/opt/chrome/policies/managed
 NATIVE_HOST_DIR=/etc/opt/chrome/native-messaging-hosts
-KEY=/usr/local/share/sand-webauthn-proxy.pem
 
-# Chrome's --pack-extension-key wants PKCS#8; `openssl genrsa` emits PKCS#1 and
-# Chrome rejects it with a bare "Failed to read private key".
+# The image is public, so the signing key must not outlive this build step: https://docs.docker.com/engine/storage/drivers/
+KEY_DIR="$(mktemp -d)"
+trap 'rm -rf "${KEY_DIR}"' EXIT
+KEY="${KEY_DIR}/key.pem"
+
+# Chrome's --pack-extension-key parses the PEM as a PKCS#8 PrivateKeyInfo and rejects any other format, so the key is converted with pkcs8 -topk8 whatever this OpenSSL's genrsa emits: https://chromium.googlesource.com/chromium/src/+/b24e51fe3854abd62fc77477f7f05fc48905a108/extensions/browser/extension_creator.cc
 openssl genrsa 2048 2>/dev/null | openssl pkcs8 -topk8 -nocrypt -out "${KEY}"
 chmod 600 "${KEY}"
 
-# A `key` field in the manifest would override the signing key as the ID source.
 python3 - "${EXT_SRC}/manifest.json" <<'PY'
 import json, sys
 path = sys.argv[1]
@@ -31,13 +28,11 @@ PY
 
 VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "${EXT_SRC}/manifest.json")"
 
-# Chrome writes the CRX beside the source dir as <dir>.crx == ${CRX}.
 google-chrome-stable --no-sandbox --pack-extension="${EXT_SRC}" --pack-extension-key="${KEY}"
 test -f "${CRX}"
 chmod 644 "${CRX}"
 
-# The ID is the first 16 bytes of the SHA-256 of the DER public key, with each
-# hex nibble mapped 0-f -> a-p.
+# Chromium derives an extension ID from the first 16 bytes of the SHA-256 of the DER public key with each hex digit mapped 0-f to a-p, which this pipeline reproduces: https://chromium.googlesource.com/chromium/src/+/b24e51fe3854abd62fc77477f7f05fc48905a108/components/crx_file/id_util.cc
 EXT_ID="$(openssl rsa -in "${KEY}" -pubout -outform DER 2>/dev/null | python3 -c '
 import hashlib, sys
 digest = hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:32]
@@ -65,14 +60,10 @@ cat >"${NATIVE_HOST_DIR}/co.anysphere.sand.webauthn_proxy.json" <<EOF
 }
 EOF
 
-# The force-install entry is written at browser launch by box-chrome-policy
-# (opt-in), so it is pre-created box-writable here: /etc/opt/chrome is
-# root-owned.
 printf '{}\n' >"${POLICY_DIR}/sand-webauthn.json"
 chown box:box "${POLICY_DIR}/sand-webauthn.json"
 chmod 644 "${POLICY_DIR}/sand-webauthn.json"
 
-# Consumed by box-chrome to write the policy entry.
 printf '%s' "${EXT_ID}" >/usr/local/share/sand-webauthn-proxy.id
 
 echo "packed sand-webauthn-proxy ${VERSION} as ${EXT_ID}"

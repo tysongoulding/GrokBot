@@ -1,715 +1,273 @@
-// sand-file-length-exempt: 3739 lines at the W12-145b pin; a legacy in-box supervisor that predates check-file-budgets admitting .mjs (the row makes it visible, it does not grow it); follow-up: a split row for the register, because check-file-budgets prices no growth of a marked file (approved-by: @sand-audit-root-countersign-w12-145b, until: 2026-11-30)
 import http from "node:http";
 import https from "node:https";
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   appendFileSync,
-  chmodSync,
   closeSync,
-  copyFileSync,
-  cpSync,
   createWriteStream,
   existsSync,
   fstatSync,
-  lstatSync,
   mkdirSync,
   openSync,
   readFileSync,
-  readlinkSync,
-  readSync,
   readdirSync,
   renameSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import net from "node:net";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  SUPERVISOR_DIR,
+  COMMAND_PATH,
+  STATUS_PATH,
+  ACKS_DIR,
+  STAGED_BUNDLE_PATH,
+  AGENT_DATA_ROOT,
+  UPGRADE_APPLIED_PATH,
+  HOST_CRASH_MARKER_PATH,
+  HOST_DIR,
+  HOST_ENTRY,
+  HOST_NODE_WARNING_FLAG,
+  HOST_LOG_PATH,
+  HOST_VERSION_PATH,
+  IMAGE_SHA_PATH,
+  HOST_BUNDLE_BASE_URL_ENV,
+  HOST_BUNDLE_CHANNELS,
+  HOST_BUNDLE_DEFAULT_CHANNEL,
+  HOST_BUNDLE_CHANNEL_ENV,
+  BOOT_FETCH_GIT_SHA_REGEX,
+  BOOT_FETCH_BUDGET_MS_ENV,
+  BOOT_FETCH_BUDGET_DEFAULT_MS,
+  BOX_SCRIPTS_SOURCE_DIR,
+  BOX_SCRIPTS_BIN_DIR,
+  BOX_SCRIPTS_MARKER_PATH,
+  BOX_SCRIPTS_SYNC_DISABLED_ENV,
+  BOX_SCRIPTS_RETRY_BACKOFF_MS,
+  TICK_MS,
+  HEALTH_TIMEOUT_MS,
+  FORK_RFB_PROBE_TIMEOUT_MS,
+  FORK_RFB_FAILURE_THRESHOLD,
+  FORK_RFB_TERMINATE_GRACE_MS,
+  MAX_DEFER_MS,
+  POST_SWAP_HEALTHY_UPTIME_MS,
+  POST_SWAP_MAX_QUICK_EXITS,
+  POST_SWAP_MAX_RESTORE_ATTEMPTS,
+  numberFromEnv,
+  isDesktopSupervisionEnabled,
+  isHostSupervisionEnabled,
+  ownsBoxWideDuties,
+  ownsDesktopDuties,
+  supervisorRole,
+  log,
+} from "./sand-supervisor-contract.mjs";
+import {
+  parseGatewayEndpoint,
+  isSafeStagedBundlePath,
+  normalizeUpgradeMode,
+  commandRequiresIdle,
+  decideUpgradeAction,
+  isSandBoxAutoUpdateOptedOut,
+  shouldBootFetchHostBundle,
+  decidePostSwapAction,
+  classifyHostProcessExit,
+  classifyHostCrashMarkerWriteError,
+  decideHostAction,
+  shouldProcessCommand,
+  buildStatus,
+  parseHostBundleDigest,
+  createHostPolicy,
+} from "./sand-supervisor-host-policy.mjs";
+import { createProcessIdentity } from "./sand-supervisor-process-identity.mjs";
+import { CGROUP_INTERACTIVE } from "./sand-supervisor-cgroup-accounting.mjs";
+import { createRfbHandshake, parseForkRfbTokenRecord } from "./sand-supervisor-rfb-handshake.mjs";
+import {
+  hostBundleSwapTargets,
+  bundleSwapTargetsClearOfDataRoot,
+  createHostBundleStore,
+} from "./sand-supervisor-host-bundle.mjs";
+import {
+  desktopLogIdentity,
+  desktopRelaunchEnv,
+  isBoundedDesktopLogSpec,
+  createDesktopSupervisor,
+} from "./sand-supervisor-desktop.mjs";
 
-export const SUPERVISOR_DIR = "/tmp/sand-supervisor";
-export const COMMAND_PATH = `${SUPERVISOR_DIR}/command.json`;
-export const STATUS_PATH = `${SUPERVISOR_DIR}/status.json`;
-export const ACKS_DIR = `${SUPERVISOR_DIR}/acks`;
-export const STAGED_BUNDLE_PATH = `${SUPERVISOR_DIR}/incoming-host-bundle.tgz`;
-export const AGENT_DATA_ROOT = "/home/box/sand-data";
-// Basenames mirror HOST_UPGRADE_MARKER_BASENAME / HOST_CRASH_MARKER_BASENAME in
-// packages/grok-bot-harness/src/host-paths.ts (this .mjs has no workspace deps);
-// the crash-marker contract parity test pins both paths.
-export const UPGRADE_APPLIED_PATH = `${AGENT_DATA_ROOT}/.sand-host-upgrade.json`;
-export const HOST_CRASH_MARKER_PATH = `${AGENT_DATA_ROOT}/.sand-host-crash.json`;
-export const HOST_DIR = "/home/box/sand-host";
-export const HOST_ENTRY = `${HOST_DIR}/host-main.cjs`;
-export const HOST_NODE_WARNING_FLAG = "--disable-warning=ExperimentalWarning";
-export const HOST_LOG_PATH = "/tmp/sand-host.log";
-export const HOST_VERSION_PATH = `${HOST_DIR}/version`;
+export {
+  SUPERVISOR_DIR,
+  DEFAULT_SUPERVISOR_DIR,
+  SUPERVISOR_DIR_ENV,
+  DESKTOP_SUPERVISOR_DIR,
+  SUPERVISOR_ROLE_ENV,
+  SUPERVISOR_ROLES,
+  COMMAND_PATH,
+  STATUS_PATH,
+  ACKS_DIR,
+  STAGED_BUNDLE_PATH,
+  AGENT_DATA_ROOT,
+  UPGRADE_APPLIED_PATH,
+  HOST_CRASH_MARKER_PATH,
+  HOST_BUNDLE_ROOT,
+  HOST_DIR,
+  HOST_ENTRY,
+  HOST_NODE_WARNING_FLAG,
+  HOST_LOG_PATH,
+  HOST_VERSION_PATH,
+  IMAGE_SHA_PATH,
+  HOST_BUNDLE_CHANNELS,
+  HOST_BUNDLE_DEFAULT_CHANNEL,
+  BOOT_FETCH_GIT_SHA_REGEX,
+  HOST_BUNDLE_SHA256_REGEX,
+  DESKTOP_DIR,
+  DESKTOP_HEALTH_PATH,
+  DESKTOP_HEALTH_PATH_ENV,
+  DESKTOP_SUPERVISION_DISABLED_ENV,
+  BOX_SCRIPTS_SOURCE_DIR,
+  BOX_SCRIPTS_BIN_DIR,
+  BOX_SCRIPTS_MARKER_PATH,
+  BOX_SCRIPTS_SYNC_DISABLED_ENV,
+  BOX_SCRIPTS_RETRY_BACKOFF_MS,
+  BOX_SCRIPTS_DENY,
+  COMMAND_KINDS,
+  UPGRADE_MODES,
+  HOST_UPGRADE_MAX_DEFER_MS,
+  isDesktopSupervisionEnabled,
+  isHostSupervisionEnabled,
+  resolveSupervisorDir,
+  supervisorRole,
+  ownsBoxWideDuties,
+  ownsDesktopDuties,
+} from "./sand-supervisor-contract.mjs";
+export {
+  HOST_BUSY_STATES,
+  HOST_CRASH_EXIT_SIGNALS,
+  parseGatewayEndpoint,
+  isSafeStagedBundlePath,
+  normalizeUpgradeMode,
+  commandRequiresIdle,
+  decideUpgradeReadiness,
+  shouldForceHostUpgrade,
+  decideUpgradeAction,
+  isSandBoxAutoUpdateOptedOut,
+  shouldBootFetchHostBundle,
+  decidePostSwapAction,
+  normalizeHostCrashExitSignal,
+  classifyHostProcessExit,
+  decideHostAction,
+  nextBackoffMs,
+  shouldProcessCommand,
+  buildStatus,
+  parseHostBundleDigest,
+} from "./sand-supervisor-host-policy.mjs";
+export { isPidAlive, listenerArgvMatches } from "./sand-supervisor-process-identity.mjs";
+export {
+  CGROUP_ROOT,
+  CGROUP_INTERACTIVE,
+  CGROUP_AGENT,
+  parseCgroupCpuStat,
+  parseCgroupPressure,
+  formatCgroupCpuSample,
+} from "./sand-supervisor-cgroup-accounting.mjs";
+export { parseForkRfbTokenRecord } from "./sand-supervisor-rfb-handshake.mjs";
+export {
+  hostBundleSwapTargets,
+  bundleSwapTargetsClearOfDataRoot,
+  pathsOverlap,
+  classifySwapError,
+  classifyExtractError,
+} from "./sand-supervisor-host-bundle.mjs";
+export {
+  countRestartsInWindow,
+  decideDesktopComponentAction,
+  shouldDisableCompositor,
+  classifyDesktopDownReason,
+  desktopStateSignature,
+  buildDesktopHealthSnapshot,
+  desktopRelaunchEnv,
+} from "./sand-supervisor-desktop.mjs";
 
-export const IMAGE_SHA_PATH = "/etc/sand-box-image-sha";
-const HOST_BUNDLE_BASE_URL_ENV = "SAND_HOST_BUNDLE_S3_BASE_URL";
+const {
+  parseCommand,
+  verifyStagedBundleDigest,
+  gatewayDiscoveryPresence,
+  readGatewayDiscoveryRecord,
+} = createHostPolicy({ attempt });
+const processIdentity = createProcessIdentity({ attempt, safeRead });
+const {
+  inspectTcpPortListener,
+  isPidComm,
+  isExpectedForkRfbProcess,
+  isDockPid,
+  findCompositorReapTargets,
+  readProcStartTime,
+} = processIdentity;
+const { DesktopSupervisor, parseDesktopComponentDescriptor, desktopLogCursor } =
+  createDesktopSupervisor({
+    attempt,
+    safeRead,
+    atomicWrite,
+    closeLog,
+    processIdentity,
+  });
+const {
+  keepExistingHostBackup,
+  swapHostBundle,
+  restoreHostBundleFromBackup,
+  syncBoxScriptsFromDir,
+} = createHostBundleStore({
+  attempt,
+  safeUnlink,
+  safeRmRecursive,
+  readVersionMarker,
+  ensureDir,
+});
+
+export {
+  parseCommand,
+  verifyStagedBundleDigest,
+  gatewayDiscoveryPresence,
+  readGatewayDiscoveryRecord,
+  parseDesktopComponentDescriptor,
+  inspectTcpPortListener,
+  isPidComm,
+  isDockPid,
+  findCompositorReapTargets,
+  readProcStartTime,
+  keepExistingHostBackup,
+  swapHostBundle,
+  restoreHostBundleFromBackup,
+  syncBoxScriptsFromDir,
+};
+
+function attempt(operation) {
+  try {
+    return { ok: true, value: operation() };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
+
+function closeLog(fd) {
+  try {
+    closeSync(fd);
+    return null;
+  } catch (error) {
+    return error;
+  }
+}
+
 export const HOST_BUNDLE_DEFAULT_BASE_URL =
   "https://public-asphr-vm-daemon-bucket.s3.us-east-1.amazonaws.com/sand-host-bundle";
-export const HOST_BUNDLE_CHANNELS = ["latest", "stable"];
-export const HOST_BUNDLE_DEFAULT_CHANNEL = "latest";
-const HOST_BUNDLE_CHANNEL_ENV = "SAND_HOST_BUNDLE_CHANNEL";
-export const BOOT_FETCH_GIT_SHA_REGEX = /^[0-9a-f]{7,40}$/;
-export const HOST_BUNDLE_SHA256_REGEX = /^[0-9a-f]{64}$/;
-const BOOT_FETCH_BUDGET_MS_ENV = "SAND_SUPERVISOR_BOOT_FETCH_BUDGET_MS";
-const BOOT_FETCH_BUDGET_DEFAULT_MS = 20_000;
 
-export const DESKTOP_DIR = "/tmp/sand-desktop";
-export const DESKTOP_HEALTH_PATH = `${SUPERVISOR_DIR}/desktop-health.json`;
-export const DESKTOP_SUPERVISION_DISABLED_ENV = "SAND_DESKTOP_SUPERVISION_DISABLED";
-
-export const BOX_SCRIPTS_SOURCE_DIR = `${HOST_DIR}/box-scripts`;
-export const BOX_SCRIPTS_BIN_DIR = "/usr/local/bin";
-export const BOX_SCRIPTS_MARKER_PATH =
-  "/usr/local/share/sand-box-scripts/version";
-export const BOX_SCRIPTS_SYNC_DISABLED_ENV = "SAND_BOX_SCRIPT_SYNC_DISABLED";
-export const BOX_SCRIPTS_RETRY_BACKOFF_MS = 5 * 60_000;
-export const BOX_SCRIPTS_DENY = [
-  "start-sand-box",
-  "sand-exit-watch",
-  "sand-supervisor.mjs",
-  "fetch-exec-daemon",
-  "sand-desktop-supervise.sh",
-  "box-cgroups.sh",
-  "ensure-machine-id",
-  "box-xvfb",
-  "box-x11vnc",
-  "start-exec-daemon",
-  "supervise-exec-daemon",
-  "supervise-sand-supervisor",
-];
-
-export const COMMAND_KINDS = ["ping", "restart", "upgrade"];
-export const UPGRADE_MODES = ["bundle", "image", "restart"];
-
-const TICK_MS = numberFromEnv("SAND_SUPERVISOR_TICK_MS", 5_000, 250);
-const RESTART_BACKOFF_BASE_MS = 1_000;
-const RESTART_BACKOFF_MAX_MS = 60_000;
-const HEALTH_TIMEOUT_MS = 1_500;
-
-const DESKTOP_BACKOFF_BASE_MS = 1_000;
-const DESKTOP_BACKOFF_MAX_MS = 30_000;
-const DESKTOP_RESTART_WINDOW_MS = numberFromEnv(
-  "SAND_DESKTOP_RESTART_WINDOW_MS",
-  10 * 60_000,
-  1_000
-);
-const DESKTOP_RESTART_MAX_IN_WINDOW = numberFromEnv(
-  "SAND_DESKTOP_MAX_RESTARTS",
-  8,
-  1
-);
 // >>> box port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
 const FORK_RFB_TOKEN_DIR = "/tmp/sand-novnc-tokens.d";
 const FORK_RFB_WEBSOCKET_PORT = 6081;
 // <<< box port table <<<
-const FORK_RFB_PROBE_TIMEOUT_MS = 1_000;
-const FORK_RFB_FAILURE_THRESHOLD = 2;
-const FORK_RFB_TERMINATE_GRACE_MS = 5_000;
-const RFB_BANNER_LENGTH = 12;
-const RFB_SERVER_INIT_HEADER_LENGTH = 24;
-// Compositor give-up (SAND-161): a crash-looping picom smears the screen on
-// every relaunch, while a compositor-less desktop merely loses translucency
-// (xfwm4 runs --compositor=off; Plank paints an opaque fallback). After this
-// many crashloop episodes picom stays down (downReason `compositor-disabled`).
-const DESKTOP_COMPOSITOR_MAX_CRASHLOOPS = numberFromEnv(
-  "SAND_DESKTOP_COMPOSITOR_MAX_CRASHLOOPS",
-  3,
-  1
-);
-const DESKTOP_COMPOSITOR_NAME = "picom";
-const DESKTOP_DOCK_NAME = "dock";
-const DESKTOP_DOCK_COMMS = Object.freeze([
-  "plank",
-  "box-plank",
-  "box-bounded-log",
-]);
-const DESKTOP_LOG_TAIL_BYTES = 8_192;
-const DESKTOP_LOG_TAIL_LINES = 6;
-export const HOST_UPGRADE_MAX_DEFER_MS = 6 * 60 * 60 * 1000;
-const MAX_DEFER_MS = numberFromEnv(
-  "SAND_SUPERVISOR_MAX_DEFER_MS",
-  HOST_UPGRADE_MAX_DEFER_MS,
-  1_000
-);
-const POST_SWAP_HEALTHY_UPTIME_MS = numberFromEnv(
-  "SAND_SUPERVISOR_POST_SWAP_HEALTHY_MS",
-  60_000,
-  1_000
-);
-const POST_SWAP_MAX_QUICK_EXITS = numberFromEnv(
-  "SAND_SUPERVISOR_POST_SWAP_MAX_QUICK_EXITS",
-  3,
-  1
-);
-const POST_SWAP_MAX_RESTORE_ATTEMPTS = 5;
 export const POST_SWAP_CRASH_LOOP_ERROR_CLASS = "post-swap-crash-loop";
 export const POST_SWAP_ROLLBACK_FAILED_ERROR_CLASS = "rollback-failed";
 const PREPARE_UPGRADE_PATH = "/prepare-upgrade";
-
-function numberFromEnv(name, fallback, min) {
-  const raw = process.env[name];
-  if (raw == null || raw.length === 0) return fallback;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) return fallback;
-  return Math.max(min, parsed);
-}
-
-export function parseCommand(raw) {
-  let value;
-  try {
-    value = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (typeof value !== "object" || value === null) return null;
-  if (typeof value.id !== "string" || value.id.length === 0) return null;
-  if (typeof value.kind !== "string" || !COMMAND_KINDS.includes(value.kind)) {
-    return null;
-  }
-  const issuedAtMs =
-    typeof value.issuedAtMs === "number" && Number.isFinite(value.issuedAtMs)
-      ? value.issuedAtMs
-      : 0;
-  return {
-    id: value.id,
-    kind: value.kind,
-    issuedAtMs,
-    reason: typeof value.reason === "string" ? value.reason : undefined,
-    mode:
-      typeof value.mode === "string" && UPGRADE_MODES.includes(value.mode)
-        ? value.mode
-        : undefined,
-    version: typeof value.version === "string" ? value.version : undefined,
-    bundlePath:
-      typeof value.bundlePath === "string" ? value.bundlePath : undefined,
-    sha256: typeof value.sha256 === "string" ? value.sha256 : undefined,
-    forceNow: value.forceNow === true ? true : undefined,
-  };
-}
-
-export function verifyStagedBundleDigest(bundlePath, expectedSha256) {
-  if (expectedSha256 == null) return { ok: false, reason: "digest_missing" };
-  if (!HOST_BUNDLE_SHA256_REGEX.test(expectedSha256)) {
-    return { ok: false, reason: "digest_malformed" };
-  }
-  let bytes;
-  try {
-    bytes = readFileSync(bundlePath);
-  } catch {
-    return { ok: false, reason: "bundle-missing" };
-  }
-  const actualSha256 = createHash("sha256").update(bytes).digest("hex");
-  return actualSha256 === expectedSha256
-    ? { ok: true, bytes }
-    : { ok: false, reason: "digest_mismatch", actualSha256 };
-}
-
-export function parseGatewayEndpoint(value) {
-  if (typeof value !== "object" || value === null) return null;
-  if (typeof value.port !== "number") return null;
-  return {
-    port: value.port,
-    token:
-      typeof value.token === "string" && value.token.length > 0
-        ? value.token
-        : undefined,
-  };
-}
-
-export function isSafeStagedBundlePath(path) {
-  if (typeof path !== "string" || path.length === 0) return false;
-  if (path.includes("\0")) return false;
-  if (path.split("/").some((segment) => segment === "..")) return false;
-  if (!path.startsWith(`${SUPERVISOR_DIR}/`)) return false;
-  const rest = path.slice(SUPERVISOR_DIR.length + 1);
-  return rest.length > 0 && rest.endsWith(".tgz");
-}
-
-export function normalizeUpgradeMode(command) {
-  if (command.mode === "bundle" || command.mode === "restart") {
-    return command.mode;
-  }
-  if (command.mode === "image") return "image";
-  if (
-    typeof command.bundlePath === "string" &&
-    isSafeStagedBundlePath(command.bundlePath)
-  ) {
-    return "bundle";
-  }
-  return "image";
-}
-
-export function commandRequiresIdle(kind) {
-  return kind === "restart" || kind === "upgrade";
-}
-
-export const HOST_BUSY_STATES = ["no-host", "idle", "busy", "unknown"];
-
-export function decideUpgradeReadiness({ kind, busyState }) {
-  if (!commandRequiresIdle(kind)) return "proceed";
-  if (busyState === "idle" || busyState === "no-host") return "proceed";
-  return "defer";
-}
-
-export function shouldForceHostUpgrade({
-  deferredForMs,
-  maxDeferMs = MAX_DEFER_MS,
-}) {
-  if (!Number.isFinite(maxDeferMs) || maxDeferMs <= 0) return false;
-  if (!Number.isFinite(deferredForMs) || deferredForMs < 0) return false;
-  return deferredForMs >= maxDeferMs;
-}
-
-export function decideUpgradeAction({
-  kind,
-  busyState,
-  deferredForMs,
-  maxDeferMs = MAX_DEFER_MS,
-  forceNow = false,
-}) {
-  if (decideUpgradeReadiness({ kind, busyState }) === "proceed") {
-    return "proceed";
-  }
-  if (
-    kind === "upgrade" &&
-    (forceNow === true || shouldForceHostUpgrade({ deferredForMs, maxDeferMs }))
-  ) {
-    return "force";
-  }
-  return "defer";
-}
-
-export function isSandBoxAutoUpdateOptedOut(env) {
-  const raw = env.SAND_BOX_AUTO_UPDATE?.trim().toLowerCase();
-  return raw === "0" || raw === "false" || raw === "no";
-}
-
-export function shouldBootFetchHostBundle({
-  hostSupervisionEnabled,
-  autoUpdateOptedOut,
-  bundlePresent,
-  localVersion,
-  imageSha,
-}) {
-  if (!hostSupervisionEnabled) return false;
-  if (autoUpdateOptedOut) return false;
-  if (!bundlePresent) return false;
-  if (localVersion == null || imageSha == null) return false;
-  return localVersion === imageSha;
-}
-
-export function decidePostSwapAction({
-  armed,
-  exitLaunchedAtMs,
-  appliedAtMs,
-  uptimeMs,
-  quickExits,
-  maxQuickExits = POST_SWAP_MAX_QUICK_EXITS,
-  healthyUptimeMs = POST_SWAP_HEALTHY_UPTIME_MS,
-}) {
-  if (!armed) return "none";
-  if (
-    !Number.isFinite(exitLaunchedAtMs) ||
-    exitLaunchedAtMs < appliedAtMs
-  ) {
-    return "none";
-  }
-  if (uptimeMs >= healthyUptimeMs) return "healthy";
-  return quickExits + 1 >= maxQuickExits ? "rollback" : "count";
-}
-
-export function bundleSwapTargetsClearOfDataRoot(
-  { hostDir, stageDir, backupDir },
-  dataRoot
-) {
-  return [hostDir, stageDir, backupDir]
-    .filter((target) => target != null)
-    .every((target) => !pathsOverlap(target, dataRoot));
-}
-
-export function pathsOverlap(a, b) {
-  const sa = pathSegments(a);
-  const sb = pathSegments(b);
-  if (sa.length === 0 || sb.length === 0) return true;
-  const shorter = sa.length <= sb.length ? sa : sb;
-  const longer = sa.length <= sb.length ? sb : sa;
-  return shorter.every((segment, i) => segment === longer[i]);
-}
-
-function pathSegments(path) {
-  return String(path ?? "")
-    .split("/")
-    .filter((segment) => segment.length > 0 && segment !== ".");
-}
-
-export const HOST_CRASH_EXIT_SIGNALS = Object.freeze([
-  "SIGABRT",
-  "SIGALRM",
-  "SIGBUS",
-  "SIGFPE",
-  "SIGHUP",
-  "SIGILL",
-  "SIGINT",
-  "SIGKILL",
-  "SIGPIPE",
-  "SIGQUIT",
-  "SIGSEGV",
-  "SIGTERM",
-  "SIGTRAP",
-  "SIGUSR1",
-  "SIGUSR2",
-  "SIGXCPU",
-  "SIGXFSZ",
-]);
-
-const HOST_CRASH_EXIT_SIGNAL_SET = new Set(HOST_CRASH_EXIT_SIGNALS);
-
-export function normalizeHostCrashExitSignal(signal) {
-  if (signal == null) return "none";
-  return HOST_CRASH_EXIT_SIGNAL_SET.has(signal) ? signal : "other";
-}
-
-export function classifyHostProcessExit({
-  code,
-  signal,
-  startedAtMs,
-  crashedAtMs,
-  uptimeMs,
-}) {
-  const exitSignal = normalizeHostCrashExitSignal(signal);
-  if (exitSignal !== "none") {
-    return {
-      schemaVersion: 1,
-      errorClass: "signal_exit",
-      exitSignal,
-      startedAtMs,
-      crashedAtMs,
-      uptimeMs,
-    };
-  }
-  if (typeof code === "number") {
-    return {
-      schemaVersion: 1,
-      errorClass: code === 0 ? "unexpected_clean_exit" : "nonzero_exit",
-      exitSignal: "none",
-      startedAtMs,
-      crashedAtMs,
-      uptimeMs,
-    };
-  }
-  return {
-    schemaVersion: 1,
-    errorClass: "unobserved_exit",
-    exitSignal: "unknown",
-    ...(startedAtMs === undefined ? {} : { startedAtMs }),
-    crashedAtMs,
-    ...(uptimeMs === undefined ? {} : { uptimeMs }),
-  };
-}
-
-function classifyHostCrashMarkerWriteError(error) {
-  const code =
-    error != null && typeof error === "object" ? error.code : undefined;
-  switch (code) {
-    case "ENOSPC":
-      return "no_space";
-    case "EROFS":
-      return "read_only";
-    case "EACCES":
-    case "EPERM":
-      return "permission";
-    case "ENOTDIR":
-      return "not_directory";
-    default:
-      return "unknown";
-  }
-}
-
-export function decideHostAction({
-  bundlePresent,
-  hostRunning,
-  isBusy,
-  lastExitAtMs,
-  restartAttempts,
-  nowMs,
-}) {
-  if (!bundlePresent) return "noop";
-  if (hostRunning) return "noop";
-  if (isBusy) return "wait";
-  if (lastExitAtMs == null) return "launch";
-  const backoff = nextBackoffMs(restartAttempts);
-  return nowMs - lastExitAtMs >= backoff ? "restart" : "wait";
-}
-
-export function nextBackoffMs(
-  attempts,
-  baseMs = RESTART_BACKOFF_BASE_MS,
-  maxMs = RESTART_BACKOFF_MAX_MS
-) {
-  const exp = Math.min(attempts, 16);
-  return Math.min(maxMs, baseMs * 2 ** exp);
-}
-
-export function isDesktopSupervisionEnabled(env = process.env) {
-  const raw = env[DESKTOP_SUPERVISION_DISABLED_ENV];
-  const v = typeof raw === "string" ? raw.trim().toLowerCase() : "";
-  return !(v === "1" || v === "true" || v === "yes");
-}
-
-export function isHostSupervisionEnabled(env = process.env) {
-  return env.SAND_SUPERVISOR_ENABLED === "1";
-}
-
-export function parseDesktopComponentDescriptor(raw) {
-  let value;
-  try {
-    value = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return null;
-  }
-  if (!Array.isArray(value.argv) || value.argv.length === 0) return null;
-  if (!value.argv.every((a) => typeof a === "string" && a.length > 0)) {
-    return null;
-  }
-  const order =
-    typeof value.order === "number" && Number.isInteger(value.order)
-      ? value.order
-      : 0;
-  const logFile =
-    typeof value.logFile === "string" && value.logFile.length > 0
-      ? value.logFile
-      : null;
-  const pidFile =
-    typeof value.pidFile === "string" && value.pidFile.length > 0
-      ? value.pidFile
-      : null;
-  const listenPort =
-    Number.isInteger(value.listenPort) &&
-    value.listenPort > 0 &&
-    value.listenPort <= 65_535
-      ? value.listenPort
-      : null;
-  const env = {};
-  if (
-    value.env != null &&
-    typeof value.env === "object" &&
-    !Array.isArray(value.env)
-  ) {
-    for (const [k, v] of Object.entries(value.env)) {
-      if (typeof v === "string" && v.length > 0) env[k] = v;
-    }
-  }
-  return { argv: value.argv, env, order, logFile, pidFile, listenPort };
-}
-
-export function countRestartsInWindow(timestamps, nowMs, windowMs) {
-  const cutoff = nowMs - windowMs;
-  return timestamps.reduce((n, t) => (t >= cutoff ? n + 1 : n), 0);
-}
-
-export function decideDesktopComponentAction({
-  supervisionEnabled,
-  running,
-  lastExitAtMs,
-  restartsInWindow,
-  maxRestarts,
-  nowMs,
-  baseBackoffMs = DESKTOP_BACKOFF_BASE_MS,
-  maxBackoffMs = DESKTOP_BACKOFF_MAX_MS,
-}) {
-  if (!supervisionEnabled) return "noop";
-  if (running) return "noop";
-  if (restartsInWindow >= maxRestarts) return "crashloop";
-  if (lastExitAtMs == null) return "restart";
-  const backoff = nextBackoffMs(restartsInWindow, baseBackoffMs, maxBackoffMs);
-  return nowMs - lastExitAtMs >= backoff ? "restart" : "wait";
-}
-
-export function shouldDisableCompositor({
-  name,
-  crashloopEpisodes,
-  maxEpisodes = DESKTOP_COMPOSITOR_MAX_CRASHLOOPS,
-}) {
-  if (name !== DESKTOP_COMPOSITOR_NAME) return false;
-  return (
-    Number.isFinite(crashloopEpisodes) && crashloopEpisodes >= maxEpisodes
-  );
-}
-
-export function classifyDesktopDownReason({
-  exitCode = null,
-  signal = null,
-  logTail = "",
-} = {}) {
-  const tail = typeof logTail === "string" ? logTail : "";
-  if (/could ?n[o']?t obtain listening port|address already in use|trouble binding|failed to bind/i.test(tail)) {
-    return "port-in-use";
-  }
-  if (/server is already active|already active for display|cannot establish any listening sockets/i.test(tail)) {
-    return "x-server-active";
-  }
-  if (/another composite manager is already running|another (?:window manager|wm)\b.*\b(?:is already running|is running)/i.test(tail)) {
-    return "already-running";
-  }
-  if (/can(?:no|')t open display|cannot open display|unable to open display|couldn't open display|no display/i.test(tail)) {
-    return "no-display";
-  }
-  if (/out of memory|cannot allocate memory|bad_alloc|std::bad_alloc/i.test(tail)) {
-    return "oom";
-  }
-  if (/\bglx\b|opengl|\begl\b|glamor|failed to initialize.*backend|render.*backend/i.test(tail)) {
-    return "glx";
-  }
-  if (/fatal io error|lost connection to x server|connection to .*(broken|reset)|\bxio\b/i.test(tail)) {
-    return "x-io-error";
-  }
-  if (typeof signal === "string" && /^SIG[A-Z0-9]+$/.test(signal)) {
-    return `signal-${signal}`;
-  }
-  if (/fatal server error/i.test(tail)) {
-    return "fatal-server";
-  }
-  if (Number.isInteger(exitCode) && exitCode !== 0) {
-    return `exit-${exitCode}`;
-  }
-  return "unknown";
-}
-
-export function desktopStateSignature(components) {
-  return components
-    .map(
-      (c) =>
-        `${c.group}/${c.name}:${c.up ? 1 : 0}:${c.crashloop ? 1 : 0}:${
-          c.up ? "" : c.downReason ?? ""
-        }`
-    )
-    .sort()
-    .join("|");
-}
-
-export function buildDesktopHealthSnapshot({
-  supervisionEnabled,
-  components,
-  nowMs,
-  revision,
-}) {
-  const total = components.length;
-  const up = components.filter((c) => c.up === true).length;
-  const crashlooping = components.filter((c) => c.crashloop === true).length;
-  const restartsInWindow = components.reduce(
-    (n, c) => n + (Number.isFinite(c.restartsInWindow) ? c.restartsInWindow : 0),
-    0
-  );
-  return {
-    updatedAtMs: nowMs,
-    revision,
-    supervisionEnabled,
-    total,
-    up,
-    down: total - up,
-    crashlooping,
-    restartsInWindow,
-    components: components.map((c) => {
-      const component = {
-        name: `${c.group}/${c.name}`,
-        up: c.up === true,
-        crashloop: c.crashloop === true,
-        restartsInWindow: Number.isFinite(c.restartsInWindow)
-          ? c.restartsInWindow
-          : 0,
-      };
-      if (component.up !== true && typeof c.downReason === "string" && c.downReason.length > 0) {
-        component.downReason = c.downReason;
-      }
-      return component;
-    }),
-  };
-}
-
-// process.kill(pid, 0) throws ESRCH when the process is gone, EPERM when it
-// exists but we can't signal it (treated as alive).
-export function isPidAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return error != null && error.code === "EPERM";
-  }
-}
-
-function createRfbHandshake(send, settle) {
-  let received = Buffer.alloc(0);
-  let stage = "version";
-  let securityTypeCount = 0;
-  let serverNameLength = 0;
-  const take = (length) => {
-    if (received.length < length) return null;
-    const value = received.subarray(0, length);
-    received = received.subarray(length);
-    return value;
-  };
-  return (chunk) => {
-    received = Buffer.concat([received, chunk]);
-    for (;;) {
-      if (stage === "version") {
-        const banner = take(RFB_BANNER_LENGTH);
-        if (banner == null) return;
-        if (banner.toString("ascii") !== "RFB 003.008\n") return settle(false);
-        send(Buffer.from("RFB 003.008\n"));
-        stage = "security-count";
-      } else if (stage === "security-count") {
-        const count = take(1);
-        if (count == null) return;
-        securityTypeCount = count[0];
-        if (securityTypeCount === 0) return settle(false);
-        stage = "security-types";
-      } else if (stage === "security-types") {
-        const types = take(securityTypeCount);
-        if (types == null) return;
-        if (!types.includes(1)) return settle(false);
-        send(Buffer.from([1]));
-        stage = "security-result";
-      } else if (stage === "security-result") {
-        const result = take(4);
-        if (result == null) return;
-        if (result.readUInt32BE(0) !== 0) return settle(false);
-        send(Buffer.from([1]));
-        stage = "server-init";
-      } else if (stage === "server-init") {
-        const header = take(RFB_SERVER_INIT_HEADER_LENGTH);
-        if (header == null) return;
-        const width = header.readUInt16BE(0);
-        const height = header.readUInt16BE(2);
-        const bitsPerPixel = header[4];
-        const depth = header[5];
-        serverNameLength = header.readUInt32BE(20);
-        if (
-          width === 0 ||
-          height === 0 ||
-          ![8, 16, 32].includes(bitsPerPixel) ||
-          depth === 0 ||
-          depth > bitsPerPixel ||
-          serverNameLength > 64 * 1024
-        ) {
-          return settle(false);
-        }
-        stage = "server-name";
-      } else {
-        const name = take(serverNameLength);
-        if (name == null) return;
-        return settle(true);
-      }
-    }
-  };
-}
 
 export function probeRfbTcp(port, timeoutMs = FORK_RFB_PROBE_TIMEOUT_MS) {
   return new Promise((resolve) => {
@@ -718,23 +276,24 @@ export function probeRfbTcp(port, timeoutMs = FORK_RFB_PROBE_TIMEOUT_MS) {
     const settle = (healthy) => {
       if (settled) return;
       settled = true;
-      clearTimeout(deadline);
+      for (const timer of [deadline, totalDeadline]) clearTimeout(timer);
       socket.destroy();
       resolve(healthy);
     };
     const feed = createRfbHandshake((bytes) => socket.write(bytes), settle);
-    const deadline = setTimeout(() => settle(false), timeoutMs);
-    socket.on("data", feed);
+    const [deadline, totalDeadline] = [timeoutMs, timeoutMs * 5].map((budget) =>
+      setTimeout(() => settle(false), budget),
+    );
+    socket.on("data", (chunk) => {
+      if (chunk.length > 0) deadline.refresh();
+      feed(chunk);
+    });
     socket.on("error", () => settle(false));
     socket.on("end", () => settle(false));
   });
 }
 
-export function probeRfbWebSocket({
-  port,
-  token,
-  timeoutMs = FORK_RFB_PROBE_TIMEOUT_MS,
-}) {
+export function probeRfbWebSocket({ port, token, timeoutMs = FORK_RFB_PROBE_TIMEOUT_MS }) {
   return new Promise((resolve) => {
     if (typeof WebSocket !== "function") {
       resolve(false);
@@ -754,20 +313,24 @@ export function probeRfbWebSocket({
     const settle = (healthy) => {
       if (settled) return;
       settled = true;
-      clearTimeout(deadline);
+      for (const timer of [deadline, totalDeadline]) clearTimeout(timer);
       try {
         socket.close();
       } catch {}
       resolve(healthy);
     };
     const feed = createRfbHandshake((bytes) => socket.send(bytes), settle);
-    const deadline = setTimeout(() => settle(false), timeoutMs);
+    const [deadline, totalDeadline] = [timeoutMs, timeoutMs * 5].map((budget) =>
+      setTimeout(() => settle(false), budget),
+    );
     socket.addEventListener("message", (event) => {
       if (typeof event.data === "string") {
         settle(false);
         return;
       }
-      feed(Buffer.from(event.data));
+      const chunk = Buffer.from(event.data);
+      if (chunk.length > 0) deadline.refresh();
+      feed(chunk);
     });
     socket.addEventListener("error", () => settle(false));
     socket.addEventListener("close", () => settle(false));
@@ -786,363 +349,22 @@ export async function probeForkRfbChain({
   return (await probeRfbTcp(vncPort, timeoutMs)) ? "fork-websockify" : "x11vnc";
 }
 
-export function parseForkRfbTokenRecord(fileName, raw) {
-  if (!/^[0-9]+$/.test(fileName)) return null;
-  const display = Number.parseInt(fileName, 10);
-  if (!Number.isInteger(display) || display < 2) return null;
-  const match = /^([^:\s]+):\s+(.+):([0-9]+)\s*$/.exec(raw);
-  if (match == null || match[1] !== fileName) return null;
-  const vncPort = Number.parseInt(match[3], 10);
-  if (!Number.isInteger(vncPort) || vncPort <= 0 || vncPort > 65_535) {
-    return null;
-  }
-  return { display, token: fileName, vncPort };
-}
-
-function listenerInspectionUnavailable(reason) {
-  return { status: "unavailable", reason, startTime: null };
-}
-
-function stableListenerInspection(pid, procRoot, startTime, status, reason) {
-  const after = readProcStartTime(pid, procRoot);
-  if (after == null) return listenerInspectionUnavailable("pid-stat-unreadable");
-  if (after !== startTime) {
-    return listenerInspectionUnavailable("pid-identity-changed");
-  }
-  return { status, reason, startTime };
-}
-
-export function inspectTcpPortListener(
-  pid,
-  port,
-  procRoot = "/proc",
-  expectedArgv = null
-) {
-  if (
-    !Number.isInteger(pid) ||
-    pid <= 0 ||
-    !Number.isInteger(port) ||
-    port <= 0 ||
-    port > 65_535
-  ) {
-    return listenerInspectionUnavailable("invalid-input");
-  }
-  const startTime = readProcStartTime(pid, procRoot);
-  if (startTime == null) return listenerInspectionUnavailable("pid-stat-unreadable");
-  if (expectedArgv != null) {
-    const rawCmdline = safeRead(join(procRoot, String(pid), "cmdline"));
-    if (rawCmdline == null) {
-      return listenerInspectionUnavailable("pid-cmdline-unreadable");
-    }
-    const actualArgv = rawCmdline.split("\0");
-    if (actualArgv.at(-1) === "") actualArgv.pop();
-    const argvMatches =
-      Array.isArray(expectedArgv) &&
-      actualArgv.length === expectedArgv.length &&
-      actualArgv.every((value, index) => value === expectedArgv[index]);
-    if (!argvMatches) {
-      return stableListenerInspection(
-        pid,
-        procRoot,
-        startTime,
-        "missing",
-        "pid-argv-mismatch"
-      );
-    }
-  }
-
-  const rawTcp = safeRead(join(procRoot, "net/tcp"));
-  if (rawTcp == null) {
-    return listenerInspectionUnavailable("ipv4-listener-table-unreadable");
-  }
-  const lines = rawTcp.split("\n");
-  const header = lines.shift()?.trim().split(/\s+/) ?? [];
-  if (
-    header[0] !== "sl" ||
-    header[1] !== "local_address" ||
-    header[2] !== "rem_address" ||
-    header[3] !== "st"
-  ) {
-    return listenerInspectionUnavailable("ipv4-listener-table-malformed");
-  }
-
-  const portHex = port.toString(16).toUpperCase().padStart(4, "0");
-  const listenerInodes = new Set();
-  for (const line of lines) {
-    if (line.trim().length === 0) continue;
-    const fields = line.trim().split(/\s+/);
-    const localAddress = /^([0-9A-Fa-f]{8}):([0-9A-Fa-f]{4})$/.exec(
-      fields[1] ?? ""
-    );
-    if (
-      fields.length < 10 ||
-      !/^\d+:$/.test(fields[0] ?? "") ||
-      localAddress == null ||
-      !/^[0-9A-Fa-f]{2}$/.test(fields[3] ?? "") ||
-      !/^\d+$/.test(fields[9] ?? "")
-    ) {
-      return listenerInspectionUnavailable("ipv4-listener-table-malformed");
-    }
-    if (fields[3].toUpperCase() !== "0A") continue;
-    const [, address, observedPort] = localAddress;
-    if (
-      observedPort.toUpperCase() === portHex &&
-      (address.toUpperCase() === "00000000" ||
-        address.toUpperCase() === "0100007F")
-    ) {
-      listenerInodes.add(fields[9]);
-    }
-  }
-  if (listenerInodes.size === 0) {
-    return stableListenerInspection(
-      pid,
-      procRoot,
-      startTime,
-      "missing",
-      "usable-ipv4-listener-absent"
-    );
-  }
-
-  let descriptors;
-  try {
-    descriptors = readdirSync(join(procRoot, String(pid), "fd"));
-  } catch {
-    return listenerInspectionUnavailable("pid-fd-table-unreadable");
-  }
-  let descriptorRaced = false;
-  for (const descriptor of descriptors) {
-    let target;
-    try {
-      target = readlinkSync(join(procRoot, String(pid), "fd", descriptor));
-    } catch {
-      descriptorRaced = true;
-      continue;
-    }
-    const socket = /^socket:\[(\d+)\]$/.exec(target);
-    if (socket != null && listenerInodes.has(socket[1])) {
-      return stableListenerInspection(
-        pid,
-        procRoot,
-        startTime,
-        "listening",
-        "owned-usable-ipv4-listener"
-      );
-    }
-  }
-  if (descriptorRaced) {
-    return listenerInspectionUnavailable("pid-fd-table-raced");
-  }
-  return stableListenerInspection(
-    pid,
-    procRoot,
-    startTime,
-    "missing",
-    "usable-ipv4-listener-not-owned"
-  );
-}
-
-export function isPidComm(pid, name, procRoot = "/proc") {
-  if (!Number.isInteger(pid) || pid <= 0 || typeof name !== "string" || name.length === 0) {
-    return false;
-  }
-  try {
-    const comm = readFileSync(join(procRoot, String(pid), "comm"), "utf8").trim();
-    return comm === name;
-  } catch {
-    return false;
-  }
-}
-
-function isExpectedForkRfbProcess({
-  pid,
-  startTime,
-  name,
-  port,
-  procRoot,
-}) {
-  const comm = name === "x11vnc" ? "x11vnc" : "websockify";
-  if (!isPidComm(pid, comm, procRoot)) return false;
-  const rawCmdline = safeRead(join(procRoot, String(pid), "cmdline"));
-  if (rawCmdline == null) return false;
-  const argv = rawCmdline.split("\0");
-  const matches =
-    name === "x11vnc"
-      ? argv.some(
-          (value, index) =>
-            value === "-rfbport" && argv[index + 1] === String(port)
-        )
-      : argv.includes(`0.0.0.0:${port}`);
-  return matches && readProcStartTime(pid, procRoot) === startTime;
-}
-
-// SAND-1112: a box restored from a memory snapshot resumes with the snapshot's
-// dock pid, which may have been recycled by an unrelated process — a bare
-// liveness check then reads "up" forever and the desktop stays dockless.
-// Checking comm against the launch chain's names rejects that.
-export function isDockPid(pid) {
-  return DESKTOP_DOCK_COMMS.some((comm) => isPidComm(pid, comm));
-}
-
-export function findCompositorReapTargets({
-  display,
-  procRoot = "/proc",
-  ownPid = process.pid,
-  comm = DESKTOP_COMPOSITOR_NAME,
-}) {
-  if (typeof display !== "string" || display.length === 0) return [];
-  let entries;
-  try {
-    entries = readdirSync(procRoot);
-  } catch {
-    return [];
-  }
-  const targets = [];
-  for (const entry of entries) {
-    if (!/^\d+$/.test(entry)) continue;
-    const pid = Number.parseInt(entry, 10);
-    if (!Number.isInteger(pid) || pid <= 0 || pid === ownPid) continue;
-    let procComm;
-    try {
-      procComm = readFileSync(join(procRoot, entry, "comm"), "utf8").trim();
-    } catch {
-      continue;
-    }
-    if (procComm !== comm) continue;
-    let environ;
-    try {
-      environ = readFileSync(join(procRoot, entry, "environ"), "utf8");
-    } catch {
-      continue;
-    }
-    const envDisplay = environ
-      .split("\0")
-      .find((kv) => kv.startsWith("DISPLAY="));
-    if (envDisplay === `DISPLAY=${display}`) targets.push(pid);
-  }
-  return targets;
-}
-
-// The starttime field (22) of /proc/<pid>/stat: pid + starttime is the
-// kernel-stable identity anchor — a recycled pid gets a NEW starttime. comm is
-// parsed from the LAST ')' because comm itself may contain parentheses.
-export function readProcStartTime(pid, procRoot = "/proc") {
-  if (!Number.isInteger(pid) || pid <= 0) return null;
-  let raw;
-  try {
-    raw = readFileSync(join(procRoot, String(pid), "stat"), "utf8");
-  } catch {
-    return null;
-  }
-  const close = raw.lastIndexOf(")");
-  if (close === -1) return null;
-  const fields = raw.slice(close + 1).trim().split(/\s+/);
-  // Post-comm slice: state is index 0, so overall field 22 (starttime) is 19.
-  const startTime = fields[19];
-  return typeof startTime === "string" && /^\d+$/.test(startTime) ? startTime : null;
-}
-
-export const CGROUP_ROOT = process.env.SAND_CGROUP_ROOT ?? "/sys/fs/cgroup";
-export const CGROUP_INTERACTIVE = "interactive";
-export const CGROUP_AGENT = "agent";
-const CGROUP_SAMPLE_MS = numberFromEnv("SAND_CGROUP_SAMPLE_MS", 60_000, 1_000);
-
-// cpu.stat is `key value` lines in microseconds; throttling counters exist only
-// once a cpu.max limit is set.
-export function parseCgroupCpuStat(raw) {
-  if (typeof raw !== "string") return null;
-  const out = {};
-  for (const line of raw.split("\n")) {
-    const [key, value] = line.trim().split(/\s+/);
-    if (key == null || value == null) continue;
-    const parsed = Number.parseInt(value, 10);
-    if (!Number.isFinite(parsed)) continue;
-    out[key] = parsed;
-  }
-  return typeof out.usage_usec === "number" ? out : null;
-}
-
-// cpu.pressure (PSI) is `some avg10=… total=<usec>` / `full avg10=… total=<usec>`;
-// `full` is not reported for CPU on all kernels, so it is optional.
-export function parseCgroupPressure(raw) {
-  if (typeof raw !== "string") return null;
-  const out = { someTotalUsec: null, fullTotalUsec: null };
-  for (const line of raw.split("\n")) {
-    const trimmed = line.trim();
-    const match = /^(some|full)\b.*\btotal=(\d+)/.exec(trimmed);
-    if (match == null) continue;
-    const total = Number.parseInt(match[2], 10);
-    if (!Number.isFinite(total)) continue;
-    if (match[1] === "some") out.someTotalUsec = total;
-    else out.fullTotalUsec = total;
-  }
-  return out.someTotalUsec == null && out.fullTotalUsec == null ? null : out;
-}
-
-export function formatCgroupCpuSample({ group, prev, next, elapsedMs }) {
-  if (prev == null || next == null) return null;
-  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return null;
-  const usageDelta = next.usageUsec - prev.usageUsec;
-  if (!Number.isFinite(usageDelta) || usageDelta < 0) return null;
-  const elapsedUsec = elapsedMs * 1000;
-  const cpuPct = (usageDelta / elapsedUsec) * 100;
-  const parts = [
-    `cgroup ${group}: cpu=${cpuPct.toFixed(1)}% of 1 core`,
-    `over ${Math.round(elapsedMs / 1000)}s`,
-  ];
-  if (prev.stallUsec != null && next.stallUsec != null) {
-    const stallDelta = next.stallUsec - prev.stallUsec;
-    if (Number.isFinite(stallDelta) && stallDelta >= 0) {
-      parts.push(`stalled=${((stallDelta / elapsedUsec) * 100).toFixed(1)}%`);
-    }
-  }
-  if (
-    prev.throttledUsec != null &&
-    next.throttledUsec != null &&
-    next.throttledUsec - prev.throttledUsec > 0
-  ) {
-    const throttleDelta = next.throttledUsec - prev.throttledUsec;
-    parts.push(`throttled=${((throttleDelta / elapsedUsec) * 100).toFixed(1)}%`);
-  }
-  return parts.join(" ");
-}
-
-export function shouldProcessCommand(command, isAcked) {
-  if (command == null) return false;
-  return !isAcked;
-}
-
-export function buildStatus({
-  nowMs,
-  hostBundlePresent,
-  hostRunning,
-  hostVersion,
-  pendingUpgradeVersion,
-  lastCommandId,
-  lastCommandKind,
-}) {
-  return {
-    updatedAtMs: nowMs,
-    hostBundlePresent,
-    hostRunning,
-    hostVersion: hostVersion ?? null,
-    pendingUpgradeVersion: pendingUpgradeVersion ?? null,
-    lastCommandId: lastCommandId ?? null,
-    lastCommandKind: lastCommandKind ?? null,
-  };
-}
-
-export class Supervisor {
+export class Supervisor extends DesktopSupervisor {
   constructor(opts = {}) {
+    super();
     this.markerPath = opts.markerPath ?? UPGRADE_APPLIED_PATH;
     this.crashMarkerPath = opts.crashMarkerPath ?? HOST_CRASH_MARKER_PATH;
     this.imageShaPath = opts.imageShaPath ?? IMAGE_SHA_PATH;
+    this.commandPath = opts.commandPath ?? COMMAND_PATH;
+    this.acksDir = opts.acksDir ?? ACKS_DIR;
+    this.gatewayRecordPath = opts.gatewayRecordPath ?? join(AGENT_DATA_ROOT, "gateway.json");
+    this.appliedCommandIds = new Set();
+    this.stuckCommand = null;
     this.bootFetchBudgetMs =
       opts.bootFetchBudgetMs ??
       numberFromEnv(BOOT_FETCH_BUDGET_MS_ENV, BOOT_FETCH_BUDGET_DEFAULT_MS, 1_000);
     this.telemetryPath =
-      opts.telemetryPath ??
-      process.env.SAND_BOX_TELEMETRY_LOG ??
-      "/tmp/sand-box-telemetry.log";
+      opts.telemetryPath ?? process.env.SAND_BOX_TELEMETRY_LOG ?? "/tmp/sand-box-telemetry.log";
     this.bootFetch = null;
     this.child = null;
     this.adoptedHost = null;
@@ -1157,72 +379,54 @@ export class Supervisor {
     this.hostPauseRequested = false;
     this.postSwapRollback = null;
     this.lastLaunchAtMs = null;
-    this.timer = null;
-    this.stopped = false;
+    this.loopKeepAliveTimer = null;
+    this.tickInFlight = null;
+    this.stopping = new AbortController();
     this.hostLogFd = null;
-    this.desktopState = new Map();
-    this.desktopExitInfo = new Map();
-    this.desktopLogOffset = new Map();
-    this.desktopLogIdentity = new Map();
-    this.desktopRevision = 0;
-    this.desktopStateSig = null;
-    this.desktopDir = opts.desktopDir ?? DESKTOP_DIR;
-    this.desktopHealthPath = opts.desktopHealthPath ?? DESKTOP_HEALTH_PATH;
-    this.desktopMaxRestarts =
-      opts.desktopMaxRestarts ?? DESKTOP_RESTART_MAX_IN_WINDOW;
-    this.desktopWindowMs = opts.desktopWindowMs ?? DESKTOP_RESTART_WINDOW_MS;
-    this.desktopBackoffBaseMs =
-      opts.desktopBackoffBaseMs ?? DESKTOP_BACKOFF_BASE_MS;
-    this.desktopBackoffMaxMs =
-      opts.desktopBackoffMaxMs ?? DESKTOP_BACKOFF_MAX_MS;
-    this.desktopCompositorMaxCrashloops =
-      opts.desktopCompositorMaxCrashloops ?? DESKTOP_COMPOSITOR_MAX_CRASHLOOPS;
-    this.procRoot = opts.procRoot ?? "/proc";
+    super.initializeDesktopState(opts);
     this.forkRfbTokenDir = opts.forkRfbTokenDir ?? FORK_RFB_TOKEN_DIR;
-    this.forkRfbWebsocketPort =
-      opts.forkRfbWebsocketPort ?? FORK_RFB_WEBSOCKET_PORT;
-    this.forkRfbProbeTimeoutMs =
-      opts.forkRfbProbeTimeoutMs ?? FORK_RFB_PROBE_TIMEOUT_MS;
-    this.forkRfbFailureThreshold =
-      opts.forkRfbFailureThreshold ?? FORK_RFB_FAILURE_THRESHOLD;
+    this.forkRfbWebsocketPort = opts.forkRfbWebsocketPort ?? FORK_RFB_WEBSOCKET_PORT;
+    this.forkRfbProbeTimeoutMs = opts.forkRfbProbeTimeoutMs ?? FORK_RFB_PROBE_TIMEOUT_MS;
+    this.forkRfbFailureThreshold = opts.forkRfbFailureThreshold ?? FORK_RFB_FAILURE_THRESHOLD;
     this.forkRfbFailures = new Map();
     this.forkRfbProbeCursor = 0;
     this.compositorReapEscalateMs = opts.compositorReapEscalateMs ?? 2_000;
-    this.cgroupRoot = opts.cgroupRoot ?? CGROUP_ROOT;
-    this.cgroupSampleMs = opts.cgroupSampleMs ?? CGROUP_SAMPLE_MS;
-    this.cgroupPrev = new Map();
-    this.lastCgroupSampleAtMs = 0;
+    super.initializeCgroupAccounting(opts);
   }
 
   start() {
-    ensureDir(SUPERVISOR_DIR);
-    ensureDir(ACKS_DIR);
-    ensureDir(AGENT_DATA_ROOT);
+    for (const dir of [SUPERVISOR_DIR, this.acksDir, AGENT_DATA_ROOT]) {
+      const error = ensureDir(dir);
+      if (error != null) log(`cannot create ${dir}: ${String(error)}`);
+    }
     log(
-      `started (tick ${TICK_MS}ms, host supervision ${
+      `started (tick ${TICK_MS}ms, role ${supervisorRole() ?? "combined"}, uid ${
+        typeof process.getuid === "function" ? process.getuid() : "n/a"
+      }, dir ${SUPERVISOR_DIR}, host supervision ${
         isHostSupervisionEnabled() ? "on" : "off"
       }, host bundle ${
         this.hostBundlePresent() ? "present" : "absent — dormant"
       }, host version ${this.readHostVersion() ?? "unknown"}, desktop supervision ${
         isDesktopSupervisionEnabled() ? "on" : "off"
-      })`
+      })`,
     );
+    if (isHostSupervisionEnabled()) this.maybeAdoptOrphanHost();
     this.maybeStartBootFetch();
     this.scheduleTick(0);
   }
 
-  stop() {
-    this.stopped = true;
-    if (this.timer != null) clearTimeout(this.timer);
+  async stop() {
+    this.stopping.abort();
+    if (this.loopKeepAliveTimer != null) clearTimeout(this.loopKeepAliveTimer);
+    await this.tickInFlight;
   }
 
   scheduleTick(delayMs) {
-    if (this.stopped) return;
-    if (this.timer != null) clearTimeout(this.timer);
-    // This timer must keep the Node event loop alive: before the host child
-    // exists nothing else holds the loop open, so an unref() here exits the
-    // process before the first tick.
-    this.timer = setTimeout(() => void this.tick(), delayMs);
+    if (this.stopping.signal.aborted) return;
+    if (this.loopKeepAliveTimer != null) clearTimeout(this.loopKeepAliveTimer);
+    this.loopKeepAliveTimer = setTimeout(() => {
+      this.tickInFlight = this.tick();
+    }, delayMs);
   }
 
   hostMutationAllowedNow() {
@@ -1243,21 +447,25 @@ export class Supervisor {
           this.maybeDisarmPostSwapRollback();
         }
       }
-      try {
-        this.manageDesktop();
-        await this.probeForkRfb();
-      } catch (error) {
-        log(`desktop tick error: ${String(error)}`);
+      if (ownsDesktopDuties()) {
+        try {
+          this.manageDesktop();
+          await this.probeForkRfb();
+        } catch (error) {
+          log(`desktop tick error: ${String(error)}`);
+        }
       }
-      try {
-        this.sampleCgroups(Date.now());
-      } catch (error) {
-        log(`cgroup sample error: ${String(error)}`);
-      }
-      try {
-        this.syncBoxScripts();
-      } catch (error) {
-        log(`box-script sync tick error: ${String(error)}`);
+      if (ownsBoxWideDuties()) {
+        try {
+          this.sampleCgroups(Date.now());
+        } catch (error) {
+          log(`cgroup sample error: ${String(error)}`);
+        }
+        try {
+          this.syncBoxScripts();
+        } catch (error) {
+          log(`box-script sync tick error: ${String(error)}`);
+        }
       }
       this.writeStatus();
     } catch (error) {
@@ -1271,12 +479,20 @@ export class Supervisor {
     return existsSync(HOST_ENTRY);
   }
 
+  runningHostPid() {
+    if (this.child != null && this.child.exitCode == null && !this.child.killed) {
+      return this.child.pid ?? null;
+    }
+    if (this.adoptedHost != null && isLiveSandHostPid(this.adoptedHost.pid)) {
+      return this.adoptedHost.pid;
+    }
+    return null;
+  }
+
   hostRunning() {
     if (this.child != null && this.child.exitCode == null && !this.child.killed) {
       return true;
     }
-    // An adopted host is poll-validated on every read since there is no child
-    // handle to emit `exit`.
     if (this.adoptedHost != null) {
       if (isLiveSandHostPid(this.adoptedHost.pid)) return true;
       const crashedAtMs = Date.now();
@@ -1306,15 +522,11 @@ export class Supervisor {
   }
 
   readGatewayDiscoveryHost() {
-    const raw = safeRead(join(AGENT_DATA_ROOT, "gateway.json"));
+    const raw = readGatewayDiscoveryRecord(this.gatewayRecordPath);
     if (raw == null) return null;
     try {
       const parsed = JSON.parse(raw);
-      if (
-        typeof parsed.pid !== "number" ||
-        !Number.isInteger(parsed.pid) ||
-        parsed.pid <= 0
-      ) {
+      if (typeof parsed.pid !== "number" || !Number.isInteger(parsed.pid) || parsed.pid <= 0) {
         return null;
       }
       return {
@@ -1332,15 +544,15 @@ export class Supervisor {
   }
 
   async processCommand() {
-    if (!existsSync(COMMAND_PATH)) return;
-    const raw = safeRead(COMMAND_PATH);
+    if (!existsSync(this.commandPath)) return;
+    const raw = safeRead(this.commandPath);
     const command = raw == null ? null : parseCommand(raw);
     if (command == null) {
-      safeUnlink(COMMAND_PATH);
+      this.removeCommand("a malformed command");
       return;
     }
-    if (!shouldProcessCommand(command, this.isAcked(command.id))) {
-      safeUnlink(COMMAND_PATH);
+    if (!shouldProcessCommand(command, this.commandState(command.id))) {
+      this.removeCommand(command.id);
       return;
     }
     let hostWasPaused = false;
@@ -1356,9 +568,7 @@ export class Supervisor {
         this.pendingUpgradeDeferredSinceMs = null;
       }
       const deferredForMs =
-        this.pendingUpgradeDeferredSinceMs != null
-          ? nowMs - this.pendingUpgradeDeferredSinceMs
-          : 0;
+        this.pendingUpgradeDeferredSinceMs != null ? nowMs - this.pendingUpgradeDeferredSinceMs : 0;
       const action = decideUpgradeAction({
         kind: command.kind,
         busyState,
@@ -1373,9 +583,7 @@ export class Supervisor {
           }
         }
         if (action === "defer") {
-          log(
-            `deferring ${command.kind} ${command.id} (host ${busyState}; retry when idle)`
-          );
+          log(`deferring ${command.kind} ${command.id} (host ${busyState}; retry when idle)`);
           return;
         }
         const forcedReason =
@@ -1392,20 +600,18 @@ export class Supervisor {
             : null;
         if (runningTurns !== 0) {
           log(
-            `forcing ${command.kind} ${command.id}: ${forcedReason} (host ${busyState}); requested graceful pause (runningTurns=${runningTurns ?? "?"}); retry`
+            `forcing ${command.kind} ${command.id}: ${forcedReason} (host ${busyState}); requested graceful pause (runningTurns=${runningTurns ?? "?"}); retry`,
           );
           return;
         }
         log(
-          `forcing ${command.kind} ${command.id}: host paused (turns idle, ${forcedReason}); applying`
+          `forcing ${command.kind} ${command.id}: host paused (turns idle, ${forcedReason}); applying`,
         );
         hostWasPaused = true;
       }
     }
     if (this.postSwapRollback?.phase === "restoring") {
-      log(
-        `deferring ${command.kind} ${command.id} (post-swap restore in progress)`
-      );
+      log(`deferring ${command.kind} ${command.id} (post-swap restore in progress)`);
       return;
     }
     log(`processing ${command.kind} ${command.id}`);
@@ -1420,12 +626,28 @@ export class Supervisor {
         this.stopHost();
         this.lastExitAtMs = null;
         this.restartAttempts = 0;
-        log(
-          `command ${command.id} failed after pause; restarting the unchanged host`
-        );
+        log(`command ${command.id} failed after pause; restarting the unchanged host`);
       }
     }
-    safeUnlink(COMMAND_PATH);
+    this.removeCommand(command.id);
+  }
+
+  commandState(id) {
+    if (this.isAcked(id)) return "acknowledged";
+    return this.appliedCommandIds.has(id) ? "applied" : "pending";
+  }
+
+  removeCommand(label) {
+    try {
+      rmSync(this.commandPath, { force: true });
+      this.stuckCommand = null;
+    } catch (error) {
+      if (this.stuckCommand === label) return;
+      this.stuckCommand = label;
+      log(
+        `cannot remove ${this.commandPath} after ${label} (${String(error)}); it stays in the mailbox`,
+      );
+    }
   }
 
   async handleCommand(command) {
@@ -1444,15 +666,13 @@ export class Supervisor {
         const toVersion = command.version ?? "unknown";
         let swapMs = 0;
         if (mode === "bundle") {
-          log(
-            `upgrade ${command.id}: applying bundle (host ${fromVersion} -> ${toVersion})`
-          );
+          log(`upgrade ${command.id}: applying bundle (host ${fromVersion} -> ${toVersion})`);
           const bundlePath = command.bundlePath ?? STAGED_BUNDLE_PATH;
           const swapStartedAtMs = Date.now();
-          const swapResult = this.applyBundleUpgrade(
+          const swapResult = await this.applyBundleUpgrade(
             bundlePath,
             command.version,
-            command.sha256
+            command.sha256,
           );
           if (swapResult.ok) {
             this.armPostSwapRollback({ command, fromVersion, toVersion });
@@ -1469,7 +689,7 @@ export class Supervisor {
               swapError: swapResult.reason ?? "bundle-swap-failed",
             });
             log(
-              `upgrade ${command.id}: bundle swap FAILED (${swapResult.reason ?? "bundle-swap-failed"}); host left on ${fromVersion} (will retry on re-poke)`
+              `upgrade ${command.id}: bundle swap FAILED (${swapResult.reason ?? "bundle-swap-failed"}); host left on ${fromVersion} (will retry on re-poke)`,
             );
             return "failed";
           }
@@ -1494,9 +714,7 @@ export class Supervisor {
             swapMs,
           });
         }
-        log(
-          `upgrade ${command.id}: host stopped; relaunching onto ${toVersion}`
-        );
+        log(`upgrade ${command.id}: host stopped; relaunching onto ${toVersion}`);
         return "applied";
       }
       default:
@@ -1504,7 +722,7 @@ export class Supervisor {
     }
   }
 
-  applyBundleUpgrade(bundlePath, expectedVersion, expectedSha256) {
+  async applyBundleUpgrade(bundlePath, expectedVersion, expectedSha256) {
     if (!isSafeStagedBundlePath(bundlePath)) {
       log(`refusing unsafe staged bundle path: ${bundlePath}`);
       return { ok: false, reason: "unsafe-path" };
@@ -1515,24 +733,26 @@ export class Supervisor {
         digest.actualSha256 == null
           ? ""
           : `: got ${digest.actualSha256.slice(0, 12)}, expected ${expectedSha256.slice(0, 12)}`;
-      log(
-        `refusing bundle swap (${digest.reason}${detail}); nothing extracted from ${bundlePath}`
-      );
+      log(`refusing bundle swap (${digest.reason}${detail}); nothing extracted from ${bundlePath}`);
       safeUnlink(bundlePath);
       return digest;
     }
-    return this.swapVerifiedBundle(bundlePath, digest.bytes, expectedVersion);
+    return this.swapVerifiedBundle(bundlePath, digest.bytes, expectedVersion, this.stopping.signal);
   }
 
-  swapVerifiedBundle(bundlePath, bundle, expectedVersion) {
+  swapVerifiedBundle(bundlePath, bundle, expectedVersion, signal) {
     const targets = hostBundleSwapTargets(HOST_DIR);
     if (!bundleSwapTargetsClearOfDataRoot(targets, AGENT_DATA_ROOT)) {
-      log(
-        `refusing bundle swap: a swap target overlaps the agent data root ${AGENT_DATA_ROOT}`
-      );
+      log(`refusing bundle swap: a swap target overlaps the agent data root ${AGENT_DATA_ROOT}`);
       return { ok: false, reason: "target-overlaps-data-root" };
     }
-    return swapHostBundle({ bundlePath, bundle, ...targets, expectedVersion });
+    return swapHostBundle({
+      bundlePath,
+      bundle,
+      ...targets,
+      expectedVersion,
+      signal,
+    });
   }
 
   readHostVersion() {
@@ -1541,17 +761,11 @@ export class Supervisor {
 
   syncBoxScripts() {
     if (process.env[BOX_SCRIPTS_SYNC_DISABLED_ENV] === "1") return;
-    if (
-      this.boxScriptsRetryAtMs != null &&
-      Date.now() < this.boxScriptsRetryAtMs
-    ) {
+    if (this.boxScriptsRetryAtMs != null && Date.now() < this.boxScriptsRetryAtMs) {
       return;
     }
     const bundleVersion = this.readHostVersion();
-    if (
-      bundleVersion == null ||
-      readVersionMarker(BOX_SCRIPTS_MARKER_PATH) === bundleVersion
-    ) {
+    if (bundleVersion == null || readVersionMarker(BOX_SCRIPTS_MARKER_PATH) === bundleVersion) {
       return;
     }
     const result = syncBoxScriptsFromDir({
@@ -1589,27 +803,32 @@ export class Supervisor {
     ) {
       return;
     }
+    if (this.adoptedHost != null) {
+      log(
+        `boot-fetch: skipped; adopted host pid ${this.adoptedHost.pid} is already running on ${localVersion}, so there is no first launch to hold (upgrades arrive through the command mailbox)`,
+      );
+      return;
+    }
     this.bootFetch = { startedAtMs: Date.now(), fromVersion: localVersion };
     log(
-      `boot-fetch: image-baked host ${localVersion}; checking the ${bootFetchChannel()} pointer before the first launch (budget ${this.bootFetchBudgetMs}ms)`
+      `boot-fetch: image-baked host ${localVersion}; checking the ${bootFetchChannel()} pointer before the first launch (budget ${this.bootFetchBudgetMs}ms)`,
     );
     void this.runBootFetch(localVersion).catch((error) => {
       this.concludeBootFetch(
         { outcome: "fallback", reason: "unexpected_error" },
-        `unexpected error (${String(error)})`
+        `unexpected error (${String(error)})`,
       );
     });
   }
 
   async runBootFetch(
     localVersion,
-    apply = (bundlePath, version, sha256) =>
-      this.applyBundleUpgrade(bundlePath, version, sha256),
+    apply = (bundlePath, version, sha256) => this.applyBundleUpgrade(bundlePath, version, sha256),
     restore = () =>
       restoreHostBundleFromBackup({
         backupDir: hostBundleSwapTargets(HOST_DIR).backupDir,
         hostDir: HOST_DIR,
-      })
+      }),
   ) {
     const startedAtMs = this.bootFetch?.startedAtMs ?? Date.now();
     const deadlineAtMs = startedAtMs + this.bootFetchBudgetMs;
@@ -1617,26 +836,26 @@ export class Supervisor {
     const channel = bootFetchChannel();
     const rawPointer = await fetchSmallTextWithDeadline(
       `${base}/${bootFetchVersionFileName(channel)}`,
-      deadlineAtMs - Date.now()
+      deadlineAtMs - Date.now(),
     );
     if (this.bootFetch == null) return;
     const target = rawPointer?.trim();
     if (target == null || target.length === 0) {
       return this.concludeBootFetch(
         { outcome: "fallback", reason: "pointer_unreachable" },
-        "pointer unreachable"
+        "pointer unreachable",
       );
     }
     if (!BOOT_FETCH_GIT_SHA_REGEX.test(target)) {
       return this.concludeBootFetch(
         { outcome: "fallback", reason: "pointer_malformed" },
-        "pointer malformed"
+        "pointer malformed",
       );
     }
     if (target === localVersion) {
       return this.concludeBootFetch(
         { outcome: "current", reason: "current", toVersion: target },
-        `baked host ${localVersion} is current`
+        `baked host ${localVersion} is current`,
       );
     }
     if (this.isAcked(`upgrade-${target}`)) {
@@ -1646,15 +865,15 @@ export class Supervisor {
           reason: "target_vetoed",
           toVersion: target,
         },
-        `target ${target} is ack-vetoed`
+        `target ${target} is ack-vetoed`,
       );
     }
     log(
-      `boot-fetch: ${channel} pointer ${target} != baked ${localVersion}; fetching its digest, then the bundle, before the first launch`
+      `boot-fetch: ${channel} pointer ${target} != baked ${localVersion}; fetching its digest, then the bundle, before the first launch`,
     );
     const rawDigest = await fetchSmallTextWithDeadline(
       `${base}/${bootFetchDigestFileName(target)}`,
-      deadlineAtMs - Date.now()
+      deadlineAtMs - Date.now(),
     );
     if (this.bootFetch == null) return;
     if (rawDigest == null) {
@@ -1664,7 +883,7 @@ export class Supervisor {
           reason: "digest_missing",
           toVersion: target,
         },
-        `digest for ${target} missing or unreachable; nothing downloaded; baked host launches`
+        `digest for ${target} missing or unreachable; nothing downloaded; baked host launches`,
       );
     }
     const expectedSha256 = parseHostBundleDigest(rawDigest);
@@ -1675,14 +894,14 @@ export class Supervisor {
           reason: "digest_malformed",
           toVersion: target,
         },
-        `digest for ${target} malformed; nothing downloaded; baked host launches`
+        `digest for ${target} malformed; nothing downloaded; baked host launches`,
       );
     }
     const downloaded = await downloadFileWithDeadline(
       `${base}/sand-host-bundle-${target}.tgz`,
       STAGED_BUNDLE_PATH,
       deadlineAtMs - Date.now(),
-      expectedSha256
+      expectedSha256,
     );
     if (this.bootFetch == null) return;
     if (!downloaded.ok) {
@@ -1693,7 +912,7 @@ export class Supervisor {
             reason: "digest_mismatch",
             toVersion: target,
           },
-          `downloaded ${target} failed its sha256 check (digest_mismatch: got ${downloaded.actualSha256.slice(0, 12)}, expected ${expectedSha256.slice(0, 12)}); discarded before extraction; baked host launches`
+          `downloaded ${target} failed its sha256 check (digest_mismatch: got ${downloaded.actualSha256.slice(0, 12)}, expected ${expectedSha256.slice(0, 12)}); discarded before extraction; baked host launches`,
         );
       }
       return this.concludeBootFetch(
@@ -1702,11 +921,12 @@ export class Supervisor {
           reason: "download_failed",
           toVersion: target,
         },
-        `download of ${target} failed/timed out`
+        `download of ${target} failed/timed out`,
       );
     }
     const swapStartedAtMs = Date.now();
-    const swapResult = apply(STAGED_BUNDLE_PATH, target, expectedSha256);
+    this.bootFetch.swapInFlight = true;
+    const swapResult = await apply(STAGED_BUNDLE_PATH, target, expectedSha256);
     if (this.bootFetch == null) return;
     if (!swapResult.ok) {
       safeUnlink(STAGED_BUNDLE_PATH);
@@ -1720,7 +940,7 @@ export class Supervisor {
           },
           `swap failed post-commit (${swapResult.reason}); baked host ${
             restored.ok ? "restored" : `NOT restored (${restored.reason})`
-          }`
+          }`,
         );
       }
       return this.concludeBootFetch(
@@ -1729,7 +949,7 @@ export class Supervisor {
           reason: "swap_refused",
           toVersion: target,
         },
-        `swap refused (${swapResult.reason}); baked host launches`
+        `swap refused (${swapResult.reason}); baked host launches`,
       );
     }
     const swapMs = Date.now() - swapStartedAtMs;
@@ -1756,7 +976,7 @@ export class Supervisor {
         toVersion: target,
         swapMs,
       },
-      `applied ${localVersion} -> ${target} (swap ${swapMs}ms); launching the fetched host`
+      `applied ${localVersion} -> ${target} (swap ${swapMs}ms); launching the fetched host`,
     );
   }
 
@@ -1778,11 +998,11 @@ export class Supervisor {
   }
 
   maybeForceConcludeBootFetch() {
-    if (this.bootFetch == null) return;
+    if (this.bootFetch == null || this.bootFetch.swapInFlight === true) return;
     if (Date.now() - this.bootFetch.startedAtMs > this.bootFetchBudgetMs + TICK_MS) {
       this.concludeBootFetch(
         { outcome: "fallback", reason: "budget_exceeded" },
-        "budget exceeded (backstop); baked host launches"
+        "budget exceeded (backstop); baked host launches",
       );
     }
   }
@@ -1820,20 +1040,18 @@ export class Supervisor {
     });
     if (action === "none") return;
     if (action === "healthy") {
-      this.clearPostSwapRollback(
-        `host ran ${uptimeMs}ms on ${armed.toVersion} (healthy)`
-      );
+      this.clearPostSwapRollback(`host ran ${uptimeMs}ms on ${armed.toVersion} (healthy)`);
       return;
     }
     armed.quickExits += 1;
     if (action === "count") {
       log(
-        `post-swap watch: host exited after ${uptimeMs}ms on ${armed.toVersion} (quick exit ${armed.quickExits}/${POST_SWAP_MAX_QUICK_EXITS})`
+        `post-swap watch: host exited after ${uptimeMs}ms on ${armed.toVersion} (quick exit ${armed.quickExits}/${POST_SWAP_MAX_QUICK_EXITS})`,
       );
       return;
     }
     log(
-      `post-swap watch: host crash-looping on ${armed.toVersion} (${armed.quickExits} quick exits); rolling back to ${armed.fromVersion}`
+      `post-swap watch: host crash-looping on ${armed.toVersion} (${armed.quickExits} quick exits); rolling back to ${armed.fromVersion}`,
     );
     armed.phase = "restoring";
     this.stopHost();
@@ -1849,7 +1067,7 @@ export class Supervisor {
       Date.now() - this.lastLaunchAtMs >= POST_SWAP_HEALTHY_UPTIME_MS
     ) {
       this.clearPostSwapRollback(
-        `host up ${Date.now() - this.lastLaunchAtMs}ms on ${armed.toVersion} (healthy)`
+        `host up ${Date.now() - this.lastLaunchAtMs}ms on ${armed.toVersion} (healthy)`,
       );
     }
   }
@@ -1885,17 +1103,16 @@ export class Supervisor {
         swapError: POST_SWAP_CRASH_LOOP_ERROR_CLASS,
       });
       log(
-        `post-swap rollback complete: host restored to ${armed.fromVersion}; ${armed.toVersion} will not be retried on this box (command already acked)`
+        `post-swap rollback complete: host restored to ${armed.fromVersion}; ${armed.toVersion} will not be retried on this box (command already acked)`,
       );
       return;
     }
     armed.restoreAttempts += 1;
     const giveUp =
-      result.reason === "backup-missing" ||
-      armed.restoreAttempts >= POST_SWAP_MAX_RESTORE_ATTEMPTS;
+      result.reason === "backup-missing" || armed.restoreAttempts >= POST_SWAP_MAX_RESTORE_ATTEMPTS;
     if (!giveUp) {
       log(
-        `post-swap rollback attempt ${armed.restoreAttempts}/${POST_SWAP_MAX_RESTORE_ATTEMPTS} failed (${result.reason}); backup kept, retrying next tick`
+        `post-swap rollback attempt ${armed.restoreAttempts}/${POST_SWAP_MAX_RESTORE_ATTEMPTS} failed (${result.reason}); backup kept, retrying next tick`,
       );
       return;
     }
@@ -1912,7 +1129,7 @@ export class Supervisor {
       swapError: POST_SWAP_ROLLBACK_FAILED_ERROR_CLASS,
     });
     log(
-      `post-swap rollback GAVE UP (${result.reason}, ${armed.restoreAttempts} attempt(s)); host left as-is on ${armed.toVersion}, relaunch backoff continues`
+      `post-swap rollback GAVE UP (${result.reason}, ${armed.restoreAttempts} attempt(s)); host left as-is on ${armed.toVersion}, relaunch backoff continues`,
     );
   }
 
@@ -1929,320 +1146,6 @@ export class Supervisor {
     if (action === "launch" || action === "restart") {
       this.launchHost();
     }
-  }
-
-  manageDesktop() {
-    const nowMs = Date.now();
-    if (!isDesktopSupervisionEnabled()) {
-      this.writeDesktopHealth([], nowMs, false);
-      return;
-    }
-    const specs = this.readDesktopSpecs();
-    const presentIds = new Set(specs.map((s) => s.id));
-    for (const id of [...this.desktopState.keys()]) {
-      if (!presentIds.has(id)) this.desktopState.delete(id);
-    }
-    for (const id of [...this.desktopExitInfo.keys()]) {
-      if (!presentIds.has(id)) this.desktopExitInfo.delete(id);
-    }
-    for (const id of [...this.desktopLogOffset.keys()]) {
-      if (!presentIds.has(id)) this.desktopLogOffset.delete(id);
-    }
-    for (const id of [...this.desktopLogIdentity.keys()]) {
-      if (!presentIds.has(id)) this.desktopLogIdentity.delete(id);
-    }
-    const groupsWithRoot = new Set(
-      specs.filter((s) => s.order === 0).map((s) => s.group)
-    );
-    const groupRootBlocked = new Map();
-    const restartedThisTick = new Set();
-    const health = [];
-    const liveDesktopPids = [];
-    const ordered = specs
-      .slice()
-      .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
-    for (const spec of ordered) {
-      const state = this.getDesktopState(spec.id);
-      const restartsInWindow = countRestartsInWindow(
-        state.restartTimestamps,
-        nowMs,
-        this.desktopWindowMs
-      );
-      if (state.restartTimestamps.length > this.desktopMaxRestarts * 4) {
-        state.restartTimestamps = state.restartTimestamps.filter(
-          (t) => t >= nowMs - this.desktopWindowMs
-        );
-      }
-      let componentRestarts = restartsInWindow;
-      const filePid = this.readDesktopPid(spec);
-      let filePidAlive = filePid != null && isPidAlive(filePid);
-      let listenerInspection = null;
-      let listenerInspectionPid = null;
-      let listenerIdentityMismatch = false;
-      if (filePidAlive && spec.listenPort != null) {
-        listenerInspection = inspectTcpPortListener(
-          filePid,
-          spec.listenPort,
-          this.procRoot,
-          spec.argv
-        );
-        listenerInspectionPid = filePid;
-        if (listenerInspection.reason === "pid-argv-mismatch") {
-          filePidAlive = false;
-          listenerIdentityMismatch = true;
-          state.downReason = "port-not-listening";
-        }
-      }
-      if (
-        filePidAlive &&
-        state.disabled &&
-        spec.name === DESKTOP_COMPOSITOR_NAME &&
-        existsSync("/proc/self/comm") &&
-        !isPidComm(filePid, DESKTOP_COMPOSITOR_NAME)
-      ) {
-        filePidAlive = false;
-      }
-      if (
-        filePidAlive &&
-        spec.name === DESKTOP_DOCK_NAME &&
-        existsSync("/proc/self/comm") &&
-        !isDockPid(filePid)
-      ) {
-        filePidAlive = false;
-      }
-      let up;
-      if (filePidAlive) {
-        if (state.pid !== filePid) {
-          const cursor = desktopLogCursor(spec.logFile);
-          const ownsBoundedLog =
-            isBoundedDesktopLogSpec(spec) &&
-            boundedDesktopLogOwner(spec.logFile) === filePid;
-          this.desktopLogOffset.set(spec.id, ownsBoundedLog ? 0 : cursor.size);
-          this.desktopLogIdentity.set(spec.id, cursor.identity);
-          this.desktopExitInfo.delete(spec.id);
-        }
-        state.pid = filePid;
-        up = true;
-      } else if (state.pid != null && isPidAlive(state.pid)) {
-        if (
-          spec.listenPort != null &&
-          listenerInspectionPid !== state.pid
-        ) {
-          listenerInspection = inspectTcpPortListener(
-            state.pid,
-            spec.listenPort,
-            this.procRoot,
-            spec.argv
-          );
-          listenerInspectionPid = state.pid;
-        }
-        if (listenerInspection?.reason === "pid-argv-mismatch") {
-          listenerIdentityMismatch = true;
-          state.downReason = "port-not-listening";
-          up = false;
-        } else if (
-          (state.disabled &&
-            spec.name === DESKTOP_COMPOSITOR_NAME &&
-            existsSync("/proc/self/comm") &&
-            !isPidComm(state.pid, DESKTOP_COMPOSITOR_NAME)) ||
-          (spec.name === DESKTOP_DOCK_NAME &&
-            existsSync("/proc/self/comm") &&
-            !isDockPid(state.pid))
-        ) {
-          up = false;
-        } else {
-          up = true;
-          if (filePid !== state.pid) atomicWrite(spec.pidFile, String(state.pid));
-        }
-      } else {
-        up = false;
-      }
-      const gatedByRoot =
-        !up &&
-        spec.order > 0 &&
-        groupsWithRoot.has(spec.group) &&
-        groupRootBlocked.get(spec.group) === true;
-      if (!up && state.disabled) {
-        state.crashloop = false;
-        state.downReason = "compositor-disabled";
-      } else if (gatedByRoot) {
-        state.downReason = "awaiting-dependency";
-      } else if (!up) {
-        const action = decideDesktopComponentAction({
-          supervisionEnabled: true,
-          running: false,
-          lastExitAtMs: state.lastExitAtMs,
-          restartsInWindow,
-          maxRestarts: this.desktopMaxRestarts,
-          nowMs,
-          baseBackoffMs: this.desktopBackoffBaseMs,
-          maxBackoffMs: this.desktopBackoffMaxMs,
-        });
-        if (
-          !listenerIdentityMismatch &&
-          (action === "restart" ||
-            (action === "crashloop" && !state.crashloop) ||
-            state.downReason == null ||
-            state.downReason === "awaiting-dependency")
-        ) {
-          state.downReason = this.desktopDownReason(spec, state);
-        }
-        if (action === "restart") {
-          const newPid = this.restartDesktopComponent(spec);
-          state.restartTimestamps.push(nowMs);
-          state.lastExitAtMs = nowMs;
-          restartedThisTick.add(spec.id);
-          componentRestarts = restartsInWindow + 1;
-          state.crashloop = false;
-          if (newPid != null) {
-            state.pid = newPid;
-            up = true;
-            log(
-              `desktop: restarted ${spec.id} (pid ${newPid}, ${componentRestarts} restart(s) in window; down reason ${state.downReason})`
-            );
-          } else {
-            log(
-              `desktop: relaunch of ${spec.id} FAILED (attempt ${componentRestarts} in window; down reason ${state.downReason}); backing off`
-            );
-          }
-        } else if (action === "crashloop") {
-          if (!state.crashloop) {
-            state.crashloopEpisodes = Number.isFinite(state.crashloopEpisodes)
-              ? state.crashloopEpisodes + 1
-              : 1;
-            log(
-              `desktop: ${spec.id} crash-looping (${restartsInWindow} restarts within ${this.desktopWindowMs}ms; episode ${state.crashloopEpisodes}; down reason ${state.downReason}); giving up until the storm subsides`
-            );
-          }
-          if (
-            shouldDisableCompositor({
-              name: spec.name,
-              crashloopEpisodes: state.crashloopEpisodes,
-              maxEpisodes: this.desktopCompositorMaxCrashloops,
-            })
-          ) {
-            if (!state.disabled) {
-              state.disabled = true;
-              log(
-                `desktop: ${spec.id} hit ${state.crashloopEpisodes} crashloop episode(s); disabling the compositor for this supervisor's lifetime (the desktop runs WITHOUT a compositor from here)`
-              );
-              this.reapDisabledCompositor(spec);
-            }
-            state.crashloop = false;
-            state.downReason = "compositor-disabled";
-          } else {
-            state.crashloop = true;
-          }
-        }
-      } else {
-        state.downReason = null;
-        this.desktopExitInfo.delete(spec.id);
-        if (state.crashloop) {
-          state.crashloop = false;
-          log(`desktop: ${spec.id} recovered (up again)`);
-        }
-        if (state.disabled) {
-          state.disabled = false;
-          state.crashloopEpisodes = 0;
-          state.restartTimestamps = [];
-          state.lastExitAtMs = null;
-          log(
-            `desktop: ${spec.id} is up again externally; re-enabling supervision`
-          );
-        }
-      }
-      let available = up;
-      if (up && spec.listenPort != null && state.pid != null) {
-        const inspection =
-          listenerInspectionPid === state.pid
-            ? listenerInspection
-            : inspectTcpPortListener(
-                state.pid,
-                spec.listenPort,
-                this.procRoot,
-                spec.argv
-              );
-        if (inspection.status === "missing") {
-          available = false;
-          state.downReason = "port-not-listening";
-        } else if (inspection.status === "unavailable") {
-          available = false;
-          state.downReason = "listener-procfs-unavailable";
-          this.noteDesktopListenerDiagnostic(
-            spec,
-            state,
-            inspection.reason
-          );
-        }
-      }
-      if (spec.order === 0) {
-        groupRootBlocked.set(spec.group, !up || restartedThisTick.has(spec.id));
-      }
-      if (up && state.pid != null) {
-        liveDesktopPids.push({ id: spec.id, pid: state.pid });
-      }
-      health.push({
-        group: spec.group,
-        name: spec.name,
-        up: available,
-        crashloop: gatedByRoot ? false : state.crashloop,
-        restartsInWindow: componentRestarts,
-        downReason: available ? undefined : state.downReason ?? undefined,
-      });
-    }
-    this.reconcileDesktopCgroup(liveDesktopPids);
-    this.writeDesktopHealth(health, nowMs, true);
-  }
-
-  reconcileDesktopCgroup(components) {
-    if (components.length === 0) return;
-    const membership = safeRead(
-      join(this.cgroupRoot, CGROUP_INTERACTIVE, "cgroup.procs")
-    );
-    if (membership == null) return;
-    const present = new Set(
-      membership.split("\n").flatMap((line) => {
-        const trimmed = line.trim();
-        return trimmed.length > 0 ? [trimmed] : [];
-      })
-    );
-    for (const { id, pid } of components) {
-      if (present.has(String(pid))) continue;
-      if (this.placeInCgroup(CGROUP_INTERACTIVE, pid)) {
-        log(`desktop: moved ${id} (pid ${pid}) into the ${CGROUP_INTERACTIVE} cgroup`);
-      }
-    }
-  }
-
-  desktopDownReason(spec, state) {
-    const exit = this.desktopExitInfo.get(spec.id);
-    const fresh = exit != null && exit.pid != null && exit.pid === state.pid;
-    const exitCode = fresh && Number.isInteger(exit.code) ? exit.code : null;
-    const signal = fresh && typeof exit.signal === "string" ? exit.signal : null;
-    const logTail =
-      spec.logFile != null
-        ? readDesktopLogTail(
-            spec.logFile,
-            this.desktopLogOffset.get(spec.id) ?? 0,
-            this.desktopLogIdentity.get(spec.id) ?? null
-          )
-        : "";
-    return classifyDesktopDownReason({ exitCode, signal, logTail });
-  }
-
-  noteDesktopListenerDiagnostic(spec, state, reason) {
-    if (state.listenerDiagnosticPid === state.pid) return;
-    state.listenerDiagnosticPid = state.pid;
-    log(
-      `desktop: ${spec.id} pid ${state.pid} listener health unavailable (${reason}); leaving the live process untouched`
-    );
-  }
-
-  readDesktopIdentity(spec) {
-    const pid = this.readDesktopPid(spec);
-    if (pid == null || !isPidAlive(pid)) return null;
-    const startTime = readProcStartTime(pid, this.procRoot);
-    return startTime == null ? null : { pid, startTime };
   }
 
   readForkRfbTargets(specs) {
@@ -2311,49 +1214,16 @@ export class Supervisor {
     }
     const previous = this.forkRfbFailures.get(target.display);
     const failures =
-      previous?.identity === identity && previous.result === result
-        ? previous.failures + 1
-        : 1;
+      previous?.identity === identity && previous.result === result ? previous.failures + 1 : 1;
     this.forkRfbFailures.set(target.display, { failures, identity, result });
     if (failures < this.forkRfbFailureThreshold) return;
     const spec = result === "x11vnc" ? target.x11vnc : target.websockify;
-    const expectedIdentity =
-      result === "x11vnc" ? x11vncIdentity : websockifyIdentity;
-    const port =
-      result === "x11vnc" ? target.vncPort : this.forkRfbWebsocketPort;
-    if (
-      this.requestForkRfbRestart(
-        spec,
-        expectedIdentity,
-        failures,
-        result,
-        port
-      )
-    ) {
+    const expectedIdentity = result === "x11vnc" ? x11vncIdentity : websockifyIdentity;
+    const port = result === "x11vnc" ? target.vncPort : this.forkRfbWebsocketPort;
+    if (this.requestForkRfbRestart(spec, expectedIdentity, failures, result, port)) {
       this.forkRfbFailures.delete(target.display);
     }
     advance();
-  }
-
-  wouldRestartAfterExit(state) {
-    const nowMs = Date.now();
-    const restartsInWindow = countRestartsInWindow(
-      state.restartTimestamps,
-      nowMs,
-      this.desktopWindowMs
-    );
-    return (
-      decideDesktopComponentAction({
-        supervisionEnabled: true,
-        running: false,
-        lastExitAtMs: state.lastExitAtMs,
-        restartsInWindow,
-        maxRestarts: this.desktopMaxRestarts,
-        nowMs,
-        baseBackoffMs: this.desktopBackoffBaseMs,
-        maxBackoffMs: this.desktopBackoffMaxMs,
-      }) === "restart"
-    );
   }
 
   requestForkRfbRestart(spec, expectedIdentity, failures, name, port) {
@@ -2381,7 +1251,7 @@ export class Supervisor {
     }
     const escalate = setTimeout(() => {
       if (
-        this.stopped ||
+        this.stopping.signal.aborted ||
         !isExpectedForkRfbProcess({
           ...expectedIdentity,
           name,
@@ -2396,77 +1266,8 @@ export class Supervisor {
       } catch {}
     }, FORK_RFB_TERMINATE_GRACE_MS);
     if (typeof escalate.unref === "function") escalate.unref();
-    log(
-      `desktop: RFB readiness failed ${failures} consecutive times; restarting ${spec.id}`
-    );
+    log(`desktop: RFB readiness failed ${failures} consecutive times; restarting ${spec.id}`);
     return true;
-  }
-
-  getDesktopState(id) {
-    let state = this.desktopState.get(id);
-    if (state == null) {
-      state = {
-        pid: null,
-        lastExitAtMs: null,
-        restartTimestamps: [],
-        crashloop: false,
-        downReason: null,
-        listenerDiagnosticPid: null,
-        crashloopEpisodes: 0,
-        disabled: false,
-      };
-      this.desktopState.set(id, state);
-    }
-    return state;
-  }
-
-  readDesktopSpecs() {
-    const specs = [];
-    let groups;
-    try {
-      groups = readdirSync(this.desktopDir, { withFileTypes: true });
-    } catch {
-      return specs;
-    }
-    for (const groupEntry of groups) {
-      if (!groupEntry.isDirectory()) continue;
-      const groupDir = join(this.desktopDir, groupEntry.name);
-      let files;
-      try {
-        files = readdirSync(groupDir, { withFileTypes: true });
-      } catch {
-        continue;
-      }
-      for (const file of files) {
-        if (!file.isFile() || !file.name.endsWith(".json")) continue;
-        const descriptorPath = join(groupDir, file.name);
-        const raw = safeRead(descriptorPath);
-        if (raw == null) continue;
-        const parsed = parseDesktopComponentDescriptor(raw);
-        if (parsed == null) continue;
-        const name = file.name.slice(0, -".json".length);
-        specs.push({
-          id: `${groupEntry.name}/${name}`,
-          group: groupEntry.name,
-          name,
-          order: parsed.order,
-          argv: parsed.argv,
-          env: parsed.env,
-          logFile: parsed.logFile,
-          listenPort: parsed.listenPort,
-          descriptorPath,
-          pidFile: parsed.pidFile ?? join(groupDir, `${name}.pid`),
-        });
-      }
-    }
-    return specs;
-  }
-
-  readDesktopPid(spec) {
-    const raw = safeRead(spec.pidFile);
-    if (raw == null) return null;
-    const pid = Number.parseInt(raw.trim(), 10);
-    return Number.isInteger(pid) && pid > 0 ? pid : null;
   }
 
   reapDisabledCompositor(spec) {
@@ -2482,8 +1283,8 @@ export class Supervisor {
     if (targets.length === 0) return;
     log(
       `desktop: ${spec.id} give-up: reaping surviving compositor pid(s) ${targets.join(
-        ", "
-      )} so no orphan keeps compositing after disable`
+        ", ",
+      )} so no orphan keeps compositing after disable`,
     );
     const pinned = [];
     for (const pid of targets) {
@@ -2497,14 +1298,14 @@ export class Supervisor {
     }
     if (pinned.length === 0) return;
     const escalate = setTimeout(() => {
-      if (this.stopped) return;
+      if (this.stopping.signal.aborted) return;
       let survivors;
       try {
         survivors = new Set(
           findCompositorReapTargets({
             display: spec.env?.DISPLAY,
             procRoot: this.procRoot,
-          })
+          }),
         );
       } catch {
         return;
@@ -2514,9 +1315,7 @@ export class Supervisor {
         if (readProcStartTime(pid, this.procRoot) !== startTime) continue;
         try {
           process.kill(pid, "SIGKILL");
-        } catch {
-          // Already gone.
-        }
+        } catch {}
       }
     }, this.compositorReapEscalateMs);
     if (typeof escalate.unref === "function") escalate.unref();
@@ -2554,13 +1353,9 @@ export class Supervisor {
         cwd: "/",
         detached: true,
         stdio,
-        env: { ...process.env, ...spec.env },
+        env: desktopRelaunchEnv(process.env, spec),
       });
-      child.on("error", (error) =>
-        log(`desktop: ${spec.id} spawn error: ${String(error)}`)
-      );
-      // The `exit` event still fires after unref() while the supervisor is
-      // alive; a missed event just falls back to the log tail.
+      child.on("error", (error) => log(`desktop: ${spec.id} spawn error: ${String(error)}`));
       const childPid = child.pid ?? null;
       child.on("exit", (code, signal) => {
         this.desktopExitInfo.set(spec.id, {
@@ -2573,14 +1368,10 @@ export class Supervisor {
       child.unref();
       const pid = childPid;
       if (pid != null) this.placeInCgroup(CGROUP_INTERACTIVE, pid);
-      // Unlike the host, desktop relaunches shed the supervisor's inherited
-      // OOM exemption so the original start-desktop incarnations stay killable.
       if (pid != null) {
         try {
           writeFileSync(`/proc/${pid}/oom_score_adj`, "0");
-        } catch {
-          // Best-effort.
-        }
+        } catch {}
       }
       if (pid != null) atomicWrite(spec.pidFile, String(pid));
       return pid;
@@ -2591,80 +1382,9 @@ export class Supervisor {
       if (logFd != null) {
         try {
           closeSync(logFd);
-        } catch {
-          // Best-effort.
-        }
+        } catch {}
       }
     }
-  }
-
-  placeInCgroup(group, pid) {
-    if (!Number.isInteger(pid) || pid <= 0) return false;
-    try {
-      writeFileSync(join(this.cgroupRoot, group, "cgroup.procs"), String(pid));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  readCgroupSample(group) {
-    const stat = parseCgroupCpuStat(
-      safeRead(join(this.cgroupRoot, group, "cpu.stat"))
-    );
-    if (stat == null) return null;
-    const pressure = parseCgroupPressure(
-      safeRead(join(this.cgroupRoot, group, "cpu.pressure"))
-    );
-    return {
-      usageUsec: stat.usage_usec,
-      throttledUsec:
-        typeof stat.throttled_usec === "number" ? stat.throttled_usec : null,
-      stallUsec: pressure?.someTotalUsec ?? null,
-    };
-  }
-
-  sampleCgroups(nowMs) {
-    if (nowMs - this.lastCgroupSampleAtMs < this.cgroupSampleMs) return;
-    const elapsedMs =
-      this.lastCgroupSampleAtMs === 0 ? 0 : nowMs - this.lastCgroupSampleAtMs;
-    this.lastCgroupSampleAtMs = nowMs;
-    for (const group of [CGROUP_INTERACTIVE, CGROUP_AGENT]) {
-      const next = this.readCgroupSample(group);
-      if (next == null) {
-        this.cgroupPrev.delete(group);
-        continue;
-      }
-      const line = formatCgroupCpuSample({
-        group,
-        prev: this.cgroupPrev.get(group) ?? null,
-        next,
-        elapsedMs,
-      });
-      if (line != null) log(line);
-      this.cgroupPrev.set(group, next);
-    }
-  }
-
-  writeDesktopHealth(components, nowMs, supervisionEnabled) {
-    const sig = `${supervisionEnabled ? 1 : 0}#${desktopStateSignature(
-      components
-    )}`;
-    if (sig !== this.desktopStateSig) {
-      this.desktopRevision += 1;
-      this.desktopStateSig = sig;
-    }
-    atomicWrite(
-      this.desktopHealthPath,
-      JSON.stringify(
-        buildDesktopHealthSnapshot({
-          supervisionEnabled,
-          components,
-          nowMs,
-          revision: this.desktopRevision,
-        })
-      )
-    );
   }
 
   launchHost() {
@@ -2678,18 +1398,13 @@ export class Supervisor {
     const child = spawn(process.execPath, [HOST_NODE_WARNING_FLAG, HOST_ENTRY], {
       cwd: HOST_DIR,
       detached: true,
-      stdio:
-        hostLogStdio === null
-          ? "inherit"
-          : ["ignore", hostLogStdio, hostLogStdio],
+      stdio: hostLogStdio === null ? "inherit" : ["ignore", hostLogStdio, hostLogStdio],
       env: {
         ...process.env,
         SAND_PACKAGED: "1",
         SAND_DATA_ROOT: AGENT_DATA_ROOT,
         SAND_HOST_IN_BOX: "1",
-        ...(hostLogStdio === null
-          ? {}
-          : { SAND_HOST_LOG_FILE: HOST_LOG_PATH }),
+        ...(hostLogStdio === null ? {} : { SAND_HOST_LOG_FILE: HOST_LOG_PATH }),
       },
     });
     this.child = child;
@@ -2697,13 +1412,10 @@ export class Supervisor {
     for (const pid of this.stoppedHostPids) {
       if (!isLiveSandHostPid(pid)) this.stoppedHostPids.delete(pid);
     }
-    // -998, not -1000: if the host itself retains the memory, the kernel must
-    // still be able to kill it and let supervision restore service.
+    // oom_score_adj -1000 disables OOM killing for the task entirely, so the host takes -998 and stays killable when it is the process holding the memory: https://man7.org/linux/man-pages/man5/proc_pid_oom_score_adj.5.html
     try {
       writeFileSync(`/proc/${child.pid}/oom_score_adj`, "-998");
-    } catch {
-      // Best-effort only.
-    }
+    } catch {}
     this.hostPauseRequested = false;
     this.restartAttempts += 1;
     child.on("exit", (code, signal) => {
@@ -2720,11 +1432,7 @@ export class Supervisor {
       log(`host exited (code ${code ?? "null"}, signal ${signal ?? "null"})`);
       if (this.child === child) this.child = null;
       try {
-        this.notePostSwapHostExit(
-          launchedAtMs,
-          nowMs - launchedAtMs,
-          child.killed
-        );
+        this.notePostSwapHostExit(launchedAtMs, nowMs - launchedAtMs, child.killed);
       } catch (error) {
         log(`post-swap watch error: ${String(error)}`);
       }
@@ -2736,14 +1444,7 @@ export class Supervisor {
     });
   }
 
-  noteHostProcessExit({
-    child,
-    code,
-    signal,
-    startedAtMs,
-    crashedAtMs,
-    uptimeMs,
-  }) {
+  noteHostProcessExit({ child, code, signal, startedAtMs, crashedAtMs, uptimeMs }) {
     if (this.expectedHostExits.delete(child)) return false;
     return this.recordHostCrashMarker(
       classifyHostProcessExit({
@@ -2752,7 +1453,7 @@ export class Supervisor {
         startedAtMs,
         crashedAtMs,
         uptimeMs,
-      })
+      }),
     );
   }
 
@@ -2765,9 +1466,7 @@ export class Supervisor {
       return true;
     } catch (error) {
       log(
-        `host crash marker write failed (error_class=${classifyHostCrashMarkerWriteError(
-          error
-        )})`
+        `host crash marker write failed (error_class=${classifyHostCrashMarkerWriteError(error)})`,
       );
       return false;
     }
@@ -2784,7 +1483,7 @@ export class Supervisor {
           adoptedHost.startedAtMs === undefined
             ? undefined
             : Math.max(0, crashedAtMs - adoptedHost.startedAtMs),
-      })
+      }),
     );
     this.lastExitAtMs = crashedAtMs;
   }
@@ -2840,7 +1539,7 @@ export class Supervisor {
   }
 
   readGatewayEndpoint() {
-    const raw = safeRead(join(AGENT_DATA_ROOT, "gateway.json"));
+    const raw = readGatewayDiscoveryRecord(this.gatewayRecordPath);
     if (raw == null) return null;
     try {
       return parseGatewayEndpoint(JSON.parse(raw));
@@ -2849,9 +1548,6 @@ export class Supervisor {
     }
   }
 
-  // Returns the host's reply ({ quiescing, runningTurns }) or null when the
-  // host is unreachable or predates /prepare-upgrade (such a host just 404s and
-  // stays busy — never killed mid-turn).
   async requestHostPause() {
     if (!this.hostRunning()) return null;
     const endpoint = this.readGatewayEndpoint();
@@ -2860,47 +1556,41 @@ export class Supervisor {
   }
 
   isAcked(id) {
-    return existsSync(join(ACKS_DIR, ackFilename(id)));
+    return existsSync(join(this.acksDir, ackFilename(id)));
   }
 
   ack(id) {
+    this.appliedCommandIds.add(id);
     try {
-      writeFileSync(join(ACKS_DIR, ackFilename(id)), String(Date.now()));
-    } catch {
-      // An ack write failure only risks a duplicate ping, which is benign.
+      writeFileSync(join(this.acksDir, ackFilename(id)), String(Date.now()));
+    } catch (error) {
+      log(
+        `cannot write the ack for ${id} in ${this.acksDir} (${String(error)}); only this supervisor process remembers it as applied`,
+      );
     }
   }
 
   writeStatus() {
     const hostVersion = this.readHostVersion();
-    if (
-      this.pendingUpgradeVersion != null &&
-      hostVersion === this.pendingUpgradeVersion
-    ) {
+    if (this.pendingUpgradeVersion != null && hostVersion === this.pendingUpgradeVersion) {
       this.pendingUpgradeVersion = null;
       this.pendingUpgradeDeferredSinceMs = null;
     }
     const status = buildStatus({
       nowMs: Date.now(),
+      tickMs: TICK_MS,
       hostBundlePresent: this.hostBundlePresent(),
       hostRunning: this.hostRunning(),
       hostVersion,
       pendingUpgradeVersion: this.pendingUpgradeVersion,
       lastCommandId: this.lastCommandId,
       lastCommandKind: this.lastCommandKind,
+      ...gatewayDiscoveryPresence(readGatewayDiscoveryRecord(this.gatewayRecordPath)),
     });
     atomicWrite(STATUS_PATH, JSON.stringify(status));
   }
 
-  recordUpgradeApplied({
-    commandId,
-    fromVersion,
-    toVersion,
-    mode,
-    reason,
-    issuedAtMs,
-    swapMs,
-  }) {
+  recordUpgradeApplied({ commandId, fromVersion, toVersion, mode, reason, issuedAtMs, swapMs }) {
     try {
       atomicWrite(
         this.markerPath,
@@ -2914,22 +1604,12 @@ export class Supervisor {
           issuedAtMs,
           appliedAtMs: Date.now(),
           swapMs,
-        })
+        }),
       );
-    } catch {
-      // Best-effort: upgrade-timing telemetry must never affect the upgrade.
-    }
+    } catch {}
   }
 
-  recordUpgradeFailed({
-    commandId,
-    fromVersion,
-    toVersion,
-    mode,
-    reason,
-    issuedAtMs,
-    swapError,
-  }) {
+  recordUpgradeFailed({ commandId, fromVersion, toVersion, mode, reason, issuedAtMs, swapError }) {
     try {
       atomicWrite(
         this.markerPath,
@@ -2943,452 +1623,10 @@ export class Supervisor {
           issuedAtMs,
           failedAtMs: Date.now(),
           swapError,
-        })
+        }),
       );
-    } catch {
-      // Best-effort: a failed-marker write must never affect the upgrade path.
-    }
+    } catch {}
   }
-}
-
-// overlayfs constraint (#157590): hostDir is baked into the image, so it is a
-// pure lower-layer dir of the box's overlayfs root, and overlayfs returns EXDEV
-// when renaming a lower-only directory — even to a same-device sibling. So the
-// swap must NEVER rename hostDir itself: publish the new bundle's files INTO
-// hostDir (copy-up is allowed), back up by copying entries out, and roll back
-// by publishing them back in. Scratch dirs are hostDir siblings so entry moves
-// are same-fs renames.
-export function hostBundleSwapTargets(hostDir = HOST_DIR) {
-  return {
-    hostDir,
-    stageDir: `${hostDir}.stage`,
-    backupDir: `${hostDir}.prev`,
-  };
-}
-
-export function classifySwapError(error) {
-  const code =
-    error != null && typeof error === "object" ? error.code : undefined;
-  switch (code) {
-    case "EXDEV":
-      return "rename-exdev";
-    case "EACCES":
-    case "EPERM":
-      return "perms";
-    case "ENOSPC":
-      return "nospace";
-    default:
-      return "swap-failed";
-  }
-}
-
-// Bounded @error_class sub-reason for a failed `tar -xz`. execFileSync
-// surfaces a child's non-zero exit as a generic Error with no errno, so the
-// classification must parse captured tar/gzip stderr. Never raw stderr on the
-// telemetry path.
-export function classifyExtractError(error) {
-  if (error != null && typeof error === "object" && error.code === "ENOSPC") {
-    return "extract-nospace";
-  }
-  const stderr = extractErrorStderr(error);
-  if (/no space left on device/i.test(stderr)) return "extract-nospace";
-  if (
-    /not in gzip format|unexpected end of file|invalid compressed data|unexpected eof|damaged|corrupt/i.test(
-      stderr
-    )
-  ) {
-    return "extract-corrupt";
-  }
-  return "extract-failed";
-}
-
-function extractErrorStderr(error) {
-  const raw =
-    error != null && typeof error === "object" ? error.stderr : undefined;
-  let text = "";
-  if (typeof raw === "string") {
-    text = raw;
-  } else if (raw instanceof Uint8Array) {
-    text = Buffer.from(raw).toString("utf8");
-  }
-  return text.slice(0, 2_000);
-}
-
-// Publish one staged bundle entry (file or directory) onto its final path.
-// POSIX rename won't replace a live directory (ENOTEMPTY/EEXIST/EISDIR): clear
-// destPath first, then rename. EXDEV drops to a copy-then-rename fallback so
-// the visible flip stays same-fs. Any other errno re-throws.
-function publishBundleEntry(srcPath, destPath) {
-  try {
-    renameSync(srcPath, destPath);
-    return;
-  } catch (error) {
-    const code = error?.code;
-    if (code === "ENOTEMPTY" || code === "EEXIST" || code === "EISDIR") {
-      rmSync(destPath, { recursive: true, force: true });
-      try {
-        renameSync(srcPath, destPath);
-        return;
-      } catch (retryError) {
-        if (retryError?.code !== "EXDEV") throw retryError;
-      }
-    } else if (code !== "EXDEV") {
-      throw error;
-    }
-  }
-  const tmpPath = `${destPath}.incoming-${process.pid}-${Date.now()}`;
-  rmSync(tmpPath, { recursive: true, force: true });
-  cpSync(srcPath, tmpPath, { recursive: true });
-  try {
-    renameSync(tmpPath, destPath);
-  } catch (error) {
-    const code = error?.code;
-    if (code !== "ENOTEMPTY" && code !== "EEXIST" && code !== "EISDIR") {
-      rmSync(tmpPath, { recursive: true, force: true });
-      throw error;
-    }
-    rmSync(destPath, { recursive: true, force: true });
-    renameSync(tmpPath, destPath);
-  }
-}
-
-export function keepExistingHostBackup(backupDir, hostDir) {
-  return (
-    existsSync(join(backupDir, "host-main.cjs")) &&
-    readVersionMarker(join(backupDir, "version")) != null &&
-    readVersionMarker(join(backupDir, "version")) ===
-      readVersionMarker(join(hostDir, "version"))
-  );
-}
-
-export function swapHostBundle({
-  bundlePath,
-  bundle,
-  hostDir,
-  stageDir,
-  backupDir,
-  expectedVersion,
-}) {
-  let entryCommitted = false;
-  try {
-    rmSync(stageDir, { recursive: true, force: true });
-    mkdirSync(stageDir, { recursive: true });
-    try {
-      execFileSync("tar", ["-xzf", "-", "-C", stageDir], {
-        input: bundle,
-        stdio: ["pipe", "ignore", "pipe"],
-      });
-    } catch (error) {
-      const reason = classifyExtractError(error);
-      log(
-        `bundle extract failed (${reason}): ${String(error)}${describeStderrExcerpt(error)}`
-      );
-      rmSync(stageDir, { recursive: true, force: true });
-      return { ok: false, reason };
-    }
-    const newHostDir = join(stageDir, "sand-host");
-    if (!existsSync(join(newHostDir, "host-main.cjs"))) {
-      log("staged bundle missing sand-host/host-main.cjs; aborting swap");
-      rmSync(stageDir, { recursive: true, force: true });
-      return { ok: false, reason: "host-main-missing" };
-    }
-    const stagedVersion = readVersionMarker(join(newHostDir, "version"));
-    const normalizedExpected =
-      typeof expectedVersion === "string" && expectedVersion.trim().length > 0
-        ? expectedVersion.trim()
-        : null;
-    if (normalizedExpected != null && stagedVersion !== normalizedExpected) {
-      const reason =
-        stagedVersion == null ? "version-unreadable" : "version-mismatch";
-      log(
-        `refusing swap: staged version ${
-          stagedVersion == null ? "unreadable" : `"${stagedVersion}"`
-        } != target "${normalizedExpected}" (${reason}); host left untouched`
-      );
-      rmSync(stageDir, { recursive: true, force: true });
-      return { ok: false, reason };
-    }
-    if (backupDir != null) {
-      try {
-        if (!keepExistingHostBackup(backupDir, hostDir)) {
-          rmSync(backupDir, { recursive: true, force: true });
-          if (existsSync(join(hostDir, "host-main.cjs"))) {
-            mkdirSync(backupDir, { recursive: true });
-            for (const name of readdirSync(hostDir)) {
-              if (name.endsWith(".map")) continue;
-              cpSync(join(hostDir, name), join(backupDir, name), {
-                recursive: true,
-              });
-            }
-          }
-        }
-      } catch (error) {
-        log(
-          `pre-swap backup failed (${classifySwapError(error)}): ${String(error)}; refusing swap (host untouched)`
-        );
-        safeRmRecursive(stageDir);
-        safeRmRecursive(backupDir);
-        return { ok: false, reason: "backup-failed" };
-      }
-    }
-    mkdirSync(hostDir, { recursive: true });
-    publishBundleEntry(
-      join(newHostDir, "host-main.cjs"),
-      join(hostDir, "host-main.cjs")
-    );
-    entryCommitted = true;
-    const staged = readdirSync(newHostDir);
-    const failedEntries = [];
-    for (const name of staged) {
-      if (name === "host-main.cjs" || name === "version") continue;
-      try {
-        publishBundleEntry(join(newHostDir, name), join(hostDir, name));
-      } catch (error) {
-        failedEntries.push({ name, error });
-        log(
-          `host bundle entry publish failed for "${name}": ${String(error)}`
-        );
-      }
-    }
-    if (failedEntries.length > 0) {
-      const reason = classifySwapError(failedEntries[0].error);
-      const failedNames = failedEntries.map((entry) => entry.name).join(", ");
-      log(
-        `host bundle publish incomplete: ${failedEntries.length} required entr${
-          failedEntries.length === 1 ? "y" : "ies"
-        } failed (${failedNames}); swap FAILED (${reason}); version NOT advanced, no prune`
-      );
-      rmSync(stageDir, { recursive: true, force: true });
-      return { ok: false, reason, mutated: true };
-    }
-    if (staged.includes("version")) {
-      try {
-        publishBundleEntry(
-          join(newHostDir, "version"),
-          join(hostDir, "version")
-        );
-      } catch (error) {
-        const reason = classifySwapError(error);
-        log(
-          `host bundle version flip failed (${reason}): ${String(error)}; version NOT advanced, no prune`
-        );
-        rmSync(stageDir, { recursive: true, force: true });
-        return { ok: false, reason, mutated: true };
-      }
-    }
-    for (const name of readdirSync(hostDir)) {
-      if (name === "host-main.cjs") continue;
-      if (staged.includes(name)) continue;
-      try {
-        rmSync(join(hostDir, name), { recursive: true, force: true });
-      } catch (error) {
-        log(
-          `host bundle stale-entry prune failed for "${name}": ${String(error)}`
-        );
-      }
-    }
-    rmSync(stageDir, { recursive: true, force: true });
-    safeUnlink(bundlePath);
-    log(`swapped in new host bundle from ${bundlePath}`);
-    return { ok: true };
-  } catch (error) {
-    const reason = classifySwapError(error);
-    log(`bundle swap failed (${reason}): ${String(error)}`);
-    rmSync(stageDir, { recursive: true, force: true });
-    return entryCommitted
-      ? { ok: false, reason, mutated: true }
-      : { ok: false, reason };
-  }
-}
-
-export function restoreHostBundleFromBackup({ backupDir, hostDir }) {
-  if (!existsSync(join(backupDir, "host-main.cjs"))) {
-    return { ok: false, reason: "backup-missing" };
-  }
-  const restoreStageDir = `${hostDir}.rollback-stage`;
-  try {
-    rmSync(restoreStageDir, { recursive: true, force: true });
-    mkdirSync(restoreStageDir, { recursive: true });
-    const names = readdirSync(backupDir);
-    for (const name of names) {
-      cpSync(join(backupDir, name), join(restoreStageDir, name), {
-        recursive: true,
-      });
-    }
-    publishBundleEntry(
-      join(restoreStageDir, "host-main.cjs"),
-      join(hostDir, "host-main.cjs")
-    );
-    const failedEntries = [];
-    for (const name of names) {
-      if (name === "host-main.cjs" || name === "version") continue;
-      try {
-        publishBundleEntry(join(restoreStageDir, name), join(hostDir, name));
-      } catch (error) {
-        failedEntries.push({ name, error });
-        log(`rollback entry publish failed for "${name}": ${String(error)}`);
-      }
-    }
-    if (failedEntries.length === 0 && names.includes("version")) {
-      publishBundleEntry(
-        join(restoreStageDir, "version"),
-        join(hostDir, "version")
-      );
-    }
-    if (failedEntries.length > 0) {
-      const reason = classifySwapError(failedEntries[0].error);
-      log(
-        `rollback incomplete: ${failedEntries.length} entr${
-          failedEntries.length === 1 ? "y" : "ies"
-        } failed (${reason}); version not restored, backup kept`
-      );
-      safeRmRecursive(restoreStageDir);
-      return { ok: false, reason };
-    }
-    for (const name of readdirSync(hostDir)) {
-      if (name === "host-main.cjs") continue;
-      if (names.includes(name)) continue;
-      try {
-        rmSync(join(hostDir, name), { recursive: true, force: true });
-      } catch (error) {
-        log(`rollback stale-entry prune failed for "${name}": ${String(error)}`);
-      }
-    }
-    safeRmRecursive(restoreStageDir);
-    safeRmRecursive(backupDir);
-    return { ok: true };
-  } catch (error) {
-    const reason = classifySwapError(error);
-    log(`rollback failed (${reason}): ${String(error)}; backup kept for retry`);
-    safeRmRecursive(restoreStageDir);
-    return { ok: false, reason };
-  }
-}
-
-export function syncBoxScriptsFromDir({
-  sourceDir,
-  binDir,
-  markerPath,
-  bundleVersion,
-  denyNames = BOX_SCRIPTS_DENY,
-  logFn = log,
-}) {
-  if (
-    bundleVersion == null ||
-    !BOOT_FETCH_GIT_SHA_REGEX.test(bundleVersion)
-  ) {
-    return { status: "noop", reason: "no valid bundle version" };
-  }
-  if (readVersionMarker(markerPath) === bundleVersion) {
-    return { status: "noop", reason: "marker current" };
-  }
-  let sourceEntries;
-  try {
-    sourceEntries = readdirSync(sourceDir);
-  } catch {
-    return { status: "noop", reason: "bundle carries no box-scripts" };
-  }
-  const eligible = [];
-  for (const name of sourceEntries.sort()) {
-    const sourcePath = join(sourceDir, name);
-    let stat;
-    try {
-      stat = lstatSync(sourcePath);
-    } catch {
-      continue;
-    }
-    // Plain files only: a symlink's target escapes the bundle.
-    if (!stat.isFile()) {
-      logFn(`box-script sync: refusing non-regular entry "${name}"`);
-      continue;
-    }
-    if (denyNames.includes(name)) {
-      logFn(`box-script sync: refusing Zone A overlay of "${name}"`);
-      continue;
-    }
-    eligible.push(name);
-  }
-  const stagedPath = (name) => join(binDir, `.${name}.sand-scripts.${process.pid}`);
-  const snapshotPath = (name) =>
-    join(binDir, `.${name}.sand-scripts-floor.${process.pid}`);
-  const staged = [];
-  for (const name of eligible) {
-    try {
-      copyFileSync(join(sourceDir, name), stagedPath(name));
-      chmodSync(stagedPath(name), 0o755);
-      staged.push(name);
-    } catch (error) {
-      for (const stagedName of staged) safeUnlink(stagedPath(stagedName));
-      safeUnlink(stagedPath(name));
-      logFn(
-        `box-script sync: could not stage "${name}" (${String(error)}); floor left whole`
-      );
-      return { status: "failed", reason: "stage failed" };
-    }
-  }
-  const published = [];
-  let publishFailed = null;
-  for (const name of staged) {
-    try {
-      if (existsSync(join(binDir, name))) {
-        copyFileSync(join(binDir, name), snapshotPath(name));
-      }
-      renameSync(stagedPath(name), join(binDir, name));
-      published.push(name);
-    } catch (error) {
-      publishFailed = { name, error };
-      break;
-    }
-  }
-  if (publishFailed != null) {
-    let rollbackFailed = null;
-    for (const name of published) {
-      try {
-        if (existsSync(snapshotPath(name))) {
-          renameSync(snapshotPath(name), join(binDir, name));
-        } else {
-          safeUnlink(join(binDir, name));
-        }
-      } catch (error) {
-        rollbackFailed = name;
-        logFn(
-          `box-script sync: ROLLBACK of "${name}" failed (${String(error)}); floor snapshot kept at ${snapshotPath(name)}`
-        );
-      }
-    }
-    for (const name of staged) safeUnlink(stagedPath(name));
-    safeUnlink(snapshotPath(publishFailed.name));
-    logFn(
-      `box-script sync: could not publish "${publishFailed.name}" (${String(
-        publishFailed.error
-      )}); ${
-        rollbackFailed == null
-          ? "rolled the floor back whole"
-          : `rollback of "${rollbackFailed}" failed`
-      } — marker unchanged, the next attempt re-runs whole`
-    );
-    return { status: "failed", reason: "publish failed" };
-  }
-  for (const name of staged) safeUnlink(snapshotPath(name));
-  try {
-    ensureDir(join(markerPath, ".."));
-    const markerTmp = `${markerPath}.${process.pid}`;
-    writeFileSync(markerTmp, bundleVersion);
-    renameSync(markerTmp, markerPath);
-  } catch (error) {
-    logFn(
-      `box-script sync: synced ${staged.length} scripts to ${bundleVersion} but could not write the marker (${String(
-        error
-      )}); the next tick re-runs the sync whole`
-    );
-    return { status: "failed", reason: "marker write failed" };
-  }
-  logFn(
-    `box-script sync: converged ${staged.length} script${
-      staged.length === 1 ? "" : "s"
-    } to bundle ${bundleVersion}`
-  );
-  return { status: "synced", reason: "ok" };
 }
 
 function ackFilename(id) {
@@ -3398,7 +1636,10 @@ function ackFilename(id) {
 function ensureDir(dir) {
   try {
     mkdirSync(dir, { recursive: true });
-  } catch {}
+    return null;
+  } catch (error) {
+    return error;
+  }
 }
 
 function safeRead(path) {
@@ -3438,85 +1679,6 @@ function safeRmRecursive(path) {
   } catch {}
 }
 
-function describeStderrExcerpt(error) {
-  const line = extractErrorStderr(error).replace(/\s+/g, " ").trim().slice(0, 200);
-  return line.length > 0 ? ` [stderr: ${line}]` : "";
-}
-
-function desktopLogIdentity(info) {
-  return `${info.dev}:${info.ino}`;
-}
-
-function desktopLogCursor(logFile) {
-  if (logFile == null) return { size: 0, identity: null };
-  try {
-    const info = statSync(logFile);
-    return { size: info.size, identity: desktopLogIdentity(info) };
-  } catch {
-    return { size: 0, identity: null };
-  }
-}
-
-function boundedDesktopLogOwner(logFile) {
-  if (logFile == null) return null;
-  const raw = safeRead(`${logFile}.lock`);
-  if (raw == null || !/^[1-9][0-9]*$/.test(raw.trim())) return null;
-  const pid = Number(raw.trim());
-  return Number.isSafeInteger(pid) ? pid : null;
-}
-
-function isBoundedDesktopLogSpec(spec) {
-  const argv = Array.isArray(spec?.argv) ? spec.argv : [];
-  const runner = typeof argv[0] === "string" ? argv[0] : "";
-  return (
-    (runner === "/usr/local/bin/box-bounded-log" ||
-      runner.endsWith("/box-bounded-log")) &&
-    argv[1] === "--run" &&
-    argv[2] === spec.logFile &&
-    argv[3] === "--"
-  );
-}
-
-function readDesktopLogTail(logFile, minOffset = 0, initialIdentity = null) {
-  let fd = null;
-  try {
-    fd = openSync(logFile, "r");
-    const info = fstatSync(fd);
-    const size = info.size;
-    const generationChanged =
-      initialIdentity != null &&
-      desktopLogIdentity(info) !== initialIdentity;
-    const floor =
-      !generationChanged &&
-      Number.isFinite(minOffset) &&
-      minOffset > 0 &&
-      minOffset <= size
-        ? minOffset
-        : 0;
-    const start = Math.max(floor, size - DESKTOP_LOG_TAIL_BYTES);
-    const len = size - start;
-    if (len <= 0) return "";
-    const buf = Buffer.allocUnsafe(len);
-    const read = readSync(fd, buf, 0, len, start);
-    const lines = buf
-      .toString("utf8", 0, read)
-      .split("\n")
-      .flatMap((l) => {
-        const trimmed = l.trimEnd();
-        return trimmed.trim().length > 0 ? [trimmed] : [];
-      });
-    return lines.slice(-DESKTOP_LOG_TAIL_LINES).join("\n");
-  } catch {
-    return "";
-  } finally {
-    if (fd != null) {
-      try {
-        closeSync(fd);
-      } catch {}
-    }
-  }
-}
-
 function atomicWrite(path, contents) {
   const partPath = `${path}.part`;
   try {
@@ -3539,7 +1701,7 @@ function fetchHealth(port) {
             resolve(null);
           }
         });
-      }
+      },
     );
     req.on("error", () => resolve(null));
     req.on("timeout", () => {
@@ -3563,9 +1725,7 @@ export function bootFetchBaseUrl(env = process.env) {
 
 export function bootFetchChannel(env = process.env) {
   const stamped = env[HOST_BUNDLE_CHANNEL_ENV]?.trim();
-  return HOST_BUNDLE_CHANNELS.includes(stamped)
-    ? stamped
-    : HOST_BUNDLE_DEFAULT_CHANNEL;
+  return HOST_BUNDLE_CHANNELS.includes(stamped) ? stamped : HOST_BUNDLE_DEFAULT_CHANNEL;
 }
 
 export function bootFetchVersionFileName(channel) {
@@ -3576,14 +1736,7 @@ export function bootFetchDigestFileName(version) {
   return `sand-host-bundle-${version}.tgz.sha256`;
 }
 
-export function parseHostBundleDigest(rawText) {
-  const token = rawText.trim().split(/\s+/, 1)[0] ?? "";
-  return HOST_BUNDLE_SHA256_REGEX.test(token) ? token : null;
-}
-
-// Node's request `timeout` option is socket-idle only, so a hard timer
-// enforces the absolute deadline — a slow-drip response must not outlive the
-// boot-fetch budget. Resolves null on any failure.
+// Node's http.request timeout is a socket inactivity timeout, not a deadline, so a separate timer bounds the whole fetch: https://nodejs.org/api/http.html#httprequesturl-options-callback
 function fetchSmallTextWithDeadline(url, timeoutMs) {
   return new Promise((resolve) => {
     if (!(timeoutMs > 0)) return resolve(null);
@@ -3709,7 +1862,7 @@ export function postPrepareUpgrade({ port, token }) {
             resolve(null);
           }
         });
-      }
+      },
     );
     req.on("error", () => resolve(null));
     req.on("timeout", () => {
@@ -3720,22 +1873,26 @@ export function postPrepareUpgrade({ port, token }) {
   });
 }
 
-function log(message) {
-  process.stdout.write(`[sand-supervisor] ${message}\n`);
+const isMain = process.argv[1] != null && fileURLToPath(import.meta.url) === process.argv[1];
+export async function handOffOnSignal(supervisor, signal) {
+  const hostPid = supervisor.runningHostPid();
+  log(
+    `received ${signal}, stopping; ${
+      hostPid == null
+        ? "no host is running"
+        : `leaving host pid ${hostPid} running for the next supervisor to adopt`
+    }`,
+  );
+  await supervisor.stop();
 }
 
-const isMain =
-  process.argv[1] != null &&
-  fileURLToPath(import.meta.url) === process.argv[1];
 if (isMain) {
   const supervisor = new Supervisor();
   supervisor.start();
-  const shutdown = (signal) => {
-    log(`received ${signal}, stopping`);
-    supervisor.stop();
-    supervisor.stopHost();
+  const shutdown = async (signal) => {
+    await handOffOnSignal(supervisor, signal);
     process.exit(0);
   };
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 }

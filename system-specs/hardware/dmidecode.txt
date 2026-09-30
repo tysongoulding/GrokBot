@@ -1,1 +1,0 @@
-sudo: dmidecode: command not found

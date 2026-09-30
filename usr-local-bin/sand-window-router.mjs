@@ -23,8 +23,6 @@ export function parseDisplayNumber(raw) {
   return Number.isInteger(num) ? num : 1;
 }
 
-// Constant-time token comparison so the reject path can't be turned into a
-// character-by-character oracle. Both must be non-empty strings of equal length.
 export function tokensMatch(a, b) {
   if (typeof a !== "string" || typeof b !== "string") return false;
   const ab = Buffer.from(a);
@@ -64,26 +62,24 @@ function readBoundToken(display) {
   }
 }
 
-function main() {
-  const LISTEN_PORT = Number(process.argv[2] || DEFAULT_LISTEN_PORT);
-  const PRIMARY_PORT = Number(process.argv[3] || DEFAULT_PRIMARY_PORT);
-  const EXEC_BASE = Number(process.argv[4] || DEFAULT_FORK_EXEC_BASE);
-
+export function createWindowRouterServer({
+  primaryPort,
+  execBase,
+  lookupBoundToken = readBoundToken,
+}) {
   const server = http.createServer((req, res) => {
     const decision = decideWindowRoute({
       displayHeader: req.headers[SAND_BOX_DISPLAY_HEADER],
       ownerHeader: req.headers[SAND_BOX_WINDOW_OWNER_HEADER],
-      primaryPort: PRIMARY_PORT,
-      execBase: EXEC_BASE,
-      lookupBoundToken: readBoundToken,
+      primaryPort,
+      execBase,
+      lookupBoundToken,
     });
     if (decision.reject !== undefined) {
       if (!res.headersSent) {
         res.writeHead(decision.reject.status, { "content-type": "text/plain" });
       }
       res.end(decision.reject.message);
-      // Drain the request body so a rejected keep-alive socket closes cleanly
-      // instead of stalling on an unread stream.
       req.resume();
       return;
     }
@@ -98,26 +94,48 @@ function main() {
       (upstreamRes) => {
         res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
         upstreamRes.pipe(res);
-      }
+        endCallerStreamWhenDaemonDropsMidResponse(upstreamRes, res);
+      },
     );
     upstream.on("error", (err) => {
+      if (res.destroyed) return;
       if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain" });
       res.end(`sand-window-router upstream error: ${String(err)}`);
     });
+    forwardCallerHangUpToDaemon(res, upstream);
     req.pipe(upstream);
   });
-
   server.timeout = 0;
+  return server;
+}
+
+function forwardCallerHangUpToDaemon(res, upstream) {
+  res.on("close", () => {
+    const callerHungUpBeforeResponseFinished = !res.writableFinished;
+    if (callerHungUpBeforeResponseFinished) upstream.destroy();
+  });
+}
+
+function endCallerStreamWhenDaemonDropsMidResponse(upstreamRes, res) {
+  upstreamRes.on("error", () => res.destroy());
+}
+
+function main() {
+  const LISTEN_PORT = Number(process.argv[2] || DEFAULT_LISTEN_PORT);
+  const PRIMARY_PORT = Number(process.argv[3] || DEFAULT_PRIMARY_PORT);
+  const EXEC_BASE = Number(process.argv[4] || DEFAULT_FORK_EXEC_BASE);
+
+  const server = createWindowRouterServer({
+    primaryPort: PRIMARY_PORT,
+    execBase: EXEC_BASE,
+  });
   server.listen(LISTEN_PORT, "0.0.0.0", () => {
     process.stdout.write(
-      `sand-window-router listening pid=${process.pid} port=${LISTEN_PORT} primary=${PRIMARY_PORT} fork_base=${EXEC_BASE} (owner-token enforced)\n`
+      `sand-window-router listening pid=${process.pid} port=${LISTEN_PORT} primary=${PRIMARY_PORT} fork_base=${EXEC_BASE} (owner-token enforced)\n`,
     );
   });
 }
 
-if (
-  process.argv[1] != null &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main();
 }

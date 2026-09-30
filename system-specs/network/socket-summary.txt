@@ -1,10 +1,10 @@
-Total: 429
-TCP:   123 (estab 45, closed 53, orphaned 1, timewait 53)
+Total: 671
+TCP:   174 (estab 52, closed 87, orphaned 0, timewait 87)
 
 Transport Total     IP        IPv6
 RAW	  0         0         0        
 UDP	  0         0         0        
-TCP	  70        58        12       
-INET	  70        58        12       
+TCP	  87        67        20       
+INET	  87        67        20       
 FRAG	  0         0         0        
 

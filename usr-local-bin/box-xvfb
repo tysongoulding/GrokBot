@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# Thin Xvfb launcher that REAPS a stale/orphaned Xvfb still owning a forked
-# display, clears the stale X lock/socket, then execs Xvfb. A teardown can miss an
-# Xvfb across a display-index reuse while that live process still owns both the
-# abstract/filesystem /tmp/.X11-unix/X<N> socket and /tmp/.X<N>-lock. Removing
-# those paths alone does NOT evict the server, so the next Xvfb loops "Server is
-# already active for display N" and takes the supervised desktop group down.
+# Removing X lock/socket paths does not close a live server's abstract socket. https://man7.org/linux/man-pages/man7/unix.7.html
 set -uo pipefail
 
 display="${1:-}"

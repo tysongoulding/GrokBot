@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+scrub_gateway_token_env() {
+	local gateway_token="${SAND_GATEWAY_TOKEN:-}" tunnel_bearer="${SAND_EGRESS_TUNNEL_BEARER:-}"
+	local entry env_name token_value
+	GATEWAY_TOKEN_ENV_UNSETS=()
+	while IFS= read -r -d '' entry; do
+		env_name="${entry%%=*}"
+		[ "${env_name}" != "${entry}" ] || continue
+		for token_value in "${gateway_token}" "${tunnel_bearer}"; do
+			if [ -n "${token_value}" ] && [[ "${entry#*=}" == *"${token_value}"* ]]; then
+				if [[ "${env_name}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+					unset "${env_name}"
+				else
+					GATEWAY_TOKEN_ENV_UNSETS+=(-u "${env_name}")
+				fi
+				break
+			fi
+		done
+	done < <(env -0)
+	unset SAND_GATEWAY_TOKEN SAND_EGRESS_TUNNEL_BEARER
+}
+scrub_gateway_token_env
+[ "${#GATEWAY_TOKEN_ENV_UNSETS[@]}" -eq 0 ] || exec env "${GATEWAY_TOKEN_ENV_UNSETS[@]}" "${BASH}" "$0" "$@"
+
 export DISPLAY="${DISPLAY:-:1}"
 export HOME="${HOME:-/home/box}"
 export XDG_RUNTIME_DIR="${SAND_XDG_RUNTIME_DIR:-${XDG_RUNTIME_DIR:-/tmp/xdg-runtime}}"
@@ -31,20 +54,14 @@ SAND_DESKTOP_GROUP="d${SAND_DESKTOP_NUM:-1}"
 
 /usr/local/bin/ensure-machine-id || true
 
-SCREEN_WIDTH=1280
-SCREEN_HEIGHT=800
+SCREEN_WIDTH="${SCREEN_WIDTH:-1280}"
+SCREEN_HEIGHT="${SCREEN_HEIGHT:-800}"
 
 # >>> box port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
-SAND_BOX_PORT_HOST_GATEWAY=1340
 SAND_BOX_NOVNC_TOKEN_DIR="/tmp/sand-novnc-tokens.d"
 VNC_PORT="${SAND_VNC_PORT:-5900}"
 NOVNC_PORT="${SAND_NOVNC_PORT:-6080}"
 # <<< box port table <<<
-# An idle desktop produces no RFB framebuffer traffic, so without a ping the
-# socket is completely silent and the anyrun authed public LB (and any NAT /
-# proxy hop) eventually drops the idle connection — which surfaced as the viewer
-# intermittently flipping to "Reconnecting" during quiet stretches. 30s stays
-# well under a 60s ALB idle timeout while costing one tiny frame per interval.
 NOVNC_HEARTBEAT_S="${SAND_NOVNC_HEARTBEAT_S:-30}"
 
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
@@ -75,12 +92,7 @@ else
 	printf '%s' "${DBUS_SESSION_BUS_ADDRESS:-}" >"${BOX_USER_XDG_DIR}/dbus-session-address" 2>/dev/null || true
 fi
 
-if [ -n "${SAND_GATEWAY_TOKEN:-}" ]; then
-	mkdir -p "${BOX_USER_XDG_DIR}" 2>/dev/null || true
-	printf '%s\n%s\n' "${SAND_GATEWAY_TOKEN}" "${SAND_HOST_PORT:-${SAND_BOX_PORT_HOST_GATEWAY}}" \
-		>"${BOX_USER_XDG_DIR}/sand-gateway-credential" 2>/dev/null || true
-	chmod 600 "${BOX_USER_XDG_DIR}/sand-gateway-credential" 2>/dev/null || true
-fi
+rm -f /tmp/xdg-runtime-box/sand-gateway-credential /tmp/xdg-runtime-box-*/sand-gateway-credential || true
 
 /usr/local/bin/box-bounded-log --run "/tmp/xvfb${DISPLAY}.log" -- \
 	/usr/local/bin/box-xvfb "${DISPLAY}" -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x24" -ac +extension GLX +render -noreset &
@@ -102,9 +114,6 @@ if [ "${DISPLAY_READY}" != "true" ]; then
 	exit 1
 fi
 
-# Paint the framebuffer before x11vnc can expose it. Fresh Xvfb starts black,
-# and an initial black RFB frame can otherwise remain cached when XDamage misses
-# a later composited repaint.
 if [ -x /usr/local/bin/sand-wallpaper ]; then
 	/usr/local/bin/sand-wallpaper paint || true
 else
@@ -120,9 +129,6 @@ X11VNC_ARGS=(
 	-nopw
 	-shared
 	-forever
-	# XDamage is only an optimization here: under Xvfb + picom it can miss a
-	# composited repaint and leave noVNC stale. Polling the full 1280x800
-	# framebuffer is reliable and inexpensive because Xvfb stores it in RAM.
 	-noxdamage
 	-rfbport "${VNC_PORT}"
 	-quiet
@@ -152,13 +158,6 @@ else
 		websockify "${WEBSOCKIFY_ARGS[@]}"
 fi
 
-# Window manager: gives every window a title bar (close / minimise / maximise)
-# and drag. Compositing is handled by picom below — xfwm4's own compositor
-# grabs the composite overlay without advertising _NET_WM_CM_S0 under Xvfb,
-# which leaves Plank rendering an opaque fallback. Route both initial launch and
-# supervisor replay through box-xfwm4 so an untracked same-display owner cannot
-# leave every replacement exiting with "Another Window Manager ... is already
-# running". The launcher execs xfwm4, preserving the tracked pid.
 /usr/local/bin/box-bounded-log --run "/tmp/xfwm4${DISPLAY}.log" -- \
 	/usr/local/bin/box-xfwm4 --compositor=off &
 sand_desktop_register "${SAND_DESKTOP_GROUP}" xfwm4 1 "/tmp/xfwm4${DISPLAY}.log" "$!" -- \
@@ -172,18 +171,6 @@ for _ in $(seq 1 50); do
 	sleep 0.2
 done
 
-# Compositor flags, tuned for the box's GPU-less virtual display (SAND-161):
-#  - xrender: the only backend that works without a GPU (Xvfb has no GL device;
-#    picom's glx/egl backends abort at init here).
-#  - no-vsync + no-frame-pacing: both lean on Present/vblank timing, which a
-#    virtual framebuffer doesn't provide (Xvfb's RandR reports no refresh rate);
-#    picom disables frame pacing itself when vsync is off, so pinning BOTH off
-#    makes the no-vblank path explicit instead of implied.
-#  - no-use-damage: repaint the whole (1280x800) screen instead of tracking
-#    damaged regions. Stale damage accounting is exactly the reported corruption
-#    class — chunks of the root wallpaper painted over Chrome content — and a
-#    full repaint per frame is cheap at this size while making it structurally
-#    impossible for a region to stay unrepainted.
 PICOM_ARGS=(
 	--backend xrender
 	--no-vsync
@@ -196,34 +183,10 @@ sand_desktop_register "${SAND_DESKTOP_GROUP}" picom 2 "/tmp/picom${DISPLAY}.log"
 	/usr/local/bin/box-bounded-log --run "/tmp/picom${DISPLAY}.log" -- \
 	/usr/local/bin/box-picom "${PICOM_ARGS[@]}"
 
-# No --test-type / --enable-automation:
-# those are automation tells anti-bot vendors (Akamai etc.) score against, and we
-# drive the browser at the OS level (xdotool) rather than over CDP, so we don't
-# need them. --no-sandbox is required because anyrun runs the box in a firecracker
-# microVM whose guest kernel forbids the user/PID-namespace (and setuid) sandbox
-# Chrome needs: without it the browser aborts on startup ("Failed to move to new
-# namespace ... Operation not permitted"), so every on-demand launch (a dock click
-# or the agent running box-chrome) would die silently (a separate bug this same
-# wrapper fixes). (DockerSandBox dodged it only because it runs the container
-# seccomp=unconfined; the firecracker box has no such opt-out.)
-# It is a process-level flag, not web-visible like --test-type, so it adds no
-# anti-bot signal, and Chrome runs as the non-root box user either way (this
-# whole desktop runs as box; the runuser branch below covers a root caller).
-# The GPU flags are deliberate: --disable-gpu is absent (it would kill
-# WebGPU) and --enable-unsafe-webgpu exposes a software (SwiftShader) adapter with
-# no real GPU. Because that adapter is software, a GPU-heavy page burns a whole
-# core inside the gpu-process, which on the box's small core count starves the
-# in-box host (message-loading, agent turns). The gpu-process is zygote-forked, so
-# a --gpu-launcher prefix never wraps it; instead the whole browser is launched
-# under `nice` below and every child (the zygote, and the renderers + gpu-process
-# it forks) inherits the low priority, so a runaway page yields the CPU to the host
-# instead of pinning a core. --password-store=basic avoids a hang on the missing
-# system keyring;
 cat >/usr/local/bin/box-chrome <<'EOF'
 #!/usr/bin/env bash
 # >>> box-chrome port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
 SAND_BOX_CDP_PORT_BASE=9222
-SAND_BOX_PORT_HOST_GATEWAY=1340
 # <<< box-chrome port table <<<
 /usr/local/bin/ensure-machine-id || true
 
@@ -237,10 +200,15 @@ BOX_DISPLAY_NUM="${DISPLAY#:}"
 BOX_DISPLAY_NUM="${BOX_DISPLAY_NUM%%.*}"
 BOX_PRIMARY_XDG="/tmp/xdg-runtime-box"
 if [ "${BOX_DISPLAY_NUM:-1}" -ge 2 ] 2>/dev/null; then
-	CHROME_PROFILE="${CHROME_USER_DATA_DIR:-/home/box/chrome-profile-${BOX_DISPLAY_NUM}}"
+	CHROME_PROFILE="${CHROME_USER_DATA_DIR:-/home/box/chrome-profile/Fork-${BOX_DISPLAY_NUM}}"
 	CHROME_XDG="/tmp/xdg-runtime-box-${BOX_DISPLAY_NUM}"
 	CHROME_DEBUG_PORT="${SAND_CHROME_REMOTE_DEBUG_PORT:-$((SAND_BOX_CDP_PORT_BASE + BOX_DISPLAY_NUM))}"
 	if [ -z "${CHROME_USER_DATA_DIR:-}" ]; then
+		LEGACY_CHROME_PROFILE="/home/box/chrome-profile-${BOX_DISPLAY_NUM}"
+		if [ -d "${LEGACY_CHROME_PROFILE}" ] && [ ! -L "${LEGACY_CHROME_PROFILE}" ] && [ ! -e "${CHROME_PROFILE}" ]; then
+			mkdir -p /home/box/chrome-profile
+			mv "${LEGACY_CHROME_PROFILE}" "${CHROME_PROFILE}" 2>/dev/null || true
+		fi
 		SAND_CHROME_PROFILE_DIR="${CHROME_PROFILE}" /usr/local/bin/link-chrome-session || true
 	fi
 else
@@ -291,18 +259,6 @@ CHROME_FLAGS+=(
 	--remote-debugging-port="${CHROME_DEBUG_PORT}"
 	--remote-debugging-address=127.0.0.1
 )
-SAND_CHROME_UA_TOKEN="GrokAgent/1.0"
-SAND_CHROME_UA_OWNER_FILE="${SAND_CHROME_UA_OWNER_FILE:-/tmp/sand-ua-user}"
-SAND_CHROME_UA_OWNER="$(sed -n 1p "${SAND_CHROME_UA_OWNER_FILE}" 2>/dev/null | tr -cd '0-9a-f' | cut -c1-16 || true)"
-[ -z "${SAND_CHROME_UA_OWNER}" ] || SAND_CHROME_UA_TOKEN="${SAND_CHROME_UA_TOKEN} (u:${SAND_CHROME_UA_OWNER})"
-SAND_CHROME_UA_DISABLED_FILE="${SAND_CHROME_UA_DISABLED_FILE:-/tmp/sand-ua-token-disabled}"
-[ ! -e "${SAND_CHROME_UA_DISABLED_FILE}" ] || SAND_CHROME_UA_TOKEN=""
-SAND_CHROME_UA_MAJOR="$(google-chrome-stable --version 2>/dev/null | sed -n 's/^[^0-9]*\([0-9][0-9]*\)\..*$/\1/p' || true)"
-if [ -n "${SAND_CHROME_UA_MAJOR}" ] && [ -n "${SAND_CHROME_UA_TOKEN}" ]; then
-	CHROME_FLAGS+=(
-		--user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${SAND_CHROME_UA_MAJOR}.0.0.0 Safari/537.36 ${SAND_CHROME_UA_TOKEN}"
-	)
-fi
 SAND_EGRESS_PROXY_FILE=/tmp/sand-egress-proxy
 if [ -r "${SAND_EGRESS_PROXY_FILE}" ]; then
 	SAND_EGRESS_PROXY_ADDR="$(sed -n 1p "${SAND_EGRESS_PROXY_FILE}" 2>/dev/null || true)"
@@ -313,11 +269,6 @@ if [ -r "${SAND_EGRESS_PROXY_FILE}" ]; then
 		)
 	fi
 fi
-# Installed by POLICY, not --load-extension: this Chrome is managed (a policy
-# file exists), and managed Chrome silently ignores that switch. The entry is
-# written per launch rather than baked into the image so the proxy stays
-# opt-in — an always-installed extension would attach and then fail EVERY
-# ceremony on a box with no laptop provider, which is worse than not having it.
 /usr/local/bin/box-chrome-policy || true
 SAND_WEBAUTHN_ID_FILE=/usr/local/share/sand-webauthn-proxy.id
 SAND_WEBAUTHN_MARKER=/home/box/.sand-webauthn-proxy-enabled
@@ -335,37 +286,19 @@ else
 	mkdir -p "${CHROME_PROFILE}" "${CHROME_XDG}" 2>/dev/null || true
 fi
 chmod 700 "${CHROME_PROFILE}" "${CHROME_XDG}" 2>/dev/null || true
-SAND_CHROME_TZ_HELPER="${SAND_CHROME_TZ_HELPER:-/usr/local/bin/sand-wallpaper}"
-if [ "${SAND_CHROME_USER_TZ:-}" = "1" ] && [ -z "${SAND_CHROME_TZ:-}" ] && [ -x "${SAND_CHROME_TZ_HELPER}" ]; then
-	SAND_CHROME_TZ="$("${SAND_CHROME_TZ_HELPER}" zone 2>/dev/null || true)"
-fi
+# Chrome watches /etc/localtime for zone changes only while TZ is unset in its environment
+# (https://chromium.googlesource.com/chromium/src/+/refs/tags/151.0.7922.169/services/device/time_zone_monitor/time_zone_monitor_linux.cc),
+# so the browser is launched without TZ and follows the box clock sand-box-timezone sets.
 CHROME_ENV=(
 	env
+	-u TZ
+	-u SAND_GATEWAY_TOKEN
+	-u SAND_EGRESS_TUNNEL_BEARER
 	DISPLAY="${DISPLAY:-:1}"
 	HOME=/home/box
-	TZ="${SAND_CHROME_TZ:-America/Los_Angeles}"
 	XDG_RUNTIME_DIR="${CHROME_XDG}"
 	DBUS_SESSION_BUS_ADDRESS="${CHROME_DBUS_ADDRESS}"
 )
-if [ -f "${SAND_WEBAUTHN_MARKER}" ]; then
-	SAND_WEBAUTHN_GATEWAY_TOKEN="${SAND_GATEWAY_TOKEN:-}"
-	SAND_WEBAUTHN_GATEWAY_PORT="${SAND_HOST_PORT:-${SAND_BOX_PORT_HOST_GATEWAY}}"
-	for SAND_WEBAUTHN_CRED_FILE in \
-		"${CHROME_XDG}/sand-gateway-credential" \
-		"${BOX_PRIMARY_XDG}/sand-gateway-credential"; do
-		[ -r "${SAND_WEBAUTHN_CRED_FILE}" ] || continue
-		SAND_WEBAUTHN_FILE_TOKEN="$(sed -n 1p "${SAND_WEBAUTHN_CRED_FILE}" 2>/dev/null || true)"
-		if [ -n "${SAND_WEBAUTHN_FILE_TOKEN}" ]; then
-			SAND_WEBAUTHN_GATEWAY_TOKEN="${SAND_WEBAUTHN_FILE_TOKEN}"
-			SAND_WEBAUTHN_GATEWAY_PORT="$(sed -n 2p "${SAND_WEBAUTHN_CRED_FILE}" 2>/dev/null || true)"
-			break
-		fi
-	done
-	CHROME_ENV+=(
-		SAND_GATEWAY_TOKEN="${SAND_WEBAUTHN_GATEWAY_TOKEN}"
-		SAND_HOST_PORT="${SAND_WEBAUTHN_GATEWAY_PORT:-${SAND_BOX_PORT_HOST_GATEWAY}}"
-	)
-fi
 if [ "$(id -u)" -eq 0 ]; then
 	CHROME_ENV=(runuser -u box -- "${CHROME_ENV[@]}")
 fi
@@ -383,13 +316,50 @@ launch_chrome() {
 
 wait_for_chrome() {
 	local visible="$1"
+	CHROME_CDP_READY_MS=""
 	for _ in $(seq 1 100); do
-		if chrome_ready && { [ "${visible}" -eq 0 ] || DISPLAY="${DISPLAY:-:1}" xdotool search --onlyvisible --class chrome >/dev/null 2>&1; }; then
-			return
+		if chrome_ready; then
+			[ -n "${CHROME_CDP_READY_MS}" ] || CHROME_CDP_READY_MS="$(date +%s%3N)"
+			if [ "${visible}" -eq 0 ] || DISPLAY="${DISPLAY:-:1}" xdotool search --onlyvisible --class chrome >/dev/null 2>&1; then
+				return
+			fi
 		fi
 		sleep 0.1
 	done
 	return 1
+}
+
+next_launch_attempt() {
+	local counter="${CHROME_PROFILE}/.sand-launch-count"
+	local boot="${SAND_BOX_BOOT_ID:-${SAND_BOX_BOOT_STARTED_AT_MS:-unknown}}"
+	local recorded_boot="" count=0
+	read -r recorded_boot count 2>/dev/null <"${counter}" || true
+	[ "${recorded_boot}" = "${boot}" ] && [ "${count}" -ge 0 ] 2>/dev/null || count=0
+	count=$((count + 1))
+	printf '%s %s\n' "${boot}" "${count}" 2>/dev/null >"${counter}" || true
+	printf '%s' "${count}"
+}
+
+start_chrome() {
+	local mode="$1" visible=1 started_ms attempt outcome duration_ms
+	shift
+	[ "${mode}" = window ] || visible=0
+	attempt="$(next_launch_attempt)"
+	started_ms="$(date +%s%3N)"
+	launch_chrome "$@"
+	if wait_for_chrome "${visible}"; then
+		outcome=ready
+	elif [ -n "${CHROME_CDP_READY_MS}" ]; then
+		outcome=window_timeout
+	else
+		outcome=cdp_timeout
+	fi
+	duration_ms=$((${CHROME_CDP_READY_MS:-$(date +%s%3N)} - started_ms))
+	[ "${duration_ms}" -ge 0 ] || duration_ms=0
+	printf '{"kind":"chrome_launch","display":%s,"mode":"%s","attempt":%s,"outcome":"%s","durationMs":%s}\n' \
+		"${BOX_DISPLAY_NUM:-1}" "${mode}" "${attempt}" "${outcome}" "${duration_ms}" \
+		2>/dev/null >>"${SAND_BOX_TELEMETRY_LOG:-/tmp/sand-box-telemetry.log}" || true
+	[ "${outcome}" = ready ]
 }
 
 exec 9>"${CHROME_PROFILE}/.sand-launch.lock"
@@ -432,31 +402,26 @@ SAND_INCOGNITO_EOF
 fi
 
 if [ "${SAND_CHROME_PREPARE}" -eq 1 ]; then
-	chrome_ready || launch_chrome --no-startup-window
-	wait_for_chrome 0
+	if chrome_ready; then
+		wait_for_chrome 0
+	else
+		start_chrome prepare --no-startup-window
+	fi
 	exit
 fi
 
-launch_chrome "$@"
-wait_for_chrome 1
+if chrome_ready; then
+	launch_chrome "$@"
+	wait_for_chrome 1
+else
+	start_chrome window "$@"
+fi
 EOF
 chmod +x /usr/local/bin/box-chrome
 
-# Chrome's upload/download dialogs (and Thunar's) use the native GTK3 file
-# chooser, which opens at the size remembered in org.gtk.Settings.FileChooser.
-# With nothing remembered GTK falls back to ~1124x822 — taller than the 800px
-# screen — so Open/Cancel land below the Plank dock and computer-use can't reach
-# them without first "fitting to screen". Pre-seeding a fitting size makes GTK
-# open the chooser at it, with Open ~60px above the dock.
-#
-# GTK reads the size from the dconf database of the user the *app* runs as. This
-# script and every desktop app (Chrome, Thunar, xfwm4) now run as the SAME box
-# user, so the direct write below is the one that matters; the root branch —
-# which seeds the box user separately because a root-run script's own write
-# would land in /root where box-run Chrome never saw it (the original chooser
-# bug) — is kept for robustness if this ever runs as root again. (A gtk.css
-# max-height is no backstop: GTK3 ignores max-height on a toplevel, so this is
-# the only lever.)
+# GTK3's org.gtk.Settings.FileChooser schema defines window-size and window-position
+# as the GtkFileChooserDialog's window size and position, and the dconf writes below
+# seed those keys (https://gitlab.gnome.org/GNOME/gtk/-/raw/gtk-3-24/gtk/org.gtk.Settings.FileChooser.gschema.xml).
 dconf write /org/gtk/settings/file-chooser/window-size "(1100, 680)" 2>/dev/null || true
 dconf write /org/gtk/settings/file-chooser/window-position "(90, 60)" 2>/dev/null || true
 if [ "$(id -u)" -eq 0 ]; then
@@ -467,18 +432,9 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 mkdir -p "${HOME}/.local/share/applications"
-# StartupWMClass ties running windows to THIS launcher: it must equal the
-# --class box-chrome passes (Chrome's --class sets the WM_CLASS class; the
-# instance is not settable and carries the non-default --user-data-dir, so it
-# can never be the anchor), and it must be a private value no stock desktop
-# file claims. With the stock "google-chrome" class, Plank's matcher
-# (bamfdaemon) resolves the window by its desktop-ID rule (file basename ==
-# lowercased class) to the SYSTEM google-chrome.desktop — Google's own deb
-# declares that same class as its StartupWMClass, so it passes bamf's class
-# filter and outranks this file — and the dock drew a second, unpinned Chrome
-# icon instead of lighting up this pinned launcher. The one shared launcher
-# serves every desktop: each display runs its own bamf/Plank pair against only
-# its own windows, so a shared class cannot merge two displays' dock entries.
+# StartupWMClass declares the WM class the launched application's window carries
+# (https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html),
+# so it must equal the class box-chrome passes with --class.
 cat >"${HOME}/.local/share/applications/box-chrome.desktop" <<'EOF'
 [Desktop Entry]
 Version=1.0
@@ -491,9 +447,6 @@ Categories=Network;WebBrowser;
 MimeType=x-scheme-handler/http;x-scheme-handler/https;
 EOF
 
-# xdg-open resolves a registered handler BEFORE $BROWSER, so the image's BROWSER
-# default alone leaves `xdg-open <url>` on the stock google-chrome.desktop: no
-# --disable-dev-shm-usage, so it cannot load pages on the box's 64MB /dev/shm.
 mkdir -p "${HOME}/.config" 2>/dev/null || true
 cat >"${HOME}/.config/mimeapps.list" <<'EOF'
 [Default Applications]
@@ -515,9 +468,9 @@ write_dconf_setting() {
 	return 1
 }
 
-# Pin a few launchers and start the Plank dock along the bottom edge. Plank
-# reads dockitems from ~/.config/plank, so they must exist there before it
-# first starts or it prunes them from the dconf dock-items list.
+# At start Plank loads only the .dockitem files present in its launchers folder, in
+# its dock-items order, then rewrites that setting from what it loaded, so a seeded
+# dock-items entry whose file is missing at start is dropped (https://github.com/ricotz/plank/blob/master/lib/DockController.vala).
 configure_plank_dock() {
 	local dock_name="$1"
 	local launchers="${HOME}/.config/plank/${dock_name}/launchers"
@@ -555,10 +508,10 @@ start_dock_once() {
 		if [ -n "${existing}" ] && kill -0 "${existing}" >/dev/null 2>&1; then
 			exit 0
 		fi
-		# 9>&- so the long-lived dock does not inherit the lock fd: otherwise it
-		# would hold the flock for its whole lifetime and make every later caller
-		# block for the full -w timeout. The lock now covers only this fast
-		# check-and-spawn, releasing as soon as the subshell exits.
+		# A flock(2) lock lives on the open file description and is released only when
+		# every duplicate fd, a forked child's copy included, is closed
+		# (https://man7.org/linux/man-pages/man2/flock.2.html), so 9>&- keeps the lock fd
+		# out of the dock's process.
 		setsid nohup /usr/local/bin/box-bounded-log --run "${log}" -- "$@" \
 			>/dev/null 2>&1 9>&- &
 		echo "$!" >"${pid_file}"

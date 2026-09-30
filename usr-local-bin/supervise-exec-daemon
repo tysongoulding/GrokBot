@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# AnyRun keeps the pod alive when a system command exits, so a one-shot
-# background launch could leave nothing listening on the exec surface forever.
 set -uo pipefail
 
 if [ "$#" -lt 2 ]; then
@@ -12,7 +10,6 @@ port="$1"
 launcher="$2"
 shift 2
 
-# Join the agent cgroup leaf once here so every respawn inherits it.
 SAND_BOX_CGROUPS_LIB="${SAND_BOX_CGROUPS_LIB:-/usr/local/bin/box-cgroups.sh}"
 if [ -r "${SAND_BOX_CGROUPS_LIB}" ]; then
 	# shellcheck source=/dev/null
@@ -61,8 +58,6 @@ stop_supervisor() {
 		kill -TERM "${delay_pid}" 2>/dev/null || true
 	fi
 	if [ -n "${child_pid}" ]; then
-		# The launcher is a wrapper: signal its whole process group so the
-		# daemon cannot outlive it.
 		kill -TERM -- "-${child_pid}" 2>/dev/null ||
 			kill -TERM "${child_pid}" 2>/dev/null ||
 			true
@@ -74,14 +69,24 @@ port_is_listening() {
 	ss -H -ltn "sport = :${port}" 2>/dev/null | grep -q .
 }
 
+has_exec_daemon_bundle_args() {
+	local pid="$1"
+	local -a argv=()
+	mapfile -d '' -t argv 2>/dev/null <"/proc/${pid}/cmdline" || return 1
+	[ "${argv[1]:-}" = "/exec-daemon/index.js" ] &&
+		[ "${argv[2]:-}" = "serve" ]
+}
+
 stale_exec_daemon_listeners() {
 	local pid cmd
 	for pid in $(ss -lptnH "sport = :${port}" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un); do
 		[ -n "${pid}" ] || continue
+		if has_exec_daemon_bundle_args "${pid}"; then
+			printf '%s\n' "${pid}"
+			continue
+		fi
 		cmd="$( (tr '\0' ' ' <"/proc/${pid}/cmdline") 2>/dev/null || true)"
 		case "${cmd}" in
-		# The packaged `exec-daemon` is a shim that execs the bundled Node
-		# runtime, so the listener carries this Node argv, not the shim path.
 		/exec-daemon/node\ /exec-daemon/index.js\ serve*) printf '%s\n' "${pid}" ;;
 		esac
 	done
@@ -155,7 +160,6 @@ while [ "${stopping}" = "0" ]; do
 	echo "[exec-daemon-supervisor] launching attempt=${restart_count} port=${port}"
 	setsid "${launcher}" "$@" &
 	child_pid=$!
-	# The trap may have run between spawning and recording $!.
 	if [ "${stopping}" = "1" ]; then
 		stop_supervisor
 	fi
@@ -195,7 +199,6 @@ while [ "${stopping}" = "0" ]; do
 
 	wait "${child_pid}" 2>/dev/null
 	child_status=$?
-	# The wrapper can exit without reaping its daemon: clear the group.
 	kill -KILL -- "-${child_pid}" 2>/dev/null || true
 	child_pid=""
 	if [ "${stopping}" = "1" ]; then

@@ -1,1 +1,0 @@
-sudo: nft: command not found

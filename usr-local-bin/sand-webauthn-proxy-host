@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Chrome's native-messaging manifest `path` must be an executable, and the
-# bridge is a .mjs; the box ships node at /exec-daemon/node.
-#
-# stdout is the native-messaging channel: a stray echo corrupts the frame and
-# Chrome kills the host. Diagnostics go to stderr.
+# Chrome executes the native-messaging manifest `path` as a binary and uses its stdout as the message channel, so this wrapper execs node on the .mjs and every diagnostic goes to stderr: https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging#native-messaging-host-protocol
 node_bin="${SAND_WEBAUTHN_PROXY_NODE:-/exec-daemon/node}"
 if [ ! -x "${node_bin}" ]; then
 	node_bin="$(command -v node || true)"

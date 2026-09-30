@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Each check prints one `[box-doctor] PASS|FAIL <name>: <detail>` line and the
-# script ends with a `[box-doctor] SUMMARY` line; it exits non-zero when any
-# check fails, so a caller can gate on it. Never aborts mid-run: every check
-# always runs so the summary is complete.
 set -uo pipefail
 
 # >>> box port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
@@ -62,9 +58,10 @@ check_chrome() {
 
 CHROME_FD_FAIL_PCT=90
 
-# Every Chrome child carries --type=<renderer|zygote|gpu-process|utility> and
-# re-lists the debugging port, so the port alone is not enough — "has a
-# debugging port, has no --type=" selects exactly the browser mains.
+# Chromium copies --remote-debugging-port into renderer command lines, which
+# also carry --type=, so only a port-bearing cmdline without --type= is the
+# browser main (kSwitchNames in
+# https://chromium.googlesource.com/chromium/src/+/refs/tags/151.0.7922.169/content/browser/renderer_host/render_process_host_impl.cc).
 probe_chrome_browser_pids() {
 	local proc_root="${1:-/proc}" dir cmdline
 	for dir in "${proc_root}"/[0-9]*; do
@@ -76,9 +73,6 @@ probe_chrome_browser_pids() {
 	done
 }
 
-# Prints "<open-fds> <soft-limit>", or returns non-zero when unreadable —
-# another user's /proc/<pid>/fd is only listable by root (or the owner), and a
-# process can exit mid-scan; neither may fail the check.
 probe_process_fd_usage() {
 	local pid="$1" open soft
 	open="$(ls "/proc/${pid}/fd" 2>/dev/null | wc -l)"

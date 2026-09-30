@@ -1,10 +1,4 @@
-
-import {
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -17,16 +11,10 @@ import {
   readCookies,
   toCookieParam,
 } from "./cdp-cookies.mjs";
-import {
-  dropToBoxUser,
-  parseSeed,
-  serializeSeed,
-  withSeedLock,
-} from "./sand-cookie-persist.mjs";
+import { dropToBoxUser, readSeed, serializeSeed, withSeedLock } from "./sand-cookie-persist.mjs";
 
 const SEED_PATH =
-  process.env.SAND_COOKIE_SEED_PATH ??
-  "/home/box/sand-data/chrome-cookie-seed.json";
+  process.env.SAND_COOKIE_SEED_PATH ?? "/home/box/sand-data/chrome-cookie-seed.json";
 
 function log(message) {
   process.stderr.write(`sand-cookie-import ${message}\n`);
@@ -41,20 +29,19 @@ export function parseCookieBatch(text) {
   }
   if (!Array.isArray(parsed)) return { error: "malformed-batch" };
   const cookies = parsed.filter(
-    cookie =>
+    (cookie) =>
       cookie != null &&
       typeof cookie.name === "string" &&
       cookie.name.length > 0 &&
       typeof cookie.value === "string" &&
       typeof cookie.domain === "string" &&
       cookie.domain.length > 0 &&
-      typeof cookie.path === "string"
+      typeof cookie.path === "string",
   );
   return { cookies };
 }
 
-// The live jar identity: toCookieParam sends a __Host- cookie by url, so it
-// lands host-only; a `.domain` seed row would duplicate it and never restore.
+// `__Host-` cookies are valid with no Domain attribute, or with a Domain equal to the host when the host is an IP address (https://chromium.googlesource.com/chromium/src/+/refs/tags/151.0.7922.169/net/cookies/cookie_util.cc), and CDP derives a set cookie's default domain from `CookieParam.url` (https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-CookieParam), so a `__Host-` cookie pushed by url lands host-only and a `.domain` seed row would never match it.
 export function toLandedCookie(cookie) {
   const param = toCookieParam(cookie);
   if (param == null) return cookie;
@@ -67,7 +54,7 @@ export function toLandedCookie(cookie) {
 }
 
 export function injectableCookies(batch) {
-  return batch.filter(cookie => toCookieParam(cookie) != null);
+  return batch.filter((cookie) => toCookieParam(cookie) != null);
 }
 
 export function countLandedInJar(batch, after) {
@@ -75,7 +62,9 @@ export function countLandedInJar(batch, after) {
   for (const cookie of batch) {
     try {
       if (after.has(landedCookieKey(cookie))) landed.add(cookieKey(cookie));
-    } catch {}
+    } catch (error) {
+      log(`a cookie has no key and is left out of the landed count: ${String(error)}`);
+    }
   }
   return landed;
 }
@@ -151,32 +140,23 @@ export async function mergeIntoSeedFile(seedPath, batch, options = {}) {
     return await withSeedLock(
       seedPath,
       () => {
-        let text = null;
-        try {
-          text = fs.readFileSync(seedPath, "utf8");
-        } catch (error) {
-          if (error?.code !== "ENOENT") {
-            log(`could not read the seed file: ${String(error)}`);
-            return { seedError: "seed-read-failed" };
-          }
+        const seed = readSeed(fs, seedPath);
+        if (seed.kind === "unreadable") {
+          log(`could not read the seed file: ${seed.code}`);
+          return { seedError: "seed-read-failed" };
         }
-        let existing = [];
-        if (text != null) {
-          const parsed = parseSeed(text);
-          if (parsed == null) {
-            log("the seed file does not hold a cookie seed");
-            return { seedError: "seed-corrupt" };
-          }
-          existing = parsed;
+        if (seed.kind === "corrupt" || seed.kind === "unsupported-version") {
+          log("the seed file does not hold a cookie seed");
+          return { seedError: "seed-corrupt" };
         }
-        const merged = mergeSeedCookies(existing, batch);
+        const merged = mergeSeedCookies(seed.kind === "ok" ? seed.cookies : [], batch);
         fs.mkdirSync(dirname(seedPath), { recursive: true });
         const tmp = `${seedPath}.tmp`;
         fs.writeFileSync(tmp, serializeSeed(merged));
         fs.renameSync(tmp, seedPath);
         return { seedSize: merged.length };
       },
-      { fs }
+      { fs },
     );
   } catch (error) {
     log(`could not write the seed file: ${String(error)}`);
@@ -186,13 +166,10 @@ export async function mergeIntoSeedFile(seedPath, batch, options = {}) {
 
 async function main() {
   if (process.env.SAND_COOKIE_IMPORT_TOKEN !== "sand-cookie-import-host") {
-    process.stdout.write(
-      `${JSON.stringify({ injected: 0, sites: 0, error: "unauthorized" })}\n`
-    );
+    process.stdout.write(`${JSON.stringify({ injected: 0, sites: 0, error: "unauthorized" })}\n`);
     return;
   }
-  const batchPath =
-    process.env.SAND_COOKIE_IMPORT_BATCH_PATH ?? process.argv[2];
+  const batchPath = process.env.SAND_COOKIE_IMPORT_BATCH_PATH ?? process.argv[2];
   if (batchPath == null || batchPath.length === 0) {
     log("no batch path given");
     process.stdout.write(`${JSON.stringify({ injected: 0, sites: 0 })}\n`);
@@ -210,7 +187,7 @@ async function main() {
   if (parsedBatch.error != null) {
     log("the batch file does not hold a cookie array");
     process.stdout.write(
-      `${JSON.stringify({ injected: 0, sites: 0, error: parsedBatch.error })}\n`
+      `${JSON.stringify({ injected: 0, sites: 0, error: parsedBatch.error })}\n`,
     );
     return;
   }
@@ -221,12 +198,11 @@ async function main() {
   }
   if (!dropToBoxUser()) {
     process.stdout.write(
-      `${JSON.stringify({ injected: 0, sites: 0, error: "privilege-drop-failed" })}\n`
+      `${JSON.stringify({ injected: 0, sites: 0, error: "privilege-drop-failed" })}\n`,
     );
     return;
   }
-  const { landed, chromeDebugPorts, monitorsReached } =
-    await injectIntoAllMonitors(batch);
+  const { landed, chromeDebugPorts, monitorsReached } = await injectIntoAllMonitors(batch);
   const injected = landed.size;
   const sites = countLandedSites(batch, landed);
   const seed = await mergeIntoSeedFile(SEED_PATH, batch);
@@ -234,16 +210,13 @@ async function main() {
     `injected ${injected}/${batch.length} cookie(s) into live Chrome; ` +
       (seed.seedError == null
         ? `seed now holds ${seed.seedSize} cookie(s)`
-        : `seed unchanged (${seed.seedError})`)
+        : `seed unchanged (${seed.seedError})`),
   );
   const outcome = { injected, sites, chromeDebugPorts, monitorsReached };
   if (seed.seedError != null) outcome.seedError = seed.seedError;
   process.stdout.write(`${JSON.stringify(outcome)}\n`);
 }
 
-if (
-  process.argv[1] != null &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] != null && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

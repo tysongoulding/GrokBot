@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Thin x11vnc launcher that REAPS a stale/orphaned x11vnc squatting the target
-# rfbport before binding, then execs x11vnc. An x11vnc that outlived its display
-# — e.g. its Xvfb died but the `-forever` x11vnc kept its listening socket, or a
-# teardown missed it across a display-index reuse — leaves the rfbport bound; the
-# next x11vnc on that display then loops "Error: could not obtain listening port"
-# forever, which the supervisor counts as a death → relaunch → same failure (the
-# confirmed per-display desktop crashloop). Clearing the squatter before bind
-# turns that crashloop into a clean bind.
 set -uo pipefail
 
 port=""

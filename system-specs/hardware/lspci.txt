@@ -1,1 +1,0 @@
-/tmp/collect_specs.sh: line 14: lspci: command not found
