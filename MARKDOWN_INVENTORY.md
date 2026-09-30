@@ -29,8 +29,10 @@ Complete directory and inventory of all unique `.md` files captured in this repo
 ### Repository Documentation
 
 - [`README.md`](README.md) - Primary microVM architecture & replication specification
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - Deep systems architecture: hypervisor, isolation boundaries, multi-display & IPC
+- [`INSTRUCTIONS.md`](INSTRUCTIONS.md) - Comprehensive soup-to-nuts implementation and build manual across all 3 tiers
 - [`MARKDOWN_INVENTORY.md`](MARKDOWN_INVENTORY.md) - Complete directory & links to all markdown files
-- [`SKILLS_LIST.md`](SKILLS_LIST.md) - Master catalog & table of all 70 SKILL.md definitions
+- [`SKILLS_LIST.md`](SKILLS_LIST.md) - Master catalog & table of all 73 SKILL.md definitions
 - [`OAUTH_AND_APIS.md`](OAUTH_AND_APIS.md) - Marketplace tools, OAuth & credential storage architecture
 
 ### Custom Workflows
@@ -100,6 +102,29 @@ Located in `system-specs/custom-configs/sand-data/agents/`:
 - [`agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/96175c89ae76cae4bed0b3266c20e0d35aacf305c3c72072799b5a603fd40332.md`](system-specs/custom-configs/sand-data/agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/96175c89ae76cae4bed0b3266c20e0d35aacf305c3c72072799b5a603fd40332.md)
 - [`agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/ccdde5373399618cb863d01614277ff96ee2287939448571de96d276f736b4de.md`](system-specs/custom-configs/sand-data/agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/ccdde5373399618cb863d01614277ff96ee2287939448571de96d276f736b4de.md)
 - [`agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/ee0d881c1867216374918e70e0cf9b59b91fdb903ce9c06d22a47fabe7e74448.md`](system-specs/custom-configs/sand-data/agents/6f3d232c-41cd-4eca-9bc9-b287df3ad53c/attachments/ee0d881c1867216374918e70e0cf9b59b91fdb903ce9c06d22a47fabe7e74448.md)
+
+### Playwright MCP & Browser-Use Skills and References
+
+Located in `usr-local-lib/sand-playwright-mcp/`:
+
+- [`playwright-cli/SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/SKILL.md) - Browser automation via CLI (`open`, `goto`, `click`, `fill`, `snapshot`, `find`, `eval`)
+- [`playwright-component-testing/SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/SKILL.md) - Story gallery component testing framework for React and Vue
+- [`playwright-trace/SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-trace/SKILL.md) - Headless CLI trace inspector for `.zip` Playwright traces
+- [`element-attributes.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/element-attributes.md) - DOM element attribute inspection reference
+- [`playwright-tests.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/playwright-tests.md) - Automated end-to-end browser test conventions
+- [`request-mocking.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/request-mocking.md) - Network interception and mock response reference
+- [`running-code.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/running-code.md) - Executing sandboxed JavaScript in page context
+- [`session-management.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/session-management.md) - Multi-display browser session lifecycle and isolation
+- [`storage-state.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/storage-state.md) - Serializing cookies, localStorage, and IndexedDB
+- [`test-generation.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/test-generation.md) - Test code generation from browser interaction traces
+- [`tracing.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/tracing.md) - Recording DOM snapshots, console logs, and action timelines
+- [`video-recording.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/references/video-recording.md) - Headless WebP and video frame streaming mechanics
+- [`gallery-spec.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/references/gallery-spec.md) - Technical specification for story-gallery components
+- [`migration.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/references/migration.md) - Migrating from experimental component runners
+- [`react.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/references/react.md) - React-specific component mounting and callback recording
+- [`vue.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/references/vue.md) - Vue-specific component testing and prop bindings
+- [`@playwright/mcp README.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/@playwright/mcp/README.md) - Playwright Model Context Protocol server documentation
+- [`playwright-core README.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/README.md) - Headless browser engine core documentation
 
 ---
 

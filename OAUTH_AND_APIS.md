@@ -69,9 +69,11 @@ The GrokBot cloud microVM (`sand` runtime) executes in an isolated Linux contain
 | **Atlassian**<br>• [`atlassian`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/atlassian/) | Issue & Project Management | HTTP MCP | `https://mcp.atlassian.com/v1/mcp/authv2`<br>`https://mcp.atlassian.com/v1/mcp` | **OAuth 2.1 (3LO)** (Just-in-Time)<br>+ Cloud API Token Fallback |
 | **PagerDuty**<br>• [`pagerduty`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/pagerduty/) | Incident Response | Streamable HTTP | `https://mcp.pagerduty.com/mcp` | **Static API Token**<br>(`Authorization: Token ${PAGERDUTY_API_TOKEN}`) |
 | **1Password**<br>• [`1password`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/1password/) | Secret Management | Local `stdio` | `1password-mcp` | **Local Desktop App IPC**<br>(OS Keychain / Biometric Master) |
-| **AWS Core**<br>• [`aws-core`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/aws-core/) | Cloud Infrastructure | Local `stdio` proxy | `uvx mcp-proxy-for-aws@1.6.4`<br>&rarr; `https://aws-mcp.us-east-1.api.aws/mcp` | **AWS IAM / SSO**<br>+ OAuth Callback Server |
+| **AWS Core**<br>• [`aws-core`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/aws-core/) | Cloud Infrastructure | Local `stdio` proxy | `uv tool uvx mcp-proxy-for-aws@1.6.0`<br>&rarr; `https://aws-mcp.us-east-1.api.aws/mcp` | **AWS IAM / SSO**<br>+ OAuth Callback Server |
 | **Context-Mode**<br>• [`context-mode`](system-specs/custom-configs/sand-data/plugins/cache/context-mode/) | Code Intelligence | Local plugin / stdio | In-process token compressor & SessionDB SQLite | **None (Local Execution)** |
 | **Grafana Assistant**<br>• [`grafana-assistant`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/grafana-assistant/) | Observability | Rule & Skill sets | CLI execution wrappers | **Grafana Service Account Tokens** |
+| **Playwright Browser MCP**<br>• [`sand-playwright-mcp`](usr-local-lib/sand-playwright-mcp/) | Browser Automation | Local `stdio` / Unix socket | `/usr/local/libexec/sand-playwright-isolate`<br>&rarr; Chrome CDP (`9222+N`) | **Process Isolation Boundary**<br>+ Session SQLite / CDP Cookie Mirroring |
+| **Zabbix Observability**<br>• `@nks-hub/zabbix-mcp` | Systems Monitoring | Local `stdio` proxy | `npm exec @nks-hub/zabbix-mcp` | **Zabbix API Token** |
 
 ---
 
@@ -131,7 +133,19 @@ The GrokBot cloud microVM (`sand` runtime) executes in an isolated Linux contain
 * **Transport**: Embedded AST chunker and full-text indexer.
 * **Authentication**: Fully self-contained local operations; operates against on-disk SQLite session databases (`SessionDB`) without external network egress.
 
+### Playwright MCP & Browser Automation (`sand-playwright-mcp`)
+* **Transport**: Local stdio bridge and Chrome DevTools Protocol (`CDP`) WebSocket.
+* **Architecture**: Bundled under `usr-local-lib/sand-playwright-mcp/`, integrating `@anysphere/sand-playwright-runtime`, `@playwright/mcp`, and `playwright-core 1.63.0-alpha`.
+* **Privilege & Process Isolation**:
+  * Executed through `/usr/local/libexec/sand-playwright-isolate` with passwordless sudo (`sudoers.d/sand-playwright`).
+  * Connects to Chrome debugging ports (`127.0.0.1:9222+N`) to manipulate DOM elements, intercept network requests, and manage authentication state without exposing raw browser credentials over external networks.
+
+### Zabbix Observability MCP (`@nks-hub/zabbix-mcp`)
+* **Transport**: Local stdio MCP bridge spawned via `npm exec @nks-hub/zabbix-mcp`.
+* **Authentication**: Token-based API access interacting with Zabbix servers for metric telemetry, host inventories, and alerting.
+
 ---
+
 
 ## 4. Storage Topology: Where Credentials & States Live
 

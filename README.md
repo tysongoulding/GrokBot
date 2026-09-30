@@ -15,6 +15,7 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │
 ├── dev/                                    # Device nodes
 │   ├── vda                                 # VirtIO block device (rootfs disk)
+│   ├── vsock                               # VirtIO hardware socket device (CID 3, ports 52 / 26500)
 │   ├── ttyS0                               # Primary serial console (console=ttyS0 earlyprintk=ttyS0)
 │   ├── shm/                                # Shared memory (POSIX shm)
 │   └── pts/                                # Virtual pseudo-terminal slave multiplexer
@@ -22,6 +23,7 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 ├── etc/                                    # System configuration
 │   ├── machine-id                          # 32-char hardware UUID (synced to Chrome profile)
 │   ├── sudoers.d/box                       # Passwordless sudo configuration for 'box' user
+│   ├── sudoers.d/sand-playwright           # Passwordless sudo for sand-playwright-isolate
 │   ├── opt/chrome/policies/managed/        # Managed Chrome policies (sand-webauthn, webrtc, efficiency)
 │   └── opt/chrome/native-messaging-hosts/  # WebAuthn native proxy bridge registration
 │
@@ -48,7 +50,7 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │       │   └── web-tree-sitter             # WebAssembly AST parser
 │       ├── chrome-profile/                 # Primary Chrome profile (Screen :1, port 9223)
 │       │   └── Default/                    # Cookies & Login Data (canonical SQLite store)
-│       ├── chrome-profile-N/               # Per-display profiles (Screen :N, port 9222+N)
+│       ├── chrome-profile-N/               # Per-display profiles (Forks :8, :10, :11 with Meet/Gmail LevelDB)
 │       │   └── Default/                    # Symlinked Cookies & Login Data -> primary
 │       ├── sand-data/                      # Persistent agent state & settings (settings.json)
 │       └── .config/                        # Plank dock items, XFCE4 XML channels, dconf DB
@@ -76,8 +78,8 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │       └── agent/                          # Background slice (compilers, runners, subagents)
 │
 ├── tmp/                                    # Ephemeral IPC, locks & dynamic routing
-│   ├── .X11-unix/                          # Headless X11 sockets (X1, X4, X6, X7)
-│   ├── sand-novnc-tokens.d/                # noVNC dynamic routing tokens (4 -> 5904, 7 -> 5907)
+│   ├── .X11-unix/                          # Headless X11 sockets (X1, X4, X6, X7, X8, X10, X11)
+│   ├── sand-novnc-tokens.d/                # noVNC dynamic routing tokens (4 -> 5904, 7 -> 5907, etc.)
 │   ├── sand-window-tokens.d/               # Window router authorization tokens
 │   ├── xdg-runtime-box/                    # Primary user XDG runtime & DBus session bus
 │   ├── xdg-runtime-box-N/                  # Per-screen XDG runtime directories
@@ -89,13 +91,17 @@ This diagram shows the complete Linux root filesystem hierarchy (`/`) of the mic
 │   ├── local/bin/                          # 40+ custom Grokbot / sand supervisor scripts
 │   │   ├── sand-exit-watch                 # PID 53 root subreaper (crash logging & liveness)
 │   │   ├── sand-window-router.mjs          # Port 1339 multi-screen HTTP/WS router
+│   │   ├── sand-egress-tunnel              # Standalone Rust reverse WebSocket tunnel (ports 8790/8791)
 │   │   ├── start-desktop.sh                # Turnkey headless desktop supervisor
 │   │   ├── box-chrome / box-chrome-policy  # Chrome launcher & managed policy generator
 │   │   ├── box-cgroups.sh                  # Cgroup v2 scheduler configuration
 │   │   ├── box-doctor                      # 10-point system diagnostic checker
 │   │   ├── box-bounded-log / .mjs          # Bounded in-memory RAM log ring
 │   │   ├── link-chrome-session             # Multi-screen SQLite cookie/session linker
+│   │   ├── table-reservation-goat-pp-cli   # 79.7 MB split binary utility CLI
 │   │   └── box-xvfb / box-x11vnc / etc.    # Collision & crash-loop prevention wrappers
+│   ├── local/lib/sand-playwright-mcp/      # Playwright MCP runtime (@anysphere/sand-playwright-runtime)
+│   ├── local/libexec/                      # sand-playwright-isolate root container runner
 │   ├── local/share/sand-webauthn-proxy/    # Inverted WebAuthn Chrome extension source & CRX
 │   └── share/backgrounds/                  # Cursor wallpapers (cursor-box-wallpaper.jpg)
 │
@@ -113,8 +119,10 @@ This map illustrates how the scraped assets are organized in this GitHub archive
 GrokBot/
 ├── README.md
 ├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 674 markdown files
-├── SKILLS_LIST.md                        # Master catalog & table of all 70 SKILL.md definitions
+├── SKILLS_LIST.md                        # Master catalog & table of all 73 SKILL.md definitions
 ├── OAUTH_AND_APIS.md                     # Marketplace tools, OAuth & credential storage architecture
+├── ARCHITECTURE.md                       # Deep systems architecture, IPC, and conversation schemas
+├── INSTRUCTIONS.md                       # Turnkey implementation and self-hosting deployment manual
 ├── screenshots/                          # UI screenshots (desktop, settings, marketplace, routines)
 │
 ├── exec-daemon/                          # Scraped @anysphere/exec-daemon-runtime
@@ -147,8 +155,16 @@ GrokBot/
 │   └── sand-data/                        # Persistent agent settings (settings.json)
 │
 ├── usr-local-bin/                        # All 40+ process supervisor & daemon scripts
+│   ├── sand-egress-tunnel                # Rust reverse WebSocket egress tunnel (ports 8790/8791)
+│   └── table-reservation-goat-pp-cli.*   # Recombined 79.7 MB binary CLI tool
+├── usr-local-lib/                        # Custom library runtimes
+│   └── sand-playwright-mcp/              # Playwright MCP runtime (@anysphere/sand-playwright-runtime)
 ├── usr-local-share/                      # Inverted WebAuthn proxy extension & signing keys
 ├── etc-policies/                         # Chrome managed policies & native messaging JSONs
+├── diffs/                                # Forensic filesystem & package verification diffs
+│   ├── dpkg-verify.txt                   # 16,017 altered files detected against pristine deb packages
+│   ├── modified-since-boot.txt           # 18,598 files modified post-boot
+│   └── unowned-custom-files.txt          # Files present on disk not owned by any deb package
 │
 └── system-specs/                         # Hardware, Kernel & OS Architecture Audit
     ├── hardware/                         # lscpu, memory, lsblk, dmidecode, virt
@@ -172,11 +188,12 @@ A complete indexed inventory with links to all 674 markdown files across the rep
 | :--- | :--- | :--- |
 | **Custom Workflows** | Network ops, Cisco ACI, and alerts | [`optconnect-network-knowledge`](system-specs/custom-configs/sand-data/workflows/optconnect-network-knowledge/SKILL.md) • [`check-google-chat-net-eng-alerts`](system-specs/custom-configs/sand-data/workflows/check-google-chat-net-eng-alerts/SKILL.md) • [`aci-configure`](system-specs/custom-configs/sand-data/workflows/aci-configure/SKILL.md) • [`aci-troubleshoot`](system-specs/custom-configs/sand-data/workflows/aci-troubleshoot/SKILL.md) • [`aci-design`](system-specs/custom-configs/sand-data/workflows/aci-design/SKILL.md) |
 | **Managed Skills** | Bot system capabilities & automation | [`box-desktop`](system-specs/custom-configs/sand-data/managed-skills/skills/box-desktop/SKILL.md) • [`code-changes`](system-specs/custom-configs/sand-data/managed-skills/skills/code-changes/SKILL.md) • [`skill-authoring`](system-specs/custom-configs/sand-data/managed-skills/skills/skill-authoring/SKILL.md) • [`channels`](system-specs/custom-configs/sand-data/managed-skills/skills/channels/SKILL.md) • [`routines`](system-specs/custom-configs/sand-data/managed-skills/skills/routines/SKILL.md) • [`add-connector`](system-specs/custom-configs/sand-data/managed-skills/skills/add-connector/SKILL.md) • [View all 12...](MARKDOWN_INVENTORY.md#managed-skills) |
+| **Playwright & Browser MCP** | Headless browser testing & tracing | [`playwright-cli`](system-specs/custom-configs/sand-data/skills/playwright-cli/SKILL.md) • [`playwright-component-testing`](system-specs/custom-configs/sand-data/skills/playwright-component-testing/SKILL.md) • [`playwright-trace`](system-specs/custom-configs/sand-data/skills/playwright-trace/SKILL.md) |
 | **Agent State & Memory** | Persistent memory logs & user profiles | [`user-memory profiles`](MARKDOWN_INVENTORY.md#user-profiles) • [`agent memory logs`](MARKDOWN_INVENTORY.md#agent-memory-logs--profiles) • [`agent attachments`](MARKDOWN_INVENTORY.md#agent-attachments) |
 | **Plugin Docs & Tools** | Cached skills and tool reference guides | [`aws-core` (305 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`slack` (27 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`atlassian` (18 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`context-mode` (46 files)](MARKDOWN_INVENTORY.md#cachecontext-mode) |
 
 👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
-⚡ *For the complete catalog and trigger table of all 70 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
+⚡ *For the complete catalog and trigger table of all 73 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
 🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*  
 🏗️ *For the deep microVM agent execution architecture, IPC protocols, and conversation storage schemas, see [**ARCHITECTURE.md**](ARCHITECTURE.md).*
 
@@ -220,15 +237,17 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 | `1340` | HTTP/RPC | `sand-host` (PID 608) | **Host Gateway**: Connect-RPC, WebAuthn & credential broker |
 | `2375` | TCP | Docker Bridge | Docker daemon socket bridge |
 | `5900` | RFB/TCP | `x11vnc` Display `:1` | Local virtual VNC server (Screen 1) |
-| `5900 + N` | RFB/TCP | `x11vnc` Display `:N` | Forked virtual VNC servers (`5904`, `5906`, `5907`) |
+| `5900 + N` | RFB/TCP | `x11vnc` Display `:N` | Forked virtual VNC servers (`5904`, `5906`, `5907`, `5908`, `5910`, `5911`) |
 | `6080` | HTTP/WS | `websockify` | Default noVNC direct proxy to port `5900` |
 | `6081` | HTTP/WS | `websockify` | Token-multiplexed noVNC proxy (`/tmp/sand-novnc-tokens.d`) |
-| `8790` | WebSocket | `sand-egress-tunnel` | Egress tunnel WebSocket for external connectivity |
-| `8791` | HTTP/TCP | `sand-egress-tunnel` | CONNECT proxy for outbound traffic filtering |
-| `9222 + N` | HTTP/WS | Chrome CDP | Chrome DevTools Protocol debugging per display |
-| `13600 + N`| WebSocket | Per-Screen PTY | Virtual terminal stream for agent fork screen `N` |
-| `14000 + N`| HTTP/RPC | Per-Screen Daemon | Agent command executor for screen `N` (`--computer-use-enabled`) |
+| `8790` | WebSocket | `sand-egress-tunnel` | Egress reverse WebSocket tunnel (compiled with `tokio-tungstenite`) |
+| `8791` | HTTP/TCP | `sand-egress-tunnel` | HTTP CONNECT proxy for outbound traffic filtering |
+| `9222 + N` | HTTP/WS | Chrome CDP & Playwright | Chrome DevTools Protocol & Playwright MCP debugging per display |
+| `13600 + N`| WebSocket | Per-Screen PTY | Virtual terminal stream for agent screens (active up to `13611`) |
+| `14000 + N`| HTTP/RPC | Per-Screen Daemon | Agent command executor for screens (active up to `14011`) |
 | `50052` | gRPC | In-Box RPC Service | In-box cloud coordination gRPC channel |
+| `VSOCK:52`| AF_VSOCK | `pod-daemon` SSH Auth | Hypervisor hardware socket bridge (`/dev/vsock` guest CID 3) |
+| `VSOCK:26500`| AF_VSOCK | `pod-daemon` Control | Hypervisor-to-guest execution control channel |
 
 ---
 
@@ -315,6 +334,24 @@ Visual captures of the running GrokBot desktop, agent controls, marketplace, rou
 * **Virtual Desktop Interaction (`computer-use`)**: Routes GUI interactions on Xvfb `:1` (mouse clicks, typing, coordinate selection via `xdotool`, and WebP screenshots via `polished-renderer`) to the dedicated `sand-cua` model profile ([`host-main.cjs:L333265`](home-box/sand-host/host-main.cjs#L333265)).
 * **Upstream Ingress & Lineage**: Streams through `DEFAULT_CURSOR_BACKEND_URL = "https://api2.cursor.sh"` ([`host-main.cjs:L302037`](home-box/sand-host/host-main.cjs#L302037)) using Connect-RPC (`aiserver.v1.InferenceService/Stream`), injecting hierarchical lineage headers `x-parent-request-id`, `x-root-parent-request-id`, and `x-parent-agent-tool-call-id` ([`host-main.cjs:L333298-333311`](home-box/sand-host/host-main.cjs#L333298-L333311)). Authenticated with user JWTs with 5-minute renewal leeway (`TOKEN_REFRESH_LEEWAY_MS = 300000`).
 
+### 13. Sand Playwright Browser MCP Runtime & Isolation Layer (`usr-local-lib/sand-playwright-mcp/`)
+* **Dedicated Browser Engine**: Houses `@anysphere/sand-playwright-runtime`, `@playwright/mcp`, and patched `playwright-core 1.63.0-alpha`.
+* **Privileged Container Isolation**: Integrates `/usr/local/libexec/sand-playwright-isolate` governed by passwordless sudo rule `sudoers.d/sand-playwright` (`box ALL=(ALL) NOPASSWD: /usr/local/libexec/sand-playwright-isolate`). Allows root-privileged namespace, PID, and network sandbox isolation when automating untrusted web sessions.
+* **CDP Multiplexing**: Connects directly to local Chrome debugging ports (`9222 + N`) to control forked browser sessions and headless tests.
+* **Managed Skills Integration**: Directly powers the 3 newly added Playwright skills documented in [`SKILLS_LIST.md`](SKILLS_LIST.md): `playwright-cli`, `playwright-component-testing`, and `playwright-trace`.
+
+### 14. Zero-Inbound Reverse Egress Tunnel & AF_VSOCK Hypervisor Interconnect
+* **Zero Inbound Attack Surface**: The microVM exposes **no open inbound ports** to the public internet. No WireGuard, OpenVPN, or public SSH daemons are used.
+* **Standalone Rust Tunnel Binary**: Outbound connectivity and client communication are mediated by [`usr-local-bin/sand-egress-tunnel`](usr-local-bin/sand-egress-tunnel) (2.3 MB ELF), compiled with `tokio-tungstenite-0.21.0` and custom multiplexer (`src/mux.rs`).
+* **Dual Port Tunnel Interface**: Listens locally on port `8790` (WebSocket reverse tunnel egress) and `127.0.0.1:8791` (HTTP CONNECT proxy), supervised by [`usr-local-bin/supervise-egress-tunnel`](usr-local-bin/supervise-egress-tunnel).
+* **Hardware AF_VSOCK Bus**: Hypervisor-to-guest hardware communication runs over `/dev/vsock` (guest CID 3). Host port `52` handles SSH agent authentication to `/run/host-services/ssh-auth.sock`, while port `26500` services hypervisor control commands from `/pod-daemon`.
+
+### 15. Forensic Filesystem & Package Integrity Audit (`diffs/`)
+* **Debian Package Drift** ([`diffs/dpkg-verify.txt`](diffs/dpkg-verify.txt)): 16,017-line verification audit comparing every package file against upstream checksums, identifying modified libraries, config files, and binaries.
+* **Session Modification Tracking** ([`diffs/modified-since-boot.txt`](diffs/modified-since-boot.txt)): 18,598 files modified post-boot, exposing dynamic runtime mutations, temporary tokens, and SQLite WAL writes.
+* **Injected File Manifest** ([`diffs/unowned-custom-files.txt`](diffs/unowned-custom-files.txt)): Exhaustive list of custom files injected into the image that do not originate from any Debian package.
+* **Active Subagent Fork Credentials**: Discovered active subagent forks `:8`, `:10`, and `:11` with authenticated LevelDB stores for Google Meet and Gmail in `home/box/chrome-profile-8/Default/` and live session tokens in `system-info/tokens/`.
+
 ---
 
 ## 🧭 Self-Hosted Deployment Inventory: Knowns vs. Unknowns
@@ -349,6 +386,7 @@ To deploy this autonomous agent microVM platform independently, the components a
 | **Agent Daemons & Runtimes** | **KNOWN** | [`exec-daemon/index.js`](exec-daemon/index.js), [`home-box/sand-host/host-main.cjs`](home-box/sand-host/host-main.cjs) | Exec-daemon (1337) and Sand Host (1340 Connect-RPC gateway) |
 | **Dual-Tier SQLite Workers** | **KNOWN** | [`home-box/sand-host/agent-isolation/`](home-box/sand-host/agent-isolation) | `agent-store-worker.cjs` (64 threads) and `transcript-mirror-worker.cjs` |
 | **Native FUSE Driver** | **KNOWN** | [`usr-local-bin/cursor-agent-store-fuse`](usr-local-bin/cursor-agent-store-fuse) (8.9 MB ELF) | ELF FUSE filesystem driver mounting `/agent-stores` |
+| **Playwright MCP & Root Isolation** | **KNOWN** | [`usr-local-lib/sand-playwright-mcp/`](usr-local-lib/sand-playwright-mcp) | Complete `@playwright/mcp` & runtime, `sand-playwright-isolate` root container runner |
 | **System Diagnostics** | **KNOWN** | [`usr-local-bin/box-doctor`](usr-local-bin/box-doctor) | 10-point test suite for machine-id, display, VNC, and egress |
 | **Rust Host VM Manager (AWS)** | **UNKNOWN** | None | **Must Build**: Host daemon in Rust managing Firecracker (POC on `c6i.xlarge` Spot @ ~$4.98/mo or Prod on `c6a.metal` Fleet) |
 | **Host-to-Guest VSOCK Bridge** | **UNKNOWN** | None | **Must Build**: Host-side VSOCK port 52 listener and SSH auth bridge |
@@ -363,7 +401,7 @@ To deploy this autonomous agent microVM platform independently, the components a
 | :--- | :--- | :--- | :--- |
 | **Model Routing Topology** | **KNOWN** | [`home-box/sand-host/host-main.cjs`](home-box/sand-host/host-main.cjs) | Exact Connect-RPC proto contract, parameter maps (`effort: high`, `fast: true`), `sand-cua`, `cursor-grok-4.5-high-fast`, and `gemini-2.5-flash` fallback |
 | **Remote MCP Matrix** | **KNOWN** | [`OAUTH_AND_APIS.md`](OAUTH_AND_APIS.md) | Protocols and endpoints for Google Workspace, Slack, Jira, AWS |
-| **Egress Tunnel Client** | **KNOWN** | [`usr-local-bin/sand-egress-tunnel`](usr-local-bin/sand-egress-tunnel) (2.3 MB ELF) | Outbound WebSocket tunnel client on port 8790 via bearer auth |
+| **Egress Tunnel Client** | **KNOWN** | [`usr-local-bin/sand-egress-tunnel`](usr-local-bin/sand-egress-tunnel) (2.3 MB ELF) | Outbound WebSocket reverse tunnel & CONNECT proxy (ports 8790/8791) via tokio-tungstenite (zero-inbound security) |
 | **Egress Supervisor** | **KNOWN** | [`usr-local-bin/supervise-egress-tunnel`](usr-local-bin/supervise-egress-tunnel) | Process supervisor with port reaping and backoff |
 | **Persistent Data Schema** | **KNOWN** | [`system-specs/custom-configs/sand-data/`](system-specs/custom-configs/sand-data) | Layout for agents, memory, workflows, plugins, transcripts |
 | **Telemetry Event Schema** | **KNOWN** | Captured in `sand-box-telemetry.log` references | Structured JSON telemetry for boot stages and failures |

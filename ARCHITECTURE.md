@@ -1084,7 +1084,14 @@ The following matrix maps every architectural mechanism and subsystem to its ver
 | **Workflow SOP** | R3 | `system-specs/custom-configs/sand-data/workflows/optconnect-network-knowledge/SKILL.md` | Verified (2,884 B) | User-defined Standard Operating Procedure skill |
 | **Transcript JSONL** | R4 | `system-specs/custom-configs/sand-data/agent-transcripts/05f1ea02-592e-4885-a98c-950ed39621a9/05f1ea02-592e-4885-a98c-950ed39621a9.jsonl` | Verified (1,348 B)| Canonical streaming JSONL transcript log |
 | **Transcript Journal** | R4 | `system-specs/custom-configs/sand-data/agent-transcripts/05f1ea02-592e-4885-a98c-950ed39621a9/05f1ea02-592e-4885-a98c-950ed39621a9.journal-mode` | Verified (2 B) | Ownership lock marker for transcript journal |
-| **Socket Audit** | R1, R2 | `system-specs/network/all-sockets.txt` | Verified (19,096 B)| Kernel socket audit confirming live bindings on ports 1337–14007 |
+| **Socket Audit** | R1, R2 | `system-specs/network/all-sockets.txt` | Verified (19,096 B)| Kernel socket audit confirming live bindings on ports 1337–14011 |
 | **Kernel Cmdline** | R1, R2 | `system-specs/kernel/cmdline.txt` | Verified (57 B) | Kernel boot arguments confirming console and root filesystem |
 | **Kernel Dmesg Log** | R1, R2 | `system-specs/kernel/dmesg.txt` | Verified (26,057 B)| Ring buffer log confirming PF_VSOCK kernel registration |
 | **MicroVM Process List**| R1, R2 | `system-info/processes.txt` | Verified (34,768 B)| Live process snapshot verifying /pod-daemon, Xvfb, and daemons |
+| **Playwright MCP Engine** | R1, R2 | `usr-local-lib/sand-playwright-mcp/` | Verified (3,500+ files) | Headless browser engine, @anysphere runtime & skills |
+| **Playwright Isolate Policy** | R1 | `system-specs/custom-configs/auth-sudo/sudoers.d/sand-playwright` | Verified (146 B) | Sudoers override for sand-playwright-isolate |
+| **WebAuthn MV3 Background** | R2 | `usr-local-share/sand-webauthn-proxy/background.js` | Verified (13,420 B) | MV3 service worker with synchronous event attachment |
+| **Subagent Fork-8 State** | R1, R2 | `diffs/modified-since-boot.txt` | Verified (18,598 lines) | Live session IndexedDB cookies for Meet & Gmail |
+| **Forensic Package Diff** | R1, R2 | `diffs/dpkg-verify.txt` | Verified (16,017 lines) | Rootfs verification proving stripped doc/locale trees |
+| **Split Large Binaries** | R1 | `usr-local-bin/table-reservation-goat-pp-cli.*` | Verified (79.7 MB) | Split part.aa/ab chunks with recombine.sh |
+

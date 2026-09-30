@@ -1,6 +1,6 @@
 # GrokBot Skills Directory & Comprehensive Catalog
 
-Catalog of all 70 `SKILL.md` skill definitions extracted from the GrokBot cloud microVM environment, complete with functional descriptions, triggers, and clickable relative file links.
+Catalog of all 73 `SKILL.md` skill definitions extracted from the GrokBot cloud microVM environment, complete with functional descriptions, triggers, and clickable relative file links.
 
 ---
 
@@ -12,8 +12,9 @@ Catalog of all 70 `SKILL.md` skill definitions extracted from the GrokBot cloud 
 - **Atlassian (Jira & Confluence) Skills**: 6
 - **Slack Integration & Messaging Skills**: 6
 - **Context-Mode Optimization Skills**: 7 (Cache) + 7 (Marketplace Mirror)
-- **Other Marketplace Skills (1Password, Grafana, PagerDuty)**: 3
-- **Total `SKILL.md` Files**: 70
+- **Developer & Observability Marketplace Skills (1Password, Grafana, PagerDuty)**: 3
+- **Playwright & Browser Automation Skills**: 3
+- **Total `SKILL.md` Files**: 73
 
 ---
 
@@ -26,6 +27,7 @@ Catalog of all 70 `SKILL.md` skill definitions extracted from the GrokBot cloud 
 5. [AWS Cloud Infrastructure Skills](#5-aws-cloud-infrastructure-skills)
 6. [Context Compression & Token Mode Skills](#6-context-compression--token-mode-skills)
 7. [Developer & Observability Marketplace Skills](#7-developer--observability-marketplace-skills)
+8. [Playwright & Browser Automation Skills](#8-playwright--browser-automation-skills)
 
 ---
 
@@ -133,4 +135,13 @@ Catalog of all 70 `SKILL.md` skill definitions extracted from the GrokBot cloud 
 | **`1password-environments`** | Manage 1Password Developer Environments via the bundled MCP server. Use when creating, importing, or mounting .env files; listing Environment variable names; adding or updating ... | [`SKILL.md`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/1password/c2fa4fc23b7c83ef37116e9bad99bc782454a8c8/skills/1password-environments/SKILL.md) |
 | **`grafana-assistant-cli`** | Use the grafana-assistant CLI to interact with Grafana Assistant via A2A API. Covers installation, configuration, prompting, keeping conversation context, and practical patterns... | [`SKILL.md`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/grafana-assistant/0d0526a92f5e5546bdd9e84390100766cc61298f/skills/grafana-assistant-cli/SKILL.md) |
 | **`pagerduty-mcp-setup`** | REQUIRED setup for how to use the PagerDuty MCP server. IMPORTANT If you want to use PagerDuty MCP tools, read these instructions BEFORE checking tool schemas or doing any Pager... | [`SKILL.md`](system-specs/custom-configs/sand-data/plugins/cache/cursor-public/pagerduty/561df5e3e98d3134af17aad00030ffe7d9ea6df2/skills/pagerduty-mcp-setup/SKILL.md) |
+
+## 8. Playwright & Browser Automation Skills (3 skills)
+
+| Skill Name | Trigger / Purpose | File Link |
+| :--- | :--- | :--- |
+| **`playwright-cli`** | Automate browser interactions, test web pages, and work with Playwright tests via CLI (`open`, `goto`, `click`, `fill`, `snapshot`, `find`, `eval`, `dialog-accept`). | [`SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-cli/SKILL.md) |
+| **`playwright-component-testing`** | Set up component testing with Playwright using a story gallery page driven by the built-in mount fixture for React and Vue components in isolation without dedicated runtimes. | [`SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-component-testing/SKILL.md) |
+| **`playwright-trace`** | Inspect Playwright trace files from the command line — list actions, view requests, console logs, errors, snapshots, and screenshots without opening a browser. | [`SKILL.md`](usr-local-lib/sand-playwright-mcp/aa43ec0c20ccdeae1b1193f675c547d3/node_modules/playwright-core/lib/tools/skills/playwright-trace/SKILL.md) |
+
 
