@@ -118,7 +118,7 @@ This map illustrates how the scraped assets are organized in this GitHub archive
 ```text
 GrokBot/
 ├── README.md
-├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 674 markdown files
+├── MARKDOWN_INVENTORY.md                 # Complete directory & links to all 788 markdown files
 ├── SKILLS_LIST.md                        # Master catalog & table of all 73 SKILL.md definitions
 ├── OAUTH_AND_APIS.md                     # Marketplace tools, OAuth & credential storage architecture
 ├── ARCHITECTURE.md                       # Deep systems architecture, IPC, and conversation schemas
@@ -180,7 +180,7 @@ GrokBot/
 
 ## 📑 Markdown Files & Skills Directory
 
-A complete indexed inventory with links to all 674 markdown files across the repository is available in **[`MARKDOWN_INVENTORY.md`](MARKDOWN_INVENTORY.md)**.
+A complete indexed inventory with links to all 788 markdown files across the repository is available in **[`MARKDOWN_INVENTORY.md`](MARKDOWN_INVENTORY.md)**.
 
 ### Quick Links to Custom Skills & Workflows
 
@@ -192,7 +192,7 @@ A complete indexed inventory with links to all 674 markdown files across the rep
 | **Agent State & Memory** | Persistent memory logs & user profiles | [`user-memory profiles`](MARKDOWN_INVENTORY.md#user-profiles) • [`agent memory logs`](MARKDOWN_INVENTORY.md#agent-memory-logs--profiles) • [`agent attachments`](MARKDOWN_INVENTORY.md#agent-attachments) |
 | **Plugin Docs & Tools** | Cached skills and tool reference guides | [`aws-core` (305 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`slack` (27 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`atlassian` (18 files)](MARKDOWN_INVENTORY.md#cachecursor-public) • [`context-mode` (46 files)](MARKDOWN_INVENTORY.md#cachecontext-mode) |
 
-👉 *For the exhaustive directory of all 674 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
+👉 *For the exhaustive directory of all 788 markdown files, see [**MARKDOWN_INVENTORY.md**](MARKDOWN_INVENTORY.md).*  
 ⚡ *For the complete catalog and trigger table of all 73 agent skills, see [**SKILLS_LIST.md**](SKILLS_LIST.md).*  
 🔐 *For marketplace tool protocols, OAuth mechanics, and credential persistence, see [**OAUTH_AND_APIS.md**](OAUTH_AND_APIS.md).*  
 🏗️ *For the deep microVM agent execution architecture, IPC protocols, and conversation storage schemas, see [**ARCHITECTURE.md**](ARCHITECTURE.md).*
@@ -493,10 +493,9 @@ unset HISTFILE
 WORKDIR=$(mktemp -d /dev/shm/scrape.XXXXXX)
 trap "rm -rf '$WORKDIR'" EXIT
 
-# 3. Clone and checkout scrap-v2 purely inside RAM
+# 3. Clone repository purely inside RAM (defaults to main)
 git clone https://github.com/tysongoulding/GrokBot.git "$WORKDIR"
 cd "$WORKDIR"
-git checkout scrap-v2
 
 # 4. Execute the deep forensic scraper into RAM
 sudo bash ./scripts/scrape-vm.sh .
@@ -514,7 +513,7 @@ done
 # 6. Commit and push directly to GitHub using your Personal Access Token
 git add -A
 git commit -m "feat(dump): ephemeral scrape update from live microVM"
-git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git scrap-v2
+git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git main
 
 # 7. Discard RAM workspace and scrub memory
 cd ~

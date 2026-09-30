@@ -4,9 +4,9 @@ Complete directory and inventory of all unique `.md` files captured in this repo
 
 ## 📊 Summary Statistics
 
-- **Total `.md` files in repository tree**: 674
-- **Unique file contents (distinct SHAs)**: 613
-- **Unique filenames (basenames)**: 432
+- **Total `.md` files in repository tree**: 788
+- **Unique file contents (distinct SHAs)**: 665
+- **Unique filenames (basenames)**: 457
 
 ---
 
@@ -787,4 +787,32 @@ Located in `usr-local-lib/sand-playwright-mcp/`:
 
 - [`home-box/sand-host/node_modules/@napi-rs/canvas-linux-x64-gnu/README.md`](home-box/sand-host/node_modules/@napi-rs/canvas-linux-x64-gnu/README.md)
 - [`home-box/sand-host/node_modules/@napi-rs/canvas/README.md`](home-box/sand-host/node_modules/@napi-rs/canvas/README.md)
+
+### `usr-local-lib/sand-playwright-mcp` (109 files)
+
+Contains vendored runtimes (`@anysphere/sand-playwright-runtime`, `@playwright/mcp`, `playwright-core 1.63.0-alpha`) across active version hashes (`2033cfe5c825eafbfcd2c467b7446bbc`, `a3f81621d647f509dd7ba43bcf46e18e`, `aa43ec0c20ccdeae1b1193f675c547d3`):
+
+- **Skills Definitions**:
+  - `playwright-core/lib/tools/skills/playwright-cli/SKILL.md` (CLI browser automation)
+  - `playwright-core/lib/tools/skills/playwright-component-testing/SKILL.md` (Component testing)
+  - `playwright-core/lib/tools/skills/playwright-trace/SKILL.md` (Trace inspection)
+- **Reference Guides**:
+  - `playwright-cli/references/element-attributes.md`
+  - `playwright-cli/references/playwright-tests.md`
+  - `playwright-cli/references/request-mocking.md`
+  - `playwright-cli/references/running-code.md`
+  - `playwright-cli/references/session-management.md`
+  - `playwright-cli/references/storage-state.md`
+  - `playwright-cli/references/test-generation.md`
+  - `playwright-cli/references/tracing.md`
+  - `playwright-cli/references/video-recording.md`
+  - `playwright-component-testing/references/gallery-spec.md`
+  - `playwright-component-testing/references/migration.md`
+  - `playwright-component-testing/references/react.md`
+  - `playwright-component-testing/references/vue.md`
+- **Vendored Packages & Dependencies**:
+  - `ws/README.md`
+  - `zod/README.md`
+  - `@playwright/mcp/README.md`
+  - `playwright-core/README.md`
 

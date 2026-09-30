@@ -1524,10 +1524,9 @@ unset HISTFILE
 WORKDIR=$(mktemp -d /dev/shm/scrape.XXXXXX)
 trap "rm -rf '$WORKDIR'" EXIT
 
-# 3. Clone and checkout scrap-v2 purely inside RAM
+# 3. Clone repository purely inside RAM (defaults to main)
 git clone https://github.com/tysongoulding/GrokBot.git "$WORKDIR"
 cd "$WORKDIR"
-git checkout scrap-v2
 
 # 4. Run the deep forensic scraper into RAM
 sudo bash ./scripts/scrape-vm.sh .
@@ -1545,7 +1544,7 @@ done
 # 6. Commit and push directly to GitHub using your Personal Access Token
 git add -A
 git commit -m "feat(dump): ephemeral scrape update from live microVM"
-git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git scrap-v2
+git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git main
 
 # 7. Discard RAM workspace and scrub memory
 cd ~

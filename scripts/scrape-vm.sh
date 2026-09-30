@@ -2,7 +2,7 @@
 # ==============================================================================
 # GrokBot Deep Forensic VM Scraper (v2.2)
 # Exhaustive capture: All Code, Workspace, Drives, Services, Libraries & Diffs
-# Reference: https://github.com/tysongoulding/GrokBot (branch: scrap-v2)
+# Reference: https://github.com/tysongoulding/GrokBot (branch: main)
 # ==============================================================================
 
 TARGET_DIR="${1:-.}"
