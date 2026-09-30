@@ -439,4 +439,52 @@ To deploy this autonomous agent microVM platform independently, the components a
 ---
 
 ## 🛠️ Step-by-Step Implementation & Build Manual
-For the complete, copy-pasteable build instructions covering all three tiers (kernel compilation, rootfs debootstrap, Rust hypervisor, Connect-RPC model router shim, Docker Compose control plane, and Tauri desktop client), see **[`INSTRUCTIONS.md`](INSTRUCTIONS.md)**.
+For the complete, copy-pasteable build instructions covering all three tiers (kernel compilation, rootfs debootstrap, Rust hypervisor, Connect-RPC model router shim, Docker Compose control plane, and Tauri desktop client), see **[`INSTRUCTIONS.md`](INSTRUCTIONS.md)**.
+
+---
+
+## 🔄 Ephemeral VM Scrape & Push Pipeline (Zero Local Record)
+
+To capture full updates (code, workspace, services, network, libraries, and forensic diffs) from a running microVM and push directly to GitHub **without leaving any files, git repository, or command history on the VM disk**:
+
+```bash
+# 1. Disable bash command history logging for this session
+unset HISTFILE
+
+# 2. Allocate an in-memory workspace in RAM (/dev/shm never touches persistent disk)
+WORKDIR=$(mktemp -d /dev/shm/scrape.XXXXXX)
+trap "rm -rf '$WORKDIR'" EXIT
+
+# 3. Clone and checkout scrap-v2 purely inside RAM
+git clone https://github.com/tysongoulding/GrokBot.git "$WORKDIR"
+cd "$WORKDIR"
+git checkout scrap-v2
+
+# 4. Execute the deep forensic scraper into RAM
+sudo bash ./scripts/scrape-vm.sh .
+sudo chown -R $USER:$USER .
+
+# 5. Split any binary > 50MB for GitHub file limits
+find . -type f -size +50M ! -path "./.git/*" ! -name "*.part.*" | while read -r BIG_FILE; do
+    echo "Splitting >50MB file for GitHub: $BIG_FILE"
+    split -b 50M "$BIG_FILE" "${BIG_FILE}.part."
+    echo "cat \"\$(basename \"$BIG_FILE\").part.\"* > \"\$(basename \"$BIG_FILE\")\" && chmod +x \"\$(basename \"$BIG_FILE\")\"" > "$(dirname "$BIG_FILE")/$(basename "$BIG_FILE").recombine.sh"
+    chmod +x "$(dirname "$BIG_FILE")/$(basename "$BIG_FILE").recombine.sh"
+    rm -f "$BIG_FILE"
+done
+
+# 6. Commit and push directly to GitHub using your Personal Access Token
+git add -A
+git commit -m "feat(dump): ephemeral scrape update from live microVM"
+git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git scrap-v2
+
+# 7. Discard RAM workspace and scrub memory
+cd ~
+rm -rf "$WORKDIR"
+```
+
+### Security Guarantees:
+- **`unset HISTFILE`**: Bypasses `~/.bash_history`—none of the commands, paths, or tokens are logged.
+- **`/dev/shm`**: Backed by `tmpfs` (volatile RAM). Zero sectors are committed to `/dev/vda` or OverlayFS upper layers.
+- **`trap ... EXIT`**: Guarantees complete self-destruct and cleanup even if a command aborts or encounters an error.
+
