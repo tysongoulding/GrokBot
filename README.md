@@ -514,7 +514,7 @@ done
 # 6. Commit and push directly to GitHub using your Personal Access Token
 git add -A
 git commit -m "feat(dump): ephemeral scrape update from live microVM"
-git push https://<YOUR_GITHUB_PAT>@github.com/tysongoulding/GrokBot.git main
+git push "https://x-access-token:$(gh auth token)@github.com/tysongoulding/GrokBot.git" main
 
 # 7. Discard RAM workspace and scrub memory
 cd ~
@@ -609,4 +609,4 @@ Inside [`usr-local-bin/sand-fingerprint-profiles.mjs`](usr-local-bin/sand-finger
    * Bypasses Chrome’s exclusive SQLite locks on `Login Data` and `Login Data For Account` using a `raw-copy fallback`.
    * Replicates live cookies across display profiles every 5,000ms via `cdp-cookies.mjs` (`SAND_COOKIE_PERSIST_INTERVAL_MS`), updating `/home/box/sand-data/chrome-cookie-seed.json` for bidirectional replication across the swarm.
 
-
+
