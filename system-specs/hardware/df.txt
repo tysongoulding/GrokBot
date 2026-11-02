@@ -1,4 +1,4 @@
 Filesystem     Type      Size  Used Avail Use% Mounted on
-overlay        overlay   126G  3.5G  117G   3% /
+/dev/vdb       ext4      128G   13G  116G  10% /
 devtmpfs       devtmpfs  7.9G     0  7.9G   0% /dev
-shm            tmpfs     7.9G     0  7.9G   0% /dev/shm
+shm            tmpfs     7.9G  1.5G  6.5G  19% /dev/shm

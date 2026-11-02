@@ -51,17 +51,17 @@ reap_stale_port_owner() {
 	emit_tunnel_event "stale_port" "$((restart_attempt + 1))"
 	echo "[egress-tunnel-supervisor] reaping stale listener on port=${port}" >&2
 	local pid
-	for pid in $(listener_pids); do
+	for pid in `listener_pids`; do
 		kill -TERM "${pid}" 2>/dev/null || true
 	done
-	for _ in $(seq 1 15); do
+	for _ in {1..15}; do
 		port_is_listening || return 0
 		sleep 0.2
 	done
-	for pid in $(listener_pids); do
+	for pid in `listener_pids`; do
 		kill -KILL "${pid}" 2>/dev/null || true
 	done
-	for _ in $(seq 1 15); do
+	for _ in {1..15}; do
 		port_is_listening || return 0
 		sleep 0.2
 	done
@@ -84,7 +84,7 @@ while [ "${stopping}" = "0" ]; do
 		continue
 	fi
 	restart_attempt=$((restart_attempt + 1))
-	started_at_s="$(date +%s)"
+	started_at_s=`date +%s`
 	echo "[egress-tunnel-supervisor] launching port=${port}" >&2
 	setsid "${launcher}" "$@" &
 	child_pid=$!
@@ -102,7 +102,7 @@ while [ "${stopping}" = "0" ]; do
 			became_ready=1
 			missed_checks=0
 		elif [ "${became_ready}" = "0" ]; then
-			if [ $(( $(date +%s) - started_at_s )) -ge 30 ]; then
+			if [ $(( `date +%s` - started_at_s )) -ge 30 ]; then
 				emit_tunnel_event "startup_timeout" "${restart_attempt}"
 				echo "[egress-tunnel-supervisor] startup listener timeout; restarting port=${port}" >&2
 				kill -TERM -- "-${child_pid}" 2>/dev/null || kill -TERM "${child_pid}" 2>/dev/null || true
@@ -133,7 +133,7 @@ while [ "${stopping}" = "0" ]; do
 		exit 0
 	fi
 
-	runtime_s=$(( $(date +%s) - started_at_s ))
+	runtime_s=$(( `date +%s` - started_at_s ))
 	emit_tunnel_event "restart" "${restart_attempt}" "${child_status}" "${runtime_s}"
 	echo "[egress-tunnel-supervisor] tunnel exited status=${child_status} runtime_s=${runtime_s} restart_in_s=${restart_delay_s}" >&2
 	if [ "${runtime_s}" -ge 60 ]; then

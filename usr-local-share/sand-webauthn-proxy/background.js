@@ -170,6 +170,18 @@ async function assertCallerTabEligible(origin) {
   };
 }
 
+// queryState reports "active" when the display this browser draws on had real input inside the interval. On X11 that is the MIT-SCREEN-SAVER idle time, which XTEST input from x11vnc and xdotool resets and XSendEvent does not: https://developer.chrome.com/docs/extensions/reference/api/idle#method-queryState
+const RECENT_INPUT_SECONDS = 60;
+
+async function desktopHadRecentInput() {
+  try {
+    return (await chrome.idle.queryState(RECENT_INPUT_SECONDS)) === "active";
+  } catch (error) {
+    log("idle query failed:", error?.message ?? error);
+    return false;
+  }
+}
+
 async function complete(kind, requestId, credentialJson) {
   if (!inFlight.has(requestId)) {
     return;
@@ -240,11 +252,13 @@ async function handleRequest(kind, request) {
     return;
   }
 
+  const recentInput = await desktopHadRecentInput();
   try {
     const result = await chrome.runtime.sendNativeMessage(NATIVE_HOST, {
       kind,
       origin,
       optionsJson: requestDetailsJson,
+      recentInput,
     });
     if (result?.ok) {
       await complete(kind, requestId, result.credentialJson);

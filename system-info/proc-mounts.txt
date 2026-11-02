@@ -1,6 +1,6 @@
-overlay / overlay rw,relatime,lowerdir=/var/lib/isod/containers/pod-g2itemrdqjexzkmvreh43nfdvm-42e0393f/overlay2/blockdev/0,upperdir=/var/lib/isod/containers/pod-g2itemrdqjexzkmvreh43nfdvm-42e0393f/image/overlay2/host_image/diff,workdir=/var/lib/isod/containers/pod-g2itemrdqjexzkmvreh43nfdvm-42e0393f/image/overlay2/host_image/work,uuid=on 0 0
+/dev/vdb / ext4 rw,relatime 0 0
 proc /proc proc rw,relatime 0 0
-devtmpfs /dev devtmpfs rw,relatime,size=8196380k,nr_inodes=2049095,mode=755 0 0
+devtmpfs /dev devtmpfs rw,relatime,size=8191116k,nr_inodes=2047779,mode=755 0 0
 tmpfs /dev/shm tmpfs rw,nosuid,nodev 0 0
 devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000 0 0
 mqueue /dev/mqueue mqueue rw,nosuid,nodev,noexec,relatime 0 0
@@ -13,4 +13,6 @@ cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime,nsdelegate,memory
 pstore /sys/fs/pstore pstore rw,nosuid,nodev,noexec,relatime 0 0
 bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,mode=700 0 0
 debugfs /sys/kernel/debug debugfs rw,nosuid,nodev,noexec,relatime 0 0
+tracefs /sys/kernel/tracing tracefs rw,nosuid,nodev,noexec,relatime 0 0
 fusectl /sys/fs/fuse/connections fusectl rw,nosuid,nodev,noexec,relatime 0 0
+cursor-agent-store /cursor/stores fuse.agent-store rw,nosuid,nodev,relatime,user_id=0,group_id=0,default_permissions,allow_other 0 0

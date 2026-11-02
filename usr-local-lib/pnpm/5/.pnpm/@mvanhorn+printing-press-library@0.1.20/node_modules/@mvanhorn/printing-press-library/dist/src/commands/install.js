@@ -1,0 +1,472 @@
+import { BUNDLES, isBundle } from "../bundles.js";
+import { mapWithConcurrency } from "../concurrency.js";
+import { mkdir, realpath } from "node:fs/promises";
+import { isAbsolute, resolve } from "node:path";
+import { detectGo, goInstall, goInstallDir } from "../go.js";
+import { pathFixInstructions } from "../pathfix.js";
+import { commandOnPath } from "../process.js";
+import { cliBinaryName, cliSkillName, DEFAULT_REGISTRY_URL, fetchGoModulePath, fetchRegistry, lookupByName, } from "../registry.js";
+import { installSkill } from "../skill.js";
+// Matches update.ts's network-bound worker cap; skill-store writes are serialized separately.
+const INSTALL_CONCURRENCY = 6;
+export function createInstallCommand(overrides = {}) {
+    const deps = {
+        fetchRegistry: (url) => fetchRegistry(url),
+        resolveModulePath: (entryPath, registryUrl) => fetchGoModulePath(entryPath, registryUrl),
+        detectGo: () => detectGo(),
+        goInstall: (modulePath, ref, env) => goInstall(modulePath, { ref, env }),
+        goInstallDir: () => goInstallDir(),
+        commandOnPath: (binary) => commandOnPath(binary),
+        realpath: async (path) => {
+            try {
+                return await realpath(path);
+            }
+            catch {
+                return null;
+            }
+        },
+        mkdir: async (path) => {
+            await mkdir(path, { recursive: true });
+        },
+        installSkill: (skillName, agents) => installSkill(skillName, { agents }),
+        stdout: (message) => console.log(message),
+        stderr: (message) => console.error(message),
+        platform: process.platform,
+        shell: process.env.SHELL,
+        home: process.env.HOME ?? process.env.USERPROFILE,
+        env: process.env,
+        ...overrides,
+    };
+    return async function installCommandWithDeps(args) {
+        const parsed = parseInstallArgs(args, deps.home);
+        if ("error" in parsed) {
+            deps.stderr(parsed.error);
+            deps.stderr("Usage: printing-press-library install <name|bundle>... [--all] [--category <cat>...] [--agent <agent>...] [--bin-dir <dir>] [--json]");
+            return 1;
+        }
+        let registry;
+        try {
+            registry = await deps.fetchRegistry(parsed.options.registryUrl);
+        }
+        catch (error) {
+            deps.stderr(error instanceof Error ? error.message : String(error));
+            return 1;
+        }
+        const expanded = expandSelectors(parsed.names, registry, parsed.options, deps);
+        if ("error" in expanded) {
+            deps.stderr(expanded.error);
+            return 1;
+        }
+        // Go is a global precondition; check it once instead of once per CLI so a
+        // missing toolchain fails fast with a single message.
+        if (!parsed.options.skillOnly) {
+            const go = await deps.detectGo();
+            if (!go.installed) {
+                deps.stderr(goMissingMessage(deps.platform));
+                return 1;
+            }
+        }
+        // `go env GOBIN GOPATH` and `go version` don't change between CLIs in a
+        // single invocation, so a bulk install only needs to shell out once for each.
+        const perInvocationDeps = {
+            ...deps,
+            goInstallDir: memoize(deps.goInstallDir),
+            detectGo: memoize(deps.detectGo),
+        };
+        if (expanded.names.length <= 1) {
+            // Single target: stream output straight through, no buffering needed.
+            const outcomes = [];
+            for (const name of expanded.names) {
+                outcomes.push(await installOne(name, registry, parsed.options, perInvocationDeps));
+            }
+            return reportResults(outcomes, parsed.options, deps);
+        }
+        // Install concurrently, but record each run's output in emission order and
+        // replay it in input order — so parallel runs don't interleave into
+        // scrambled lines. A completion counter on stderr keeps long runs live.
+        let completed = 0;
+        const total = expanded.names.length;
+        const installSkill = serializeAsync(perInvocationDeps.installSkill);
+        const outcomes = await mapWithConcurrency(expanded.names, INSTALL_CONCURRENCY, async (name) => {
+            const lines = [];
+            const bufferedDeps = {
+                ...perInvocationDeps,
+                installSkill,
+                stdout: (message) => lines.push({ stream: "out", message }),
+                stderr: (message) => lines.push({ stream: "err", message }),
+            };
+            let outcome;
+            try {
+                outcome = await installOne(name, registry, parsed.options, bufferedDeps);
+            }
+            catch (error) {
+                // installOne resolves with an outcome rather than throwing; guard anyway
+                // so one unexpected throw can't reject the whole concurrent batch.
+                lines.push({ stream: "err", message: error instanceof Error ? error.message : String(error) });
+                outcome = { ok: false, name, error: "unexpected error" };
+            }
+            completed++;
+            if (!parsed.options.json) {
+                deps.stderr(`[${completed}/${total}] ${name}: ${outcome.ok ? "ok" : "failed"}`);
+            }
+            return { outcome, lines };
+        });
+        for (const { lines } of outcomes) {
+            for (const { stream, message } of lines) {
+                (stream === "out" ? deps.stdout : deps.stderr)(message);
+            }
+        }
+        return reportResults(outcomes.map((o) => o.outcome), parsed.options, deps);
+    };
+}
+async function installOne(name, registry, options, deps) {
+    const entry = lookupByName(registry, name);
+    if (!entry) {
+        deps.stderr(`No Printing Press CLI found for "${name}". Try \`printing-press-library search ${name}\`.`);
+        return { ok: false, name, error: "not in catalog" };
+    }
+    const summary = {
+        name: entry.name,
+    };
+    if (!options.skillOnly) {
+        const go = await deps.detectGo();
+        if (!go.installed) {
+            deps.stderr(goMissingMessage(deps.platform));
+            return { ok: false, name: entry.name, error: "go missing" };
+        }
+        const binary = cliBinaryName(entry);
+        const moduleRoot = installModuleOverride(entry) ??
+            (await deps.resolveModulePath(entry.path, options.registryUrl)) ??
+            `github.com/mvanhorn/printing-press-library/${entry.path}`;
+        const modulePath = `${moduleRoot}/cmd/${binary}`;
+        const effectiveBinDir = options.binDir ?? defaultUserBinDir(deps.platform, deps.home, deps.env);
+        if (effectiveBinDir) {
+            try {
+                await deps.mkdir(effectiveBinDir);
+            }
+            catch (error) {
+                const label = options.binDir ? `--bin-dir ${effectiveBinDir}` : `default bin directory ${effectiveBinDir}`;
+                deps.stderr(`Failed to create ${label}: ${error instanceof Error ? error.message : String(error)}`);
+                return { ok: false, name: entry.name, error: "bin dir create failed" };
+            }
+        }
+        const installEnv = effectiveBinDir ? { ...deps.env, GOBIN: effectiveBinDir } : undefined;
+        const install = await deps.goInstall(modulePath, "latest", installEnv);
+        if (install.code !== 0) {
+            deps.stderr(`go install failed for ${modulePath}`);
+            if (install.stderr.trim()) {
+                deps.stderr(install.stderr.trim());
+            }
+            return { ok: false, name: entry.name, error: "go install failed" };
+        }
+        const installed = await resolveInstalledPath(binary, deps, effectiveBinDir);
+        const installedPath = installed?.binaryPath ?? null;
+        const pathBinaryPath = await deps.commandOnPath(binary);
+        if (!pathBinaryPath) {
+            // `go install` succeeded, but `which`/`where` cannot find the binary —
+            // PATH does not include the directory go install wrote to. Print the exact,
+            // copy-pasteable PATH fix for this platform and shell, but keep going so
+            // the matching focused skill is still installed.
+            deps.stderr(notOnPathMessage(binary, installed, deps));
+        }
+        summary.binary = binary;
+        summary.modulePath = modulePath;
+        if (installedPath) {
+            summary.installedPath = installedPath;
+        }
+        summary.binaryPath = installedPath ?? pathBinaryPath ?? undefined;
+        if (!pathBinaryPath) {
+            summary.pathWarning = "not_on_path";
+        }
+        if (installedPath && pathBinaryPath && !(await sameInstalledBinary(installedPath, pathBinaryPath, deps))) {
+            // `which`/`where` resolved to a different binary than `go install` wrote.
+            // The older binary earlier in PATH will shadow the freshly built one.
+            summary.shadowedBy = pathBinaryPath;
+            summary.binaryPath = installedPath;
+            deps.stderr(shadowMessage(binary, installedPath, pathBinaryPath));
+        }
+    }
+    if (!options.cliOnly) {
+        const skillName = cliSkillName(entry);
+        const skill = await deps.installSkill(skillName, options.agents);
+        if (skill.code !== 0) {
+            const binaryNote = summary.binaryPath
+                ? ` The binary remains installed at ${summary.binaryPath}.`
+                : "";
+            deps.stderr(`Skill install failed for ${skillName}.${binaryNote}`);
+            if (skill.stderr.trim()) {
+                deps.stderr(skill.stderr.trim());
+            }
+            return { ok: false, name: entry.name, error: "skill install failed" };
+        }
+        summary.skill = skillName;
+    }
+    if (!options.json) {
+        deps.stdout(`Installed ${entry.name}`);
+        if (summary.binaryPath) {
+            deps.stdout(`  binary: ${summary.binaryPath}`);
+        }
+        if (summary.shadowedBy) {
+            deps.stdout(`  shadowed by: ${summary.shadowedBy} (earlier in PATH)`);
+        }
+        if (summary.pathWarning === "not_on_path") {
+            deps.stdout("  warning: binary is not on PATH; run it by full path or add the install directory to PATH (see stderr for platform-specific instructions)");
+        }
+        if (summary.skill) {
+            deps.stdout(`  skill: ${summary.skill}`);
+        }
+    }
+    return { ok: true, name: entry.name, data: summary };
+}
+function expandSelectors(names, registry, options, deps) {
+    const expanded = [];
+    if (options.all) {
+        expanded.push(...registry.entries.map((entry) => entry.name));
+    }
+    for (const category of options.categories) {
+        const members = registry.entries
+            .filter((entry) => entry.category.toLowerCase() === category.toLowerCase())
+            .map((entry) => entry.name);
+        if (members.length === 0) {
+            const known = [...new Set(registry.entries.map((entry) => entry.category))].sort().join(", ");
+            return { error: `No CLIs in category "${category}". Known categories: ${known}` };
+        }
+        if (!options.json) {
+            deps.stdout(`Category "${category}" → ${members.join(", ")}`);
+        }
+        expanded.push(...members);
+    }
+    for (const name of names) {
+        if (isBundle(name)) {
+            const members = BUNDLES[name];
+            if (!options.json) {
+                deps.stdout(`Bundle "${name}" → ${members.join(", ")}`);
+            }
+            expanded.push(...members);
+        }
+        else {
+            expanded.push(name);
+        }
+    }
+    // Selectors can overlap ("--all espn", two categories sharing a bundle
+    // member); install each target once, keeping first-occurrence order.
+    return { names: [...new Set(expanded)] };
+}
+function reportResults(outcomes, options, deps) {
+    const failures = outcomes.filter((o) => !o.ok);
+    if (options.json) {
+        // Backward-compatible flat shape for the single-success case.
+        if (outcomes.length === 1 && outcomes[0].ok) {
+            deps.stdout(JSON.stringify({ ok: true, ...outcomes[0].data }, null, 2));
+            return 0;
+        }
+        deps.stdout(JSON.stringify({
+            ok: failures.length === 0,
+            results: outcomes.map((o) => ({
+                ok: o.ok,
+                name: o.name,
+                ...(o.data ?? {}),
+                ...(o.error ? { error: o.error } : {}),
+            })),
+        }, null, 2));
+        return failures.length === 0 ? 0 : 1;
+    }
+    if (outcomes.length > 1) {
+        deps.stdout("");
+        if (failures.length === 0) {
+            deps.stdout(`Installed ${outcomes.length} CLI(s).`);
+        }
+        else {
+            const ok = outcomes.length - failures.length;
+            const failedNames = failures.map((f) => f.name).join(", ");
+            deps.stdout(`Installed ${ok} of ${outcomes.length}; failed: ${failedNames}.`);
+        }
+    }
+    return failures.length === 0 ? 0 : 1;
+}
+export const installCommand = createInstallCommand();
+function installModuleOverride(entry) {
+    if (entry.name === "v0" && entry.api === "v0" && entry.path === "library/ai/v0") {
+        return "github.com/mvanhorn/printing-press-library/library/ai/v0/vzero";
+    }
+    return null;
+}
+function parseInstallArgs(args, home) {
+    const options = {
+        agents: [],
+        json: false,
+        registryUrl: DEFAULT_REGISTRY_URL,
+        cliOnly: false,
+        skillOnly: false,
+        all: false,
+        categories: [],
+    };
+    const names = [];
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg === "--json") {
+            options.json = true;
+        }
+        else if (arg === "--all") {
+            options.all = true;
+        }
+        else if (arg === "--category") {
+            const category = args[++i];
+            if (!category) {
+                return { error: "Missing value for --category" };
+            }
+            options.categories.push(category);
+        }
+        else if (arg === "--cli-only") {
+            options.cliOnly = true;
+        }
+        else if (arg === "--skill-only") {
+            options.skillOnly = true;
+        }
+        else if (arg === "--bin-dir") {
+            const value = args[++i];
+            if (!value) {
+                return { error: "Missing value for --bin-dir" };
+            }
+            options.binDir = normalizeBinDir(value, home);
+        }
+        else if (arg === "--agent" || arg === "-a") {
+            const agent = args[++i];
+            if (!agent) {
+                return { error: "Missing value for --agent" };
+            }
+            options.agents.push(agent);
+        }
+        else if (arg === "--registry-url") {
+            const registryUrl = args[++i];
+            if (!registryUrl) {
+                return { error: "Missing value for --registry-url" };
+            }
+            options.registryUrl = registryUrl;
+        }
+        else if (arg.startsWith("-")) {
+            return { error: `Unknown install option: ${arg}` };
+        }
+        else {
+            names.push(arg);
+        }
+    }
+    if (options.cliOnly && options.skillOnly) {
+        return { error: "--cli-only and --skill-only are mutually exclusive" };
+    }
+    if (options.skillOnly && options.binDir) {
+        return { error: "--bin-dir cannot be used with --skill-only" };
+    }
+    if (names.length === 0 && !options.all && options.categories.length === 0) {
+        return { error: "Missing CLI name, bundle, --category, or --all" };
+    }
+    return { names, options };
+}
+function goMissingMessage(platform) {
+    const installHint = platform === "darwin"
+        ? "Install Go with: brew install go"
+        : platform === "win32"
+            ? "Install Go with: winget install GoLang.Go"
+            : "Install Go from your package manager or https://go.dev/dl/";
+    return `Go is required to install Printing Press CLIs. ${installHint}`;
+}
+async function resolveInstalledPath(binary, deps, binDirOverride) {
+    if (binDirOverride) {
+        const sep = deps.platform === "win32" ? "\\" : "/";
+        const suffix = deps.platform === "win32" ? ".exe" : "";
+        const clean = stripTrailingSeparators(binDirOverride);
+        return { binDir: clean, binaryPath: `${clean}${sep}${binary}${suffix}` };
+    }
+    const info = await deps.goInstallDir();
+    if (!info.binDir) {
+        return null;
+    }
+    const sep = deps.platform === "win32" ? "\\" : "/";
+    const suffix = deps.platform === "win32" ? ".exe" : "";
+    return { binDir: info.binDir, binaryPath: `${info.binDir}${sep}${binary}${suffix}` };
+}
+function defaultUserBinDir(platform, home, env) {
+    if (platform === "win32") {
+        const localAppData = env.LOCALAPPDATA ?? env.LocalAppData;
+        if (localAppData) {
+            return `${stripTrailingSeparators(localAppData)}\\Programs\\PrintingPress\\bin`;
+        }
+        if (home) {
+            return `${stripTrailingSeparators(home)}\\AppData\\Local\\Programs\\PrintingPress\\bin`;
+        }
+        return undefined;
+    }
+    if (home) {
+        return `${stripTrailingSeparators(home)}/.local/bin`;
+    }
+    return undefined;
+}
+function normalizeBinDir(input, home) {
+    const expanded = expandHome(input, home);
+    const cleaned = stripTrailingSeparators(expanded);
+    return isAbsolute(cleaned) ? cleaned : resolve(cleaned);
+}
+function expandHome(input, home) {
+    if (!home) {
+        return input;
+    }
+    if (input === "~") {
+        return home;
+    }
+    if (input.startsWith("~/") || input.startsWith("~\\")) {
+        return `${home}${input.slice(1)}`;
+    }
+    return input;
+}
+function stripTrailingSeparators(path) {
+    return path.replace(/[\\/]+$/, "");
+}
+function memoize(fn) {
+    let cached;
+    return () => {
+        if (!cached) {
+            cached = fn();
+        }
+        return cached;
+    };
+}
+function serializeAsync(fn) {
+    let previous = Promise.resolve();
+    return (...args) => {
+        const run = previous.then(() => fn(...args));
+        previous = run.then(() => undefined, () => undefined);
+        return run;
+    };
+}
+function samePath(a, b, platform) {
+    const norm = (p) => {
+        const stripped = p.replace(/[\\/]+$/, "");
+        return platform === "win32" ? stripped.toLowerCase() : stripped;
+    };
+    return norm(a) === norm(b);
+}
+async function sameInstalledBinary(a, b, deps) {
+    if (samePath(a, b, deps.platform)) {
+        return true;
+    }
+    const [realA, realB] = await Promise.all([deps.realpath(a), deps.realpath(b)]);
+    return !!realA && !!realB && samePath(realA, realB, deps.platform);
+}
+function shadowMessage(binary, installedPath, shadowedBy) {
+    return (`WARNING: installed ${binary} at ${installedPath}, but ${shadowedBy} appears earlier in PATH and will shadow it. ` +
+        `Move or remove the old binary, or reorder PATH so the install directory comes first.`);
+}
+function notOnPathMessage(binary, installed, deps) {
+    const head = installed
+        ? `WARNING: installed ${binary} at ${installed.binaryPath}, but its directory is not on PATH.`
+        : `WARNING: ${binary} was installed, but it is not on PATH.`;
+    const fix = pathFixInstructions({
+        binDir: installed?.binDir ?? null,
+        platform: deps.platform,
+        shell: deps.shell,
+        home: deps.home,
+    });
+    const tail = installed ? `\n\nOr run it directly: ${installed.binaryPath}` : "";
+    return `${head}\n${fix}${tail}`;
+}
+//# sourceMappingURL=install.js.map

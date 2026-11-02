@@ -35,7 +35,7 @@ emit_daemon_boot_stage() {
 		return
 	fi
 	local now_ms duration_ms
-	now_ms="$(date +%s%3N)"
+	now_ms=`date +%s%3N`
 	duration_ms=$((now_ms - SAND_BOX_BOOT_STARTED_AT_MS))
 	if [ "${duration_ms}" -lt 0 ]; then
 		duration_ms=0
@@ -77,15 +77,24 @@ has_exec_daemon_bundle_args() {
 		[ "${argv[2]:-}" = "serve" ]
 }
 
+listener_pids() {
+	ss -lptnH "sport = :${port}" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un
+}
+
+spaced_cmdline() {
+	local pid="$1"
+	tr '\0' ' ' <"/proc/${pid}/cmdline"
+}
+
 stale_exec_daemon_listeners() {
 	local pid cmd
-	for pid in $(ss -lptnH "sport = :${port}" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un); do
+	for pid in `listener_pids`; do
 		[ -n "${pid}" ] || continue
 		if has_exec_daemon_bundle_args "${pid}"; then
 			printf '%s\n' "${pid}"
 			continue
 		fi
-		cmd="$( (tr '\0' ' ' <"/proc/${pid}/cmdline") 2>/dev/null || true)"
+		cmd=`spaced_cmdline "${pid}" 2>/dev/null`
 		case "${cmd}" in
 		/exec-daemon/node\ /exec-daemon/index.js\ serve*) printf '%s\n' "${pid}" ;;
 		esac
@@ -97,19 +106,19 @@ reap_stale_port_owner() {
 		return 0
 	fi
 	echo "[exec-daemon-supervisor] stale listener found; reaping port=${port}" >&2
-	for pid in $(stale_exec_daemon_listeners); do
+	for pid in `stale_exec_daemon_listeners`; do
 		kill -TERM "${pid}" 2>/dev/null || true
 	done
-	for _ in $(seq 1 10); do
+	for _ in {1..10}; do
 		if ! port_is_listening; then
 			return 0
 		fi
 		sleep 0.2
 	done
-	for pid in $(stale_exec_daemon_listeners); do
+	for pid in `stale_exec_daemon_listeners`; do
 		kill -KILL "${pid}" 2>/dev/null || true
 	done
-	for _ in $(seq 1 10); do
+	for _ in {1..10}; do
 		if ! port_is_listening; then
 			return 0
 		fi
@@ -129,7 +138,7 @@ stop_unhealthy_child() {
 	kill -TERM -- "-${child_pid}" 2>/dev/null ||
 		kill -TERM "${child_pid}" 2>/dev/null ||
 		true
-	for _ in $(seq 1 10); do
+	for _ in {1..10}; do
 		if ! kill -0 -- "-${child_pid}" 2>/dev/null; then
 			return
 		fi
@@ -154,7 +163,7 @@ while [ "${stopping}" = "0" ]; do
 		fi
 		continue
 	fi
-	started_at_s="$(date +%s)"
+	started_at_s=`date +%s`
 	restart_count=$((restart_count + 1))
 	restart_cause="daemon_exited"
 	echo "[exec-daemon-supervisor] launching attempt=${restart_count} port=${port}"
@@ -175,7 +184,7 @@ while [ "${stopping}" = "0" ]; do
 			became_ready=1
 			missed_live_checks=0
 		else
-			now_s="$(date +%s)"
+			now_s=`date +%s`
 			if [ "${became_ready}" = "0" ]; then
 				if [ $((now_s - started_at_s)) -ge 30 ]; then
 					stop_unhealthy_child "startup-listener-timeout"
@@ -206,7 +215,7 @@ while [ "${stopping}" = "0" ]; do
 		exit 0
 	fi
 
-	runtime_s=$(( $(date +%s) - started_at_s ))
+	runtime_s=$(( `date +%s` - started_at_s ))
 	if [ "${runtime_s}" -lt 0 ]; then
 		runtime_s=0
 	fi

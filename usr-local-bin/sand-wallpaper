@@ -6,12 +6,13 @@ FALLBACK_IMAGE="${SAND_WALLPAPER_FALLBACK:-${TONE_DIR}/cursor-box-wallpaper.jpg}
 SETTINGS_PATH="${SAND_WALLPAPER_SETTINGS:-/home/box/sand-data/settings.json}"
 NODE_BIN="${SAND_WALLPAPER_NODE:-/exec-daemon/node}"
 TONE_SCRIPT="${SAND_WALLPAPER_TONE_SCRIPT:-/usr/local/bin/sand-wallpaper-tone.mjs}"
+TONE_TIMEOUT_S="${SAND_WALLPAPER_TONE_TIMEOUT_S:-10}"
 export DISPLAY="${2:-${DISPLAY:-:1}}"
 
 resolve_plan() {
 	[ -x "${NODE_BIN}" ] || return 1
 	[ -r "${TONE_SCRIPT}" ] || return 1
-	timeout 10 "${NODE_BIN}" "${TONE_SCRIPT}" "${SETTINGS_PATH}" 2>/dev/null
+	timeout "${TONE_TIMEOUT_S}" "${NODE_BIN}" "${TONE_SCRIPT}" "${SETTINGS_PATH}" 2>/dev/null
 }
 
 read_tone() {

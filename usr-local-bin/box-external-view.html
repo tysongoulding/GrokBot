@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-src https: http://127.0.0.1:* http://localhost:* http://[::1]:*" /><!-- pragma: allowlist secret -->
+    <title>External browser</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #111;
+        cursor: default;
+        user-select: none;
+      }
+      #bar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #1f2937;
+        color: #f9fafb;
+        font: 500 14px/1 system-ui, sans-serif;
+        border-bottom: 1px solid #374151;
+      }
+      #connection {
+        color: #fbbf24;
+      }
+      #frame {
+        position: fixed;
+        inset: 36px 0 0 0;
+        width: 100%;
+        height: calc(100% - 36px);
+        border: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bar" role="status">
+      <span>External browser, running in the cloud. Clicks and typing in this window don't reach it yet.</span>
+      <span id="connection" hidden></span>
+    </div>
+    <iframe id="frame" sandbox="allow-same-origin allow-scripts" tabindex="-1" referrerpolicy="no-referrer"></iframe>
+    <script>
+      "use strict";
+      const TITLE = "External browser";
+      const RELOAD_DELAY_MS = 2000;
+      const MAX_RELOADS = 5;
+      const CONNECTED_GRACE_MS = 5000;
+      const DISCONNECTED_MESSAGE = "browserbase-disconnected";
+      const STATUS_BINDING = "sandExternalViewStatus";
+      const RECONNECTING = "Reconnecting…";
+      const DISCONNECTED = "Disconnected";
+      const SWALLOWED_EVENTS = [
+        "keydown",
+        "keyup",
+        "keypress",
+        "beforeinput",
+        "pointerdown",
+        "pointerup",
+        "mousedown",
+        "mouseup",
+        "click",
+        "auxclick",
+        "dblclick",
+        "contextmenu",
+        "wheel",
+        "dragstart",
+        "drop",
+        "paste",
+      ];
+      const frame = document.getElementById("frame");
+      const connection = document.getElementById("connection");
+      const state = {
+        liveViewUrl: null,
+        connection: null,
+        reloads: 0,
+        reloadTimer: null,
+        graceTimer: null,
+      };
+
+      function setConnection(text) {
+        state.connection = text;
+        connection.hidden = text === null;
+        connection.textContent = text ?? "";
+        document.title = text === null ? TITLE : `${TITLE} (${text})`;
+      }
+
+      function clearTimers() {
+        clearTimeout(state.reloadTimer);
+        clearTimeout(state.graceTimer);
+        state.reloadTimer = null;
+        state.graceTimer = null;
+      }
+
+      function reportStatus(status) {
+        if (typeof window[STATUS_BINDING] === "function") window[STATUS_BINDING](status);
+      }
+
+      frame.addEventListener("load", () => {
+        if (state.connection !== RECONNECTING || state.reloadTimer !== null) return;
+        clearTimeout(state.graceTimer);
+        state.graceTimer = setTimeout(() => {
+          state.graceTimer = null;
+          state.reloads = 0;
+          setConnection(null);
+        }, CONNECTED_GRACE_MS);
+      });
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== frame.contentWindow || event.data !== DISCONNECTED_MESSAGE) return;
+        if (state.liveViewUrl === null || state.connection === DISCONNECTED) return;
+        if (state.reloadTimer !== null) return;
+        clearTimeout(state.graceTimer);
+        state.graceTimer = null;
+        if (state.reloads >= MAX_RELOADS) {
+          setConnection(DISCONNECTED);
+          reportStatus("disconnected");
+          return;
+        }
+        setConnection(RECONNECTING);
+        state.reloads++;
+        state.reloadTimer = setTimeout(() => {
+          state.reloadTimer = null;
+          frame.src = state.liveViewUrl;
+        }, RELOAD_DELAY_MS);
+      });
+
+      for (const type of SWALLOWED_EVENTS) {
+        window.addEventListener(
+          type,
+          (event) => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          },
+          { capture: true, passive: false },
+        );
+      }
+
+      window.sandExternalView = Object.freeze({
+        show(url) {
+          clearTimers();
+          state.reloads = 0;
+          state.liveViewUrl = url;
+          setConnection(null);
+          frame.src = url;
+        },
+      });
+    </script>
+  </body>
+</html>

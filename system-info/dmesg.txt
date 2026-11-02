@@ -1,397 +1,1606 @@
-[    0.000000] Linux version 6.12.94+ (root@aa969d4fa2c7) (gcc (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT_DYNAMIC Thu Sep 24 16:04:37 UTC 2026
-[    0.000000] Command line: console=ttyS0 root=/dev/vda random.trust_cpu=on ip=172.30.0.2::172.30.0.1:255.255.255.0::eth0:off rw loglevel=7 earlyprintk=ttyS0 print-fatal-signals=1 systemd.unified_cgroup_hierarchy=1 systemd.setenv=SWAP_SIZE_MB=0 reboot=k panic=1 nomodule i8042.noaux=1 i8042.nomux=1 i8042.dumbkbd=1 clocksource=kvm-clock tsc=unstable nosoftlockup root=/dev/vda rw
-[    0.000000] KASLR disabled
-[    0.000000] x86/split lock detection: #DB: warning on user-space bus_locks
-[    0.000000] BIOS-provided physical RAM map:
-[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
-[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x00000000000fffff] reserved
-[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000bfffffff] usable
-[    0.000000] BIOS-e820: [mem 0x00000000eec00000-0x00000000febfffff] reserved
-[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000043fffffff] usable
-[    0.000000] printk: legacy bootconsole [earlyser0] enabled
-[    0.000000] NX (Execute Disable) protection: active
-[    0.000000] APIC: Static calls initialized
-[    0.000000] DMI not present or invalid.
-[    0.000000] Hypervisor detected: KVM
-[    0.000000] last_pfn = 0xc0000 max_arch_pfn = 0x400000000
-[    0.000000] kvm-clock: Using msrs 4b564d01 and 4b564d00
-[    0.000000] kvm-clock: using sched offset of 36252296 cycles
-[    0.000389] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
-[    0.001625] tsc: Detected 2400.000 MHz processor
-[    0.002053] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
-[    0.002056] e820: remove [mem 0x000a0000-0x000fffff] usable
-[    0.002059] last_pfn = 0x440000 max_arch_pfn = 0x400000000
-[    0.002524] MTRR map: 0 entries (0 fixed + 0 variable; max 16), built from 8 variable MTRRs
-[    0.003158] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
-[    0.003717] last_pfn = 0xc0000 max_arch_pfn = 0x400000000
-[    0.004171] Using GB pages for direct mapping
-[    0.004620] ACPI: Early table checksum verification disabled
-[    0.005196] ACPI: RSDP 0x00000000000E0000 000024 (v02 FIRECK)
-[    0.005677] ACPI: XSDT 0x00000000000A0ED7 00003C (v01 FIRECK FCMVXSDT 00000000 FCAT 20240119)
-[    0.006310] ACPI: FACP 0x00000000000A0D0F 000114 (v06 FIRECK FCVMFADT 00000000 FCAT 20240119)
-[    0.006998] ACPI: DSDT 0x000000000009FDBC 000F53 (v02 FIRECK FCVMDSDT 00000000 FCAT 20240119)
-[    0.007658] ACPI: APIC 0x00000000000A0E23 000078 (v06 FIRECK FCVMMADT 00000000 FCAT 20240119)
-[    0.008322] ACPI: MCFG 0x00000000000A0E9B 00003C (v01 FIRECK FCMVMCFG 00000000 FCAT 20240119)
-[    0.008998] ACPI: Reserving FACP table memory at [mem 0xa0d0f-0xa0e22]
-[    0.009481] ACPI: Reserving DSDT table memory at [mem 0x9fdbc-0xa0d0e]
-[    0.010091] ACPI: Reserving APIC table memory at [mem 0xa0e23-0xa0e9a]
-[    0.010722] ACPI: Reserving MCFG table memory at [mem 0xa0e9b-0xa0ed6]
-[    0.011691] No NUMA configuration found
-[    0.011989] Faking a node at [mem 0x0000000000000000-0x000000043fffffff]
-[    0.012512] NODE_DATA(0) allocated [mem 0x43ffde4c0-0x43fffffff]
-[    0.013283] Zone ranges:
-[    0.013536]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
-[    0.014156]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
-[    0.014738]   Normal   [mem 0x0000000100000000-0x000000043fffffff]
-[    0.015311] Movable zone start for each node
-[    0.015707] Early memory node ranges
-[    0.016046]   node   0: [mem 0x0000000000001000-0x000000000009efff]
-[    0.016649]   node   0: [mem 0x0000000000100000-0x00000000bfffffff]
-[    0.017239]   node   0: [mem 0x0000000100000000-0x000000043fffffff]
-[    0.017830] Initmem setup node 0 [mem 0x0000000000001000-0x000000043fffffff]
-[    0.018512] On node 0, zone DMA: 1 pages in unavailable ranges
-[    0.019268] On node 0, zone DMA: 97 pages in unavailable ranges
-[    0.055921] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
-[    0.056490] ACPI: Using ACPI (MADT) for SMP configuration information
-[    0.057101] TSC deadline timer available
-[    0.057479] CPU topo: Max. logical packages:   1
-[    0.057921] CPU topo: Max. logical dies:       1
-[    0.058367] CPU topo: Max. dies per package:   1
-[    0.058816] CPU topo: Max. threads per core:   1
-[    0.059257] CPU topo: Num. cores per package:     8
-[    0.059736] CPU topo: Num. threads per package:   8
-[    0.060197] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
-[    0.060812] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
-[    0.061534] kvm-guest: KVM setup pv remote TLB flush
-[    0.062011] kvm-guest: setup PV sched yield
-[    0.062436] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
-[    0.063173] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
-[    0.063895] PM: hibernation: Registered nosave memory: [mem 0xc0000000-0xffffffff]
-[    0.064604] [mem 0xc0000000-0xeebfffff] available for PCI devices
-[    0.065069] Booting paravirtualized kernel on KVM
-[    0.065428] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
-[    0.066208] setup_percpu: NR_CPUS:64 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
-[    0.068713] percpu: Embedded 48 pages/cpu s159256 r8192 d29160 u262144
-[    0.069238] pcpu-alloc: s159256 r8192 d29160 u262144 alloc=1*2097152
-[    0.069242] pcpu-alloc: [0] 0 1 2 3 4 5 6 7 
-[    0.069274] kvm-guest: PV spinlocks enabled
-[    0.069580] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
-[    0.070168] Kernel command line: console=ttyS0 root=/dev/vda random.trust_cpu=on ip=172.30.0.2::172.30.0.1:255.255.255.0::eth0:off rw loglevel=7 earlyprintk=ttyS0 print-fatal-signals=1 systemd.unified_cgroup_hierarchy=1 systemd.setenv=SWAP_SIZE_MB=0 reboot=k panic=1 nomodule i8042.noaux=1 i8042.nomux=1 i8042.dumbkbd=1 clocksource=kvm-clock tsc=unstable nosoftlockup root=/dev/vda rw
-[    0.073032] tsc: Marking TSC unstable due to boot parameter
-[    0.073487] random: crng init done
-[    0.084875] Dentry cache hash table entries: 2097152 (order: 12, 16777216 bytes, linear)
-[    0.091055] Inode-cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
-[    0.091787] Fallback order for Node 0: 0 
-[    0.091796] Built 1 zonelists, mobility grouping on.  Total pages: 4194206
-[    0.092571] Policy zone: Normal
-[    0.092789] mem auto-init: stack:off, heap alloc:off, heap free:off
-[    0.093250] software IO TLB: area num 8.
-[    0.158752] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
-[    0.160215] Dynamic Preempt: none
-[    0.160560] rcu: Preemptible hierarchical RCU implementation.
-[    0.160975] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=8.
-[    0.161443] 	Trampoline variant of Tasks RCU enabled.
-[    0.161791] 	Tracing variant of Tasks RCU enabled.
-[    0.162144] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
-[    0.162717] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
-[    0.163210] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
-[    0.163847] RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
-[    0.164539] NR_IRQS: 4352, nr_irqs: 472, preallocated irqs: 0
-[    0.165012] rcu: srcu_init: Setting srcu_struct sizes based on contention.
-[    0.165616] Console: colour dummy device 80x25
-[    0.165984] printk: legacy console [ttyS0] enabled
-[    0.166650] printk: legacy bootconsole [earlyser0] disabled
-[    0.167498] ACPI: Core revision 20240827
-[    0.167859] APIC: Switch to symmetric I/O mode setup
-[    0.168416] x2apic enabled
-[    0.168848] APIC: Switched APIC routing to: physical x2apic
-[    0.169249] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()
-[    0.169764] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()
-[    0.170419] kvm-guest: setup PV IPIs
-[    0.170711] Calibrating delay loop (skipped) preset value.. 4800.00 BogoMIPS (lpj=9600000)
-[    0.171468] x86/cpu: User Mode Instruction Prevention (UMIP) activated
-[    0.171975] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
-[    0.172390] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
-[    0.172853] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
-[    0.173511] Spectre V2 : Mitigation: Enhanced / Automatic IBRS
-[    0.173914] Spectre V2 : Spectre v2 / PBRSB-eIBRS: Retire a single CALL on VMEXIT
-[    0.174480] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier
-[    0.174708] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl
-[    0.174708] TAA: Mitigation: TSX disabled
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x020: 'AVX-512 opmask'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x040: 'AVX-512 Hi256'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x080: 'AVX-512 ZMM_Hi256'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x20000: 'AMX Tile config'
-[    0.174708] x86/fpu: Supporting XSAVE feature 0x40000: 'AMX Tile data'
-[    0.174708] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
-[    0.174708] x86/fpu: xstate_offset[5]:  832, xstate_sizes[5]:   64
-[    0.174708] x86/fpu: xstate_offset[6]:  896, xstate_sizes[6]:  512
-[    0.174708] x86/fpu: xstate_offset[7]: 1408, xstate_sizes[7]: 1024
-[    0.174708] x86/fpu: xstate_offset[9]: 2432, xstate_sizes[9]:    8
-[    0.174708] x86/fpu: xstate_offset[17]: 2496, xstate_sizes[17]:   64
-[    0.174708] x86/fpu: xstate_offset[18]: 2560, xstate_sizes[18]: 8192
-[    0.174708] x86/fpu: Enabled xstate features 0x602e7, context size is 10752 bytes, using 'compacted' format.
-[    0.174708] Freeing SMP alternatives memory: 44K
-[    0.174708] pid_max: default: 32768 minimum: 301
-[    0.174708] LSM: initializing lsm=capability,landlock,selinux
-[    0.174708] landlock: Up and running.
-[    0.174708] SELinux:  Initializing.
-[    0.174708] Mount-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
-[    0.174708] Mountpoint-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
-[    0.174708] smpboot: CPU0: Intel(R) Xeon(R) Processor (family: 0x6, model: 0xcf, stepping: 0x2)
-[    0.174708] Performance Events: unsupported p6 CPU model 207 no PMU driver, software events only.
-[    0.174708] signal: max sigframe size: 11952
-[    0.174708] rcu: Hierarchical SRCU implementation.
-[    0.174708] rcu: 	Max phase no-delay instances is 1000.
-[    0.174708] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
-[    0.174708] NMI watchdog: Perf NMI watchdog permanently disabled
-[    0.174708] smp: Bringing up secondary CPUs ...
-[    0.174889] smpboot: x86: Booting SMP configuration:
-[    0.175243] .... node  #0, CPUs:      #1 #2 #3 #4 #5 #6 #7
-[    0.176519] smp: Brought up 1 node, 8 CPUs
-[    0.178993] smpboot: Total of 8 processors activated (38400.00 BogoMIPS)
-[    0.208130] node 0 deferred pages initialised in 28ms
-[    0.208130] Memory: 16387968K/16776824K available (16384K kernel code, 1196K rwdata, 4140K rodata, 2852K init, 1928K bss, 384064K reserved, 0K cma-reserved)
-[    0.211298] devtmpfs: initialized
-[    0.211298] x86/mm: Memory block size: 128MB
-[    0.212501] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
-[    0.212501] futex hash table entries: 2048 (order: 5, 131072 bytes, linear)
-[    0.215199] NET: Registered PF_NETLINK/PF_ROUTE protocol family
-[    0.215676] audit: initializing netlink subsys (disabled)
-[    0.216108] audit: type=2000 audit(1790695368.052:1): state=initialized audit_enabled=0 res=1
-[    0.216108] thermal_sys: Registered thermal governor 'fair_share'
-[    0.216108] thermal_sys: Registered thermal governor 'step_wise'
-[    0.216108] thermal_sys: Registered thermal governor 'user_space'
-[    0.216510] cpuidle: using governor ladder
-[    0.218717] cpuidle: using governor menu
-[    0.219584] PCI: ECAM [mem 0xeec00000-0xeecfffff] (base 0xeec00000) for domain 0000 [bus 00-00]
-[    0.220163] PCI: ECAM [mem 0xeec00000-0xeecfffff] reserved as E820 entry
-[    0.220640] PCI: Using configuration type 1 for base access
-[    0.221321] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
-[    0.221321] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
-[    0.221321] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
-[    0.222712] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
-[    0.223160] ACPI: Added _OSI(Module Device)
-[    0.223160] ACPI: Added _OSI(Processor Device)
-[    0.223388] ACPI: Added _OSI(Processor Aggregator Device)
-[    0.223909] ACPI: 1 ACPI AML tables successfully acquired and loaded
-[    0.224414] ACPI: Interpreter enabled
-[    0.224414] ACPI: PM: (supports S0)
-[    0.224414] ACPI: Using IOAPIC for interrupt routing
-[    0.224414] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
-[    0.226711] PCI: Using E820 reservations for host bridge windows
-[    0.227962] ACPI: PCI Root Bridge [PC00] (domain 0000 [bus 00])
-[    0.228354] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
-[    0.228978] acpi PNP0A08:00: PCIe port services disabled; not requesting _OSC control
-[    0.229542] acpi PNP0A08:00: _OSC: platform retains control of PCIe features (AE_NOT_FOUND)
-[    0.230195] PCI host bridge to bus 0000:00
-[    0.230477] pci_bus 0000:00: root bus resource [mem 0xeec00000-0xeecfffff]
-[    0.230711] pci_bus 0000:00: root bus resource [mem 0xc0001000-0xeebfffff window]
-[    0.231216] pci_bus 0000:00: root bus resource [mem 0x4000000000-0x7fffffffff window]
-[    0.231738] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
-[    0.232189] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
-[    0.232645] pci_bus 0000:00: root bus resource [bus 00]
-[    0.233062] pci 0000:00:00.0: [8086:0d57] type 00 class 0x060000 conventional PCI endpoint
-[    0.234046] pci 0000:00:01.0: [1af4:1045] type 00 class 0xffff00 conventional PCI endpoint
-[    0.234692] pci 0000:00:01.0: BAR 0 [mem 0x4000000000-0x400007ffff 64bit]
-[    0.235357] pci 0000:00:02.0: [1af4:1042] type 00 class 0x018000 conventional PCI endpoint
-[    0.236035] pci 0000:00:02.0: BAR 0 [mem 0x4000080000-0x40000fffff 64bit]
-[    0.237088] pci 0000:00:03.0: [1af4:1042] type 00 class 0x018000 conventional PCI endpoint
-[    0.237728] pci 0000:00:03.0: BAR 0 [mem 0x4000100000-0x400017ffff 64bit]
-[    0.238769] pci 0000:00:04.0: [1af4:1041] type 00 class 0x020000 conventional PCI endpoint
-[    0.239398] pci 0000:00:04.0: BAR 0 [mem 0x4000180000-0x40001fffff 64bit]
-[    0.240496] pci 0000:00:05.0: [1af4:1053] type 00 class 0xffff00 conventional PCI endpoint
-[    0.241137] pci 0000:00:05.0: BAR 0 [mem 0x4000200000-0x400027ffff 64bit]
-[    0.242133] pci 0000:00:06.0: [1af4:1044] type 00 class 0xffff00 conventional PCI endpoint
-[    0.242758] pci 0000:00:06.0: BAR 0 [mem 0x4000280000-0x40002fffff 64bit]
-[    0.244734] iommu: Default domain type: Translated
-[    0.245053] iommu: DMA domain TLB invalidation policy: lazy mode
-[    0.245523] SCSI subsystem initialized
-[    0.245800] pps_core: LinuxPPS API ver. 1 registered
-[    0.246136] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
-[    0.246712] PTP clock support registered
-[    0.247527] NetLabel: Initializing
-[    0.247752] NetLabel:  domain hash size = 128
-[    0.248050] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
-[    0.248449] NetLabel:  unlabeled traffic allowed by default
-[    0.248834] PCI: Using ACPI for IRQ routing
-[    0.249116] PCI: pci_cache_line_size set to 64 bytes
-[    0.249195] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
-[    0.249212] vgaarb: loaded
-[    0.249212] clocksource: Switched to clocksource kvm-clock
-[    0.249212] VFS: Disk quotas dquot_6.6.0
-[    0.249212] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
-[    0.249212] pnp: PnP ACPI init
-[    0.249212] pnp: PnP ACPI: found 2 devices
-[    0.250271] NET: Registered PF_INET protocol family
-[    0.252032] IP idents hash table entries: 262144 (order: 9, 2097152 bytes, linear)
-[    0.254951] tcp_listen_portaddr_hash hash table entries: 8192 (order: 5, 131072 bytes, linear)
-[    0.255594] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
-[    0.256204] TCP established hash table entries: 131072 (order: 8, 1048576 bytes, linear)
-[    0.257868] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
-[    0.260268] TCP: Hash tables configured (established 131072 bind 65536)
-[    0.261242] MPTCP token hash table entries: 16384 (order: 7, 393216 bytes, linear)
-[    0.262031] UDP hash table entries: 8192 (order: 6, 262144 bytes, linear)
-[    0.262752] UDP-Lite hash table entries: 8192 (order: 6, 262144 bytes, linear)
-[    0.263704] NET: Registered PF_UNIX/PF_LOCAL protocol family
-[    0.264736] RPC: Registered named UNIX socket transport module.
-[    0.265280] RPC: Registered udp transport module.
-[    0.265681] RPC: Registered tcp transport module.
-[    0.266100] RPC: Registered tcp-with-tls transport module.
-[    0.266550] RPC: Registered tcp NFSv4.1 backchannel transport module.
-[    0.267031] NET: Registered PF_XDP protocol family
-[    0.267374] pci_bus 0000:00: resource 4 [mem 0xeec00000-0xeecfffff]
-[    0.267812] pci_bus 0000:00: resource 5 [mem 0xc0001000-0xeebfffff window]
-[    0.268286] pci_bus 0000:00: resource 6 [mem 0x4000000000-0x7fffffffff window]
-[    0.268810] pci_bus 0000:00: resource 7 [io  0x0000-0x0cf7 window]
-[    0.269265] pci_bus 0000:00: resource 8 [io  0x0d00-0xffff window]
-[    0.269758] PCI: CLS 0 bytes, default 64
-[    0.270050] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
-[    0.270522] software IO TLB: mapped [mem 0x00000000bc000000-0x00000000c0000000] (64MB)
-[    0.271473] RAPL PMU: API unit is 2^-32 Joules, 1 fixed counters, 10737418240 ms ovfl timer
-[    0.272051] RAPL PMU: hw unit of domain psys 2^-0 Joules
-[    0.280475] kvm_amd: CPU 1 isn't AMD or Hygon
-[    0.280823] platform rtc_cmos: registered platform RTC device (no PNP device found)
-[    0.283704] Initialise system trusted keyrings
-[    0.284043] Key type blacklist registered
-[    0.284356] workingset: timestamp_bits=36 max_order=22 bucket_order=0
-[    0.284809] zbud: loaded
-[    0.285156] squashfs: version 4.0 (2009/01/31) Phillip Lougher
-[    0.285698] NFS: Registering the id_resolver key type
-[    0.286047] Key type id_resolver registered
-[    0.286320] Key type id_legacy registered
-[    0.286591] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
-[    0.287032] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
-[    0.287554] fuse: init (API version 7.41)
-[    0.287910] SGI XFS with ACLs, security attributes, quota, no debug enabled
-[    0.295659] Key type asymmetric registered
-[    0.295961] Asymmetric key parser 'x509' registered
-[    0.296339] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 251)
-[    0.296951] io scheduler mq-deadline registered
-[    0.297273] io scheduler kyber registered
-[    0.297555] io scheduler bfq registered
-[    0.298517] virtio-pci 0000:00:01.0: enabling device (0000 -> 0002)
-[    0.299325] virtio-pci 0000:00:02.0: enabling device (0000 -> 0002)
-[    0.300125] virtio-pci 0000:00:03.0: enabling device (0000 -> 0002)
-[    0.300924] virtio-pci 0000:00:04.0: enabling device (0000 -> 0002)
-[    0.301748] virtio-pci 0000:00:05.0: enabling device (0000 -> 0002)
-[    0.302599] virtio-pci 0000:00:06.0: enabling device (0000 -> 0002)
-[    0.305601] Free page reporting enabled
-[    0.306002] Serial: 8250/16550 driver, 1 ports, IRQ sharing disabled
-[    0.306541] 00:00: ttyS0 at I/O 0x3f8 (irq = 26, base_baud = 115200) is a 16550A
-[    0.310845] loop: module loaded
-[    0.311145] virtio_blk virtio1: 1/0/0 default/read/poll queues
-[    0.312194] virtio_blk virtio1: [vda] 268435456 512-byte logical blocks (137 GB/128 GiB)
-[    0.313181] virtio_blk virtio2: 1/0/0 default/read/poll queues
-[    0.314179] virtio_blk virtio2: [vdb] 33554432 512-byte logical blocks (17.2 GB/16.0 GiB)
-[    0.315084] Loading iSCSI transport class v2.0-870.
-[    0.315588] iscsi: registered transport (tcp)
-[    0.316060] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
-[    0.316631] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
-[    0.317346] tun: Universal TUN/TAP device driver, 1.6
-[    0.319399] intel_pstate: CPU model not supported
-[    0.319723] hid: raw HID events driver (C) Jiri Kosina
-[    0.323376] Initializing XFRM netlink socket
-[    0.323715] NET: Registered PF_INET6 protocol family
-[    0.324822] Segment Routing with IPv6
-[    0.325083] In-situ OAM (IOAM) with IPv6
-[    0.325375] NET: Registered PF_PACKET protocol family
-[    0.325724] Bridge firewalling registered
-[    0.326228] Key type dns_resolver registered
-[    0.326576] NET: Registered PF_VSOCK protocol family
-[    0.328921] IPI shorthand broadcast: enabled
-[    0.331505] sched_clock: Marking stable (324036080, 5190901)->(371890718, -42663737)
-[    0.332216] registered taskstats version 1
-[    0.332708] Loading compiled-in X.509 certificates
-[    0.335186] Demotion targets for Node 0: null
-[    0.335551] Key type .fscrypt registered
-[    0.335833] Key type fscrypt-provisioning registered
-[    0.336907] Key type encrypted registered
-[    0.353215] IP-Config: Complete:
-[    0.353461]      device=eth0, hwaddr=82:2b:38:3d:bc:d0, ipaddr=172.30.0.2, mask=255.255.255.0, gw=172.30.0.1
-[    0.354112]      host=172.30.0.2, domain=, nis-domain=(none)
-[    0.354499]      bootserver=255.255.255.255, rootserver=255.255.255.255, rootpath=
-[    0.354561] clk: Disabling unused clocks
-[    0.359172] EXT4-fs (vda): mounted filesystem 04b996c4-104b-44e9-adb1-dfc1f1285729 r/w with ordered data mode. Quota mode: none.
-[    0.361530] VFS: Mounted root (ext4 filesystem) on device 254:0.
-[    0.362552] devtmpfs: mounted
-[    0.363728] Freeing unused kernel image (initmem) memory: 2852K
-[    0.363992] Write protecting the kernel read-only data: 22528k
-[    0.365885] Freeing unused kernel image (rodata/data gap) memory: 2004K
-[    0.366168] Run /sbin/init as init process
-[    0.366329]   with arguments:
-[    0.366330]     /sbin/init
-[    0.366330]   with environment:
-[    0.366331]     HOME=/
-[    0.366331]     TERM=linux
-[    0.415868] systemd[1]: systemd 252.39-1~deb12u2 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
-[    0.417172] systemd[1]: Detected virtualization kvm.
-[    0.417407] systemd[1]: Detected architecture x86-64.
-[    0.418576] systemd[1]: Hostname set to <localhost>.
-[    0.419673] systemd[1]: Initializing machine ID from random generator.
-[    0.503098] systemd[1]: /etc/systemd/system/docker-socat.service:13: Failed to parse output specifier, ignoring: console
-[    0.503539] systemd[1]: /etc/systemd/system/docker-socat.service:14: Failed to parse output specifier, ignoring: console
-[    0.508972] systemd[1]: Queued start job for default target multi-user.target.
-[    0.531091] systemd[1]: Created slice system-getty.slice - Slice /system/getty.
-[    0.532421] systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
-[    0.533772] systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
-[    0.534943] systemd[1]: Created slice user.slice - User and Session Slice.
-[    0.535703] systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
-[    0.536721] systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
-[    0.537784] systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
-[    0.538791] systemd[1]: Expecting device dev-ttyS0.device - /dev/ttyS0...
-[    0.539536] systemd[1]: Reached target cryptsetup.target - Local Encrypted Volumes.
-[    0.540285] systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
-[    0.541107] systemd[1]: Reached target network-online.target - Network is Online.
-[    0.541934] systemd[1]: Reached target paths.target - Path Units.
-[    0.542591] systemd[1]: Reached target remote-fs.target - Remote File Systems.
-[    0.543452] systemd[1]: Reached target slices.target - Slice Units.
-[    0.544077] systemd[1]: Reached target swap.target - Swaps.
-[    0.544644] systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
-[    0.545624] systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
-[    0.546678] systemd[1]: Listening on systemd-journald-audit.socket - Journal Audit Socket.
-[    0.547537] systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
-[    0.548381] systemd[1]: Listening on systemd-journald.socket - Journal Socket.
-[    0.549397] systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
-[    0.550504] systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
-[    0.552576] systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
-[    0.554212] systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
-[    0.555637] systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
-[    0.556442] systemd[1]: sys-kernel-tracing.mount - Kernel Trace File System was skipped because of an unmet condition check (ConditionPathExists=/sys/kernel/tracing).
-[    0.557189] systemd[1]: kmod-static-nodes.service - Create List of Static Device Nodes was skipped because of an unmet condition check (ConditionFileNotEmpty=/lib/modules/6.12.94+/modules.devname).
-[    0.558548] systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
-[    0.559911] systemd[1]: Starting modprobe@dm_mod.service - Load Kernel Module dm_mod...
-[    0.561372] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
-[    0.562743] systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
-[    0.564493] systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
-[    0.565912] systemd[1]: Starting modprobe@loop.service - Load Kernel Module loop...
-[    0.568075] systemd[1]: Starting systemd-journald.service - Journal Service...
-[    0.570081] systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
-[    0.571624] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
-[    0.573609] systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
-[    0.575620] systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
-[    0.576535] systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
-[    0.577350] systemd[1]: Mounted sys-kernel-debug.mount - Kernel Debug File System.
-[    0.578373] systemd[1]: modprobe@configfs.service: Deactivated successfully.
-[    0.578774] systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
-[    0.579734] systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
-[    0.580111] systemd[1]: Finished modprobe@dm_mod.service - Load Kernel Module dm_mod.
-[    0.581011] systemd[1]: modprobe@drm.service: Deactivated successfully.
-[    0.581433] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
-[    0.582316] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
-[    0.582744] systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
-[    0.583623] systemd[1]: modprobe@fuse.service: Deactivated successfully.
-[    0.584004] systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
-[    0.584866] systemd[1]: modprobe@loop.service: Deactivated successfully.
-[    0.585323] systemd[1]: Finished modprobe@loop.service - Load Kernel Module loop.
-[    0.586245] systemd[1]: Started systemd-journald.service - Journal Service.
-[    0.594584] systemd-journald[636]: Received client request to flush runtime journal.
-[    0.675464] virtio_net virtio3 enp0s4: renamed from eth0 (while UP)
-[    1.634120] EXT4-fs (vdb): mounted filesystem 00000000-0000-0000-0000-000000000004 ro without journal. Quota mode: none.
-[21552.406627] random: crng reseeded due to virtual machine fork
-[21555.442190] virtio_balloon virtio0: Out of puff! Can't get 1 pages
-[21555.755505] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[    0.160317] NMI watchdog: Perf NMI watchdog permanently disabled
+[    0.160317] smp: Bringing up secondary CPUs ...
+[    0.160317] smpboot: x86: Booting SMP configuration:
+[    0.160322] .... node  #0, CPUs:      #1 #2 #3 #4 #5 #6 #7
+[    0.161548] smp: Brought up 1 node, 8 CPUs
+[    0.161608] smpboot: Total of 8 processors activated (38400.00 BogoMIPS)
+[    0.185696] node 0 deferred pages initialised in 20ms
+[    0.186642] Memory: 16375876K/16776824K available (18432K kernel code, 2773K rwdata, 11940K rodata, 3788K init, 1456K bss, 394592K reserved, 0K cma-reserved)
+[    0.188827] devtmpfs: initialized
+[    0.188827] x86/mm: Memory block size: 128MB
+[    0.189818] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.189818] futex hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[    0.194746] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.195202] audit: initializing netlink subsys (disabled)
+[    0.195539] audit: type=2000 audit(1792468114.376:1): state=initialized audit_enabled=0 res=1
+[    0.195539] thermal_sys: Registered thermal governor 'fair_share'
+[    0.196320] thermal_sys: Registered thermal governor 'step_wise'
+[    0.196674] thermal_sys: Registered thermal governor 'user_space'
+[    0.197041] cpuidle: using governor ladder
+[    0.197041] cpuidle: using governor menu
+[    0.200595] PCI: ECAM [mem 0xeec00000-0xeecfffff] (base 0xeec00000) for domain 0000 [bus 00-00]
+[    0.201121] PCI: ECAM [mem 0xeec00000-0xeecfffff] reserved as E820 entry
+[    0.201541] PCI: Using configuration type 1 for base access
+[    0.203230] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    0.204354] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.204768] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.205188] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.205588] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.205976] ACPI: Added _OSI(Module Device)
+[    0.205976] ACPI: Added _OSI(Processor Device)
+[    0.205976] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.205976] ACPI: 1 ACPI AML tables successfully acquired and loaded
+[    0.205976] ACPI: Interpreter enabled
+[    0.208323] ACPI: PM: (supports S0)
+[    0.208547] ACPI: Using IOAPIC for interrupt routing
+[    0.208868] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[    0.209448] PCI: Using E820 reservations for host bridge windows
+[    0.210512] ACPI: PCI Root Bridge [PC00] (domain 0000 [bus 00])
+[    0.210858] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+[    0.211355] acpi PNP0A08:00: PCIe port services disabled; not requesting _OSC control
+[    0.211802] acpi PNP0A08:00: _OSC: platform retains control of PCIe features (AE_NOT_FOUND)
+[    0.212369] PCI host bridge to bus 0000:00
+[    0.212623] pci_bus 0000:00: root bus resource [mem 0xeec00000-0xeecfffff]
+[    0.213023] pci_bus 0000:00: root bus resource [mem 0xc0001000-0xeebfffff window]
+[    0.213461] pci_bus 0000:00: root bus resource [mem 0x4000000000-0x7fffffffff window]
+[    0.213916] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[    0.214303] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[    0.214682] pci_bus 0000:00: root bus resource [bus 00]
+[    0.215031] pci 0000:00:00.0: [8086:0d57] type 00 class 0x060000 conventional PCI endpoint
+[    0.215838] pci 0000:00:01.0: [1af4:1045] type 00 class 0xffff00 conventional PCI endpoint
+[    0.216368] pci 0000:00:01.0: BAR 0 [mem 0x4000000000-0x400007ffff 64bit]
+[    0.217267] pci 0000:00:02.0: [1af4:1042] type 00 class 0x018000 conventional PCI endpoint
+[    0.217892] pci 0000:00:02.0: BAR 0 [mem 0x4000080000-0x40000fffff 64bit]
+[    0.218739] pci 0000:00:03.0: [1af4:1041] type 00 class 0x020000 conventional PCI endpoint
+[    0.219231] pci 0000:00:03.0: BAR 0 [mem 0x4000100000-0x400017ffff 64bit]
+[    0.220068] pci 0000:00:04.0: [1af4:1053] type 00 class 0xffff00 conventional PCI endpoint
+[    0.220376] pci 0000:00:04.0: BAR 0 [mem 0x4000180000-0x40001fffff 64bit]
+[    0.221241] pci 0000:00:05.0: [1af4:1044] type 00 class 0xffff00 conventional PCI endpoint
+[    0.221738] pci 0000:00:05.0: BAR 0 [mem 0x4000200000-0x400027ffff 64bit]
+[    0.223232] iommu: Default domain type: Translated
+[    0.223508] iommu: DMA domain TLB invalidation policy: lazy mode
+[    0.223903] SCSI subsystem initialized
+[    0.224125] pps_core: LinuxPPS API ver. 1 registered
+[    0.224318] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.224866] PTP clock support registered
+[    0.225494] NetLabel: Initializing
+[    0.225693] NetLabel:  domain hash size = 128
+[    0.225935] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    0.226266] NetLabel:  unlabeled traffic allowed by default
+[    0.226591] PCI: Using ACPI for IRQ routing
+[    0.226844] PCI: pci_cache_line_size set to 64 bytes
+[    0.226902] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+[    0.226918] vgaarb: loaded
+[    0.226918] clocksource: Switched to clocksource kvm-clock
+[    0.319237] VFS: Disk quotas dquot_6.6.0
+[    0.319485] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.320568] pnp: PnP ACPI init
+[    0.320842] pnp: PnP ACPI: found 2 devices
+[    0.323224] NET: Registered PF_INET protocol family
+[    0.324591] IP idents hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.338887] tcp_listen_portaddr_hash hash table entries: 8192 (order: 5, 131072 bytes, linear)
+[    0.339359] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.339787] TCP established hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.340313] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.341281] TCP: Hash tables configured (established 131072 bind 65536)
+[    0.341961] MPTCP token hash table entries: 16384 (order: 7, 393216 bytes, linear)
+[    0.342394] UDP hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.342904] UDP-Lite hash table entries: 8192 (order: 6, 262144 bytes, linear)
+[    0.343463] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.345200] RPC: Registered named UNIX socket transport module.
+[    0.345550] RPC: Registered udp transport module.
+[    0.345811] RPC: Registered tcp transport module.
+[    0.346074] RPC: Registered tcp-with-tls transport module.
+[    0.346379] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.346735] NET: Registered PF_XDP protocol family
+[    0.347007] pci_bus 0000:00: resource 4 [mem 0xeec00000-0xeecfffff]
+[    0.347355] pci_bus 0000:00: resource 5 [mem 0xc0001000-0xeebfffff window]
+[    0.347734] pci_bus 0000:00: resource 6 [mem 0x4000000000-0x7fffffffff window]
+[    0.348133] pci_bus 0000:00: resource 7 [io  0x0000-0x0cf7 window]
+[    0.348483] pci_bus 0000:00: resource 8 [io  0x0d00-0xffff window]
+[    0.348883] PCI: CLS 0 bytes, default 64
+[    0.349108] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    0.349469] software IO TLB: mapped [mem 0x00000000bc000000-0x00000000c0000000] (64MB)
+[    0.351228] RAPL PMU: API unit is 2^-32 Joules, 1 fixed counters, 10737418240 ms ovfl timer
+[    0.351709] RAPL PMU: hw unit of domain psys 2^-0 Joules
+[    0.370810] kvm_amd: CPU 5 isn't AMD or Hygon
+[    0.371049] platform rtc_cmos: registered platform RTC device (no PNP device found)
+[    0.375200] Initialise system trusted keyrings
+[    0.375464] Key type blacklist registered
+[    0.375755] workingset: timestamp_bits=36 max_order=22 bucket_order=0
+[    0.376118] zbud: loaded
+[    0.376661] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.377111] NFS: Registering the id_resolver key type
+[    0.377394] Key type id_resolver registered
+[    0.377628] Key type id_legacy registered
+[    0.377860] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[    0.378230] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[    0.378669] fuse: init (API version 7.41)
+[    0.378958] SGI XFS with ACLs, security attributes, quota, no debug enabled
+[    0.385594] Key type asymmetric registered
+[    0.385828] Asymmetric key parser 'x509' registered
+[    0.386139] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 251)
+[    0.386762] io scheduler mq-deadline registered
+[    0.387021] io scheduler kyber registered
+[    0.387254] io scheduler bfq registered
+[    0.389624] virtio-pci 0000:00:01.0: enabling device (0000 -> 0002)
+[    0.390271] virtio-pci 0000:00:02.0: enabling device (0000 -> 0002)
+[    0.390904] virtio-pci 0000:00:03.0: enabling device (0000 -> 0002)
+[    0.391536] virtio-pci 0000:00:04.0: enabling device (0000 -> 0002)
+[    0.392186] virtio-pci 0000:00:05.0: enabling device (0000 -> 0002)
+[    0.393848] Free page reporting enabled
+[    0.394158] Serial: 8250/16550 driver, 1 ports, IRQ sharing disabled
+[    0.394611] 00:00: ttyS0 at I/O 0x3f8 (irq = 26, base_baud = 115200) is a 16550A
+[    0.398167] loop: module loaded
+[    0.398414] virtio_blk virtio1: 1/0/0 default/read/poll queues
+[    0.399139] virtio_blk virtio1: [vda] 268435456 512-byte logical blocks (137 GB/128 GiB)
+[    0.399945] Loading iSCSI transport class v2.0-870.
+[    0.400587] iscsi: registered transport (tcp)
+[    0.400862] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+[    0.401339] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+[    0.401896] tun: Universal TUN/TAP device driver, 1.6
+[    0.403192] intel_pstate: CPU model not supported
+[    0.403558] hid: raw HID events driver (C) Jiri Kosina
+[    0.406739] Initializing XFRM netlink socket
+[    0.407017] IPsec XFRM device driver
+[    0.407270] NET: Registered PF_INET6 protocol family
+[    0.408209] Segment Routing with IPv6
+[    0.408445] In-situ OAM (IOAM) with IPv6
+[    0.408695] NET: Registered PF_PACKET protocol family
+[    0.408986] NET: Registered PF_KEY protocol family
+[    0.409293] Bridge firewalling registered
+[    0.409727] Key type dns_resolver registered
+[    0.410163] NET: Registered PF_VSOCK protocol family
+[    0.411743] IPI shorthand broadcast: enabled
+[    0.414119] sched_clock: Marking stable (408003480, 4166664)->(452996268, -40826124)
+[    0.414723] registered taskstats version 1
+[    0.420038] Loading compiled-in X.509 certificates
+[    0.422253] Demotion targets for Node 0: null
+[    0.422566] Key type .fscrypt registered
+[    0.422789] Key type fscrypt-provisioning registered
+[    0.423781] Key type encrypted registered
+[    0.444177] IP-Config: Complete:
+[    0.444368]      device=eth0, hwaddr=82:2b:38:3d:bc:d0, ipaddr=172.30.0.2, mask=255.255.255.0, gw=172.30.0.1
+[    0.444905]      host=172.30.0.2, domain=, nis-domain=(none)
+[    0.445216]      bootserver=255.255.255.255, rootserver=255.255.255.255, rootpath=
+[    0.445852] clk: Disabling unused clocks
+[    0.458413] EXT4-fs (vda): mounted filesystem d5e2721d-6353-4826-8bb0-cc9554519ddb r/w with ordered data mode. Quota mode: none.
+[    0.472939] VFS: Mounted root (ext4 filesystem) on device 254:0.
+[    0.478023] devtmpfs: mounted
+[    0.485442] Freeing unused kernel image (initmem) memory: 3788K
+[    0.485670] Write protecting the kernel read-only data: 30720k
+[    0.487295] Freeing unused kernel image (rodata/data gap) memory: 348K
+[    0.487524] Run /sbin/init as init process
+[    0.487668]   with arguments:
+[    0.487669]     /sbin/init
+[    0.487669]   with environment:
+[    0.487670]     HOME=/
+[    0.487670]     TERM=linux
+[    0.616272] systemd[1]: systemd 252.39-1~deb12u2 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+[    0.617258] systemd[1]: Detected virtualization kvm.
+[    0.617417] systemd[1]: Detected architecture x86-64.
+[    0.620792] systemd[1]: Hostname set to <localhost>.
+[    0.623967] systemd[1]: Initializing machine ID from random generator.
+[    0.807498] systemd[1]: /etc/systemd/system/docker-socat.service:13: Failed to parse output specifier, ignoring: console
+[    0.807979] systemd[1]: /etc/systemd/system/docker-socat.service:14: Failed to parse output specifier, ignoring: console
+[    0.825111] systemd[1]: Queued start job for default target multi-user.target.
+[    0.849069] systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+[    0.850170] systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+[    0.851273] systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+[    0.852228] systemd[1]: Created slice user.slice - User and Session Slice.
+[    0.852961] systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+[    0.853805] systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+[    0.854843] systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+[    0.855754] systemd[1]: Expecting device dev-ttyS0.device - /dev/ttyS0...
+[    0.856364] systemd[1]: Reached target cryptsetup.target - Local Encrypted Volumes.
+[    0.857179] systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
+[    0.857953] systemd[1]: Reached target network-online.target - Network is Online.
+[    0.858646] systemd[1]: Reached target paths.target - Path Units.
+[    0.859271] systemd[1]: Reached target remote-fs.target - Remote File Systems.
+[    0.859975] systemd[1]: Reached target slices.target - Slice Units.
+[    0.860492] systemd[1]: Reached target swap.target - Swaps.
+[    0.860929] systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
+[    0.861590] systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+[    0.862579] systemd[1]: Listening on systemd-journald-audit.socket - Journal Audit Socket.
+[    0.863246] systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+[    0.864323] systemd[1]: Listening on systemd-journald.socket - Journal Socket.
+[    0.870601] systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+[    0.871433] systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+[    0.872816] systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+[    0.874255] systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+[    0.875627] systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
+[    0.877047] systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+[    0.877793] systemd[1]: kmod-static-nodes.service - Create List of Static Device Nodes was skipped because of an unmet condition check (ConditionFileNotEmpty=/lib/modules/6.12.94+/modules.devname).
+[    0.878912] systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+[    0.880195] systemd[1]: Starting modprobe@dm_mod.service - Load Kernel Module dm_mod...
+[    0.881556] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+[    0.882805] systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+[    0.884013] systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+[    0.885266] systemd[1]: Starting modprobe@loop.service - Load Kernel Module loop...
+[    0.886985] systemd[1]: Starting systemd-journald.service - Journal Service...
+[    0.891656] systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+[    0.892990] systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+[    0.894355] systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+[    0.895753] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[    0.896082] systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+[    0.897046] systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+[    0.897337] systemd[1]: Finished modprobe@dm_mod.service - Load Kernel Module dm_mod.
+[    0.898403] systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+[    0.899120] systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+[    0.899787] systemd[1]: Mounted sys-kernel-debug.mount - Kernel Debug File System.
+[    0.900442] systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+[    0.901096] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[    0.901380] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+[    0.902007] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+[    0.902291] systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+[    0.902928] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[    0.903208] systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+[    0.903978] systemd[1]: modprobe@loop.service: Deactivated successfully.
+[    0.904352] systemd[1]: Finished modprobe@loop.service - Load Kernel Module loop.
+[    0.905061] systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+[    0.905759] systemd[1]: Finished systemd-remount-fs.service - Remount Root and Kernel File Systems.
+[    0.907136] systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+[    0.907817] systemd[1]: sys-kernel-config.mount - Kernel Configuration File System was skipped because of an unmet condition check (ConditionPathExists=/sys/kernel/config).
+[    0.908354] systemd[1]: systemd-firstboot.service - First Boot Wizard was skipped because of an unmet condition check (ConditionFirstBoot=yes).
+[    0.908798] systemd[1]: systemd-pstore.service - Platform Persistent Storage Archival was skipped because of an unmet condition check (ConditionDirectoryNotEmpty=/sys/fs/pstore).
+[    0.909846] systemd[1]: Starting systemd-random-seed.service - Load/Save Random Seed...
+[    0.910499] systemd[1]: systemd-repart.service - Repartition Root Disk was skipped because no trigger condition checks were met.
+[    0.911575] systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+[    0.913007] systemd[1]: Starting systemd-sysusers.service - Create System Users...
+[    0.917328] systemd[1]: Started systemd-journald.service - Journal Service.
+[    0.925636] systemd-journald[641]: Received client request to flush runtime journal.
+[    1.019343] virtio_net virtio2 enp0s3: renamed from eth0 (while UP)
+[    1.267008] random: crng reseeded due to virtual machine fork
+[    1.305806] pci 0000:00:06.0: [1af4:1042] type 00 class 0x018000 conventional PCI endpoint
+[    1.306264] pci 0000:00:06.0: BAR 0 [mem 0x4000280000-0x40002fffff 64bit]
+[    1.308294] pci 0000:00:06.0: BAR 0 [mem 0x4000280000-0x40002fffff 64bit]: assigned
+[    1.309076] virtio-pci 0000:00:06.0: enabling device (0000 -> 0002)
+[    1.310776] virtio_blk virtio5: 1/0/0 default/read/poll queues
+[    1.314158] virtio_blk virtio5: [vdb] 268435456 512-byte logical blocks (137 GB/128 GiB)
+[    1.348922] EXT4-fs (vdb): mounted filesystem 00000000-0000-0000-0000-000000000004 r/w with ordered data mode. Quota mode: none.
+[  739.389542] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[  739.390637] CPU: 4 UID: 997 PID: 1163 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[  739.391009] RIP: 0033:0x7f0e76e45d6a
+[  739.391592] Code: ff ff ff c3 0f 1f 40 00 48 8b 15 91 80 0c 00 f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb b7 0f 1f 00 49 89 ca b8 36 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 06 c3 0f 1f 44 00 00 48 8b 15 61 80 0c 00 f7
+[  739.392365] RSP: 002b:00007ffe7d968bf8 EFLAGS: 00000246 ORIG_RAX: 0000000000000036
+[  739.392682] RAX: 0000000000000000 RBX: 0000559b26aadaa0 RCX: 00007f0e76e45d6a
+[  739.392973] RDX: 0000000000000023 RSI: 0000000000000001 RDI: 000000000000000f
+[  739.393264] RBP: 00007ffe7d968c40 R08: 0000000000000004 R09: 00000000ffffffff
+[  739.393573] R10: 00007ffe7d968c04 R11: 0000000000000246 R12: 00007ffe7d968d10
+[  739.393928] R13: 00007ffe7d968d08 R14: 0000559b26aadf00 R15: 0000000000000002
+[  739.394342] FS:  00007f0e763c1480 GS:  0000000000000000
+[  746.207980] random: crng reseeded due to virtual machine fork
+[  746.998325] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  747.231356] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  747.502125] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  747.718643] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  747.937691] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  748.160014] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  748.366412] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  748.577801] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  748.786280] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  749.010845] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  752.063789] fill_balloon: 11 callbacks suppressed
+[  752.063800] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  752.278889] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  752.493861] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  752.713674] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  752.924077] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  753.129142] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  753.342304] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  753.563737] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  753.775905] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[  753.984119] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 1167.562515] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 1167.562867] CPU: 7 UID: 0 PID: 1212 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 1167.563160] RIP: 0033:0x7f961b926ef3
+[ 1167.563346] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 1167.563998] RSP: 002b:00007fffc00d4b28 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 1167.564292] RAX: 0000000000000002 RBX: 000055caafb72090 RCX: 00007f961b926ef3
+[ 1167.564575] RDX: 000000000000001c RSI: 000055caafb72b00 RDI: 0000000000000004
+[ 1167.564887] RBP: 000055caafb71f00 R08: 000000000000001c R09: 000055caafb89980
+[ 1167.565186] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 1167.565479] R13: 000000000000001c R14: 000000000000000d R15: 0000000000000082
+[ 1167.565795] FS:  00007f961bd37580 GS:  0000000000000000
+[ 1172.788507] random: crng reseeded due to virtual machine fork
+[ 1593.746658] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[ 1593.747322] CPU: 3 UID: 0 PID: 1155 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[ 1593.747726] RIP: 0033:0x7f483a1deef3
+[ 1593.748092] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 1593.749027] RSP: 002b:00007ffffaa3dd18 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 1593.749387] RAX: 0000000000000001 RBX: 0000556fb3a39000 RCX: 00007f483a1deef3
+[ 1593.749731] RDX: 000000000000008e RSI: 0000556fb3a87da0 RDI: 0000000000000009
+[ 1593.750129] RBP: 0000556fb3a39190 R08: 0000000000000004 R09: 00007f483a378080
+[ 1593.750475] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 1593.750815] R13: 0000000000000009 R14: 000000000000005a R15: 000000000000008e
+[ 1593.751153] FS:  00007f4839f4c8c0 GS:  0000000000000000
+[ 1600.522393] random: crng reseeded due to virtual machine fork
+[ 2075.990447] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[ 2075.990910] CPU: 4 UID: 0 PID: 641 Comm: systemd-journal Not tainted 6.12.94+ #1
+[ 2075.991251] RIP: 0033:0x7fdfe0af8ef3
+[ 2075.991499] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 2075.992327] RSP: 002b:00007ffeb1967308 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 2075.992685] RAX: 0000000000000002 RBX: 0000562f0434f490 RCX: 00007fdfe0af8ef3
+[ 2075.993068] RDX: 0000000000000020 RSI: 0000562f04353e30 RDI: 0000000000000008
+[ 2075.993238] systemd[1]: systemd-udevd.service: Watchdog timeout (limit 3min)!
+[ 2075.993415] RBP: 0000562f0434f300 R08: 0000000000000020 R09: 00007fdfe0f62080
+[ 2075.993812] systemd[1]: systemd-udevd.service: Killing process 17740 (systemd-udevd) with signal SIGABRT.
+[ 2075.994092] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 2075.994807] R13: 0000000000000020 R14: 0000000000000018 R15: 00000000000000f0
+[ 2075.995092] FS:  00007fdfe06ad5c0 GS:  0000000000000000
+[ 2075.995581] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[ 2075.995878] CPU: 2 UID: 0 PID: 17740 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[ 2075.996240] RIP: 0033:0x7f4361231ef3
+[ 2075.996451] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 2075.997252] RSP: 002b:00007ffff49b4208 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 2075.997566] RAX: 0000000000000001 RBX: 00005598e393b070 RCX: 00007f4361231ef3
+[ 2075.997876] RDX: 0000000000000010 RSI: 00005598e3963250 RDI: 0000000000000009
+[ 2075.998205] RBP: 00005598e393b200 R08: 0000000000000004 R09: 00007f43613cb080
+[ 2075.998485] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 2075.998796] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[ 2075.999089] FS:  00007f4360f9f8c0 GS:  0000000000000000
+[ 2076.008703] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[ 2076.009330] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[ 2076.013040] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[ 2076.013784] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[ 2076.016974] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[ 2076.017786] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 2.
+[ 2076.018372] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[ 2076.050223] systemd[1]: Starting systemd-journald.service - Journal Service...
+[ 2076.050679] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[ 2076.054830] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[ 2076.063272] systemd-journald[21434]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[ 2076.067452] systemd[1]: Started systemd-journald.service - Journal Service.
+[ 2084.254472] random: crng reseeded due to virtual machine fork
+[ 4984.902265] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[ 4984.902833] CPU: 7 UID: 0 PID: 21434 Comm: systemd-journal Not tainted 6.12.94+ #1
+[ 4984.903262] RIP: 0033:0x7f9531b26ef3
+[ 4984.903435] systemd[1]: systemd-logind.service: Watchdog timeout (limit 3min)!
+[ 4984.903483] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 4984.903951] systemd[1]: systemd-logind.service: Killing process 15003 (systemd-logind) with signal SIGABRT.
+[ 4984.904921] RSP: 002b:00007fff74971128 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 4984.905601] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 4984.905840] RAX: 0000000000000002 RBX: 000055a3d19174a0 RCX: 00007f9531b26ef3
+[ 4984.906153] CPU: 3 UID: 0 PID: 15003 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 4984.906477] RDX: 000000000000002e RSI: 000055a3d191c220 RDI: 000000000000000f
+[ 4984.906766] RIP: 0033:0x7fe4fc126ef3
+[ 4984.907128] RBP: 000055a3d1917310 R08: 000000000000002e R09: 00007f9531f7d080
+[ 4984.907287] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 4984.907563] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 4984.908253] RSP: 002b:00007fff673025c8 EFLAGS: 00000202
+[ 4984.908524] R13: 000000000000002e R14: 0000000000000018 R15: 00000000000000f0
+[ 4984.908524]  ORIG_RAX: 00000000000000e8
+[ 4984.908725] FS:  00007f95316955c0 GS:  0000000000000000
+[ 4984.908987] RAX: 0000000000000002 RBX: 000055df0e8a2090 RCX: 00007fe4fc126ef3
+[ 4984.909618] RDX: 000000000000001a RSI: 000055df0e8afc30 RDI: 0000000000000004
+[ 4984.909881] RBP: 000055df0e8a1f00 R08: 000000000000001a R09: 0000000000000000
+[ 4984.910148] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 4984.910415] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[ 4984.910681] FS:  00007fe4fbc9b580 GS:  0000000000000000
+[ 4984.919509] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[ 4984.919975] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[ 4984.921567] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 2.
+[ 4984.922245] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[ 4984.947533] systemd[1]: Starting systemd-journald.service - Journal Service...
+[ 4984.948143] systemd[1]: systemd-logind.service: Main process exited, code=killed, status=6/ABRT
+[ 4984.948710] systemd[1]: systemd-logind.service: Failed with result 'watchdog'.
+[ 4984.950413] systemd[1]: systemd-logind.service: Scheduled restart job, restart counter is at 2.
+[ 4984.950826] systemd[1]: Stopped systemd-logind.service - User Login Management.
+[ 4984.952704] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+[ 4984.957674] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[ 4984.958107] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+[ 4984.960624] systemd-journald[43922]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[ 4984.961182] systemd[1]: Starting systemd-logind.service - User Login Management...
+[ 4984.964972] systemd[1]: Started systemd-journald.service - Journal Service.
+[ 4993.055045] random: crng reseeded due to virtual machine fork
+[ 5952.519448] systemd[1]: systemd-udevd.service: Watchdog timeout (limit 3min)!
+[ 5952.519842] systemd[1]: systemd-udevd.service: Killing process 21456 (systemd-udevd) with signal SIGABRT.
+[ 5952.521712] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[ 5952.522049] CPU: 6 UID: 0 PID: 21456 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[ 5952.522416] RIP: 0033:0x7f4b6a0cbef3
+[ 5952.522608] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 5952.523416] RSP: 002b:00007ffd0fb44248 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 5952.523660] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[ 5952.523758] RAX: 0000000000000001 RBX: 00005639c300df00 RCX: 00007f4b6a0cbef3
+[ 5952.524116] CPU: 2 UID: 0 PID: 43922 Comm: systemd-journal Not tainted 6.12.94+ #1
+[ 5952.524119] RIP: 0033:0x7f1673326ef3
+[ 5952.524447] RDX: 0000000000000010 RSI: 00005639c3036260 RDI: 0000000000000009
+[ 5952.524829] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 5952.524830] RSP: 002b:00007ffc951351a8 EFLAGS: 00000202
+[ 5952.524997] RBP: 00005639c300e090 R08: 0000000000000004 R09: 00007f4b6a265080
+[ 5952.525340]  ORIG_RAX: 00000000000000e8
+[ 5952.526101] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 5952.526326] RAX: 0000000000000002 RBX: 000055f8ed6ef490 RCX: 00007f1673326ef3
+[ 5952.526627] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[ 5952.526795] RDX: 0000000000000030 RSI: 000055f8ed6f4320 RDI: 0000000000000010
+[ 5952.527110] FS:  00007f4b69ed38c0 GS:  0000000000000000
+[ 5952.527400] RBP: 000055f8ed6ef300 R08: 0000000000000030 R09: 00007f16737b2080
+[ 5952.528698] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 5952.529101] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[ 5952.529525] FS:  00007f1672e9b5c0 GS:  0000000000000000
+[ 5952.532891] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[ 5952.533380] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[ 5952.535412] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 3.
+[ 5952.535923] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[ 5952.557273] systemd[1]: Starting systemd-journald.service - Journal Service...
+[ 5952.557818] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[ 5952.558353] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[ 5952.559798] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 3.
+[ 5952.560784] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[ 5952.562707] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[ 5952.573449] systemd-journald[56556]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[ 5952.577014] systemd[1]: Started systemd-journald.service - Journal Service.
+[ 5962.403416] random: crng reseeded due to virtual machine fork
+[ 5963.543680] fill_balloon: 9 callbacks suppressed
+[ 5963.543710] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 5963.979891] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 5965.562969] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6580.263813] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 6580.264369] CPU: 5 UID: 0 PID: 43955 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 6580.264672] RIP: 0033:0x7fdd28928dc7
+[ 6580.264939] Code: 73 01 c3 48 8b 0d 39 80 0c 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 29 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 09 80 0c 00 f7 d8 64 89 01 48
+[ 6580.265661] RSP: 002b:00007ffea5a3b938 EFLAGS: 00000246 ORIG_RAX: 0000000000000029
+[ 6580.266022] RAX: 000000000000000a RBX: 0000000000000000 RCX: 00007fdd28928dc7
+[ 6580.266429] RDX: 0000000000000000 RSI: 0000000000080002 RDI: 0000000000000001
+[ 6580.266853] RBP: 00007ffea5a3ba70 R08: 0000000000000000 R09: 0000000000000000
+[ 6580.267290] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[ 6580.267772] R13: 00007fdd28cbf348 R14: 0000000000000000 R15: 0000000000000016
+[ 6580.268207] FS:  00007fdd28d36580 GS:  0000000000000000
+[ 6588.470603] random: crng reseeded due to virtual machine fork
+[ 6589.894080] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6590.349278] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6591.322336] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6591.741187] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6592.166342] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6592.451822] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6592.798299] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6593.075018] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 6593.910681] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[ 7171.591606] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[ 7171.592001] CPU: 3 UID: 0 PID: 56573 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[ 7171.592341] RIP: 0033:0x7f20ac0d3ef3
+[ 7171.592534] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 7171.593305] RSP: 002b:00007ffd8ebbe3d8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 7171.593665] RAX: fffffffffffffffc RBX: 000055eac8fc2070 RCX: 00007f20ac0d3ef3
+[ 7171.594002] RDX: 0000000000000010 RSI: 000055eac8fea250 RDI: 0000000000000009
+[ 7171.594322] RBP: 000055eac8fc2200 R08: 0000000000000004 R09: 00007f20ac26d080
+[ 7171.594646] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 7171.594991] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[ 7171.595318] FS:  00007f20abedb8c0 GS:  0000000000000000
+[ 7179.942092] random: crng reseeded due to virtual machine fork
+[ 7819.929276] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 7819.929720] CPU: 7 UID: 0 PID: 65233 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 7819.930028] RIP: 0033:0x7fe229b26ef3
+[ 7819.930224] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 7819.930971] RSP: 002b:00007fff84ffe898 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 7819.931303] RAX: 0000000000000001 RBX: 000055d5b7ae5090 RCX: 00007fe229b26ef3
+[ 7819.931622] RDX: 000000000000001a RSI: 000055d5b7af2c30 RDI: 0000000000000004
+[ 7819.931965] RBP: 000055d5b7ae4f00 R08: 000000000000001a R09: 000055d5b7af8c80
+[ 7819.932291] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 7819.932593] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[ 7819.932916] FS:  00007fe229692580 GS:  0000000000000000
+[ 7827.250102] random: crng reseeded due to virtual machine fork
+[ 8269.783158] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[ 8269.783746] CPU: 2 UID: 0 PID: 68222 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[ 8269.783756] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 8269.783775] CPU: 3 UID: 0 PID: 71122 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 8269.784177] RIP: 0033:0x7f430adf2ef3
+[ 8269.785025] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 8269.785226] RIP: 0033:0x7fd4fa728dc7
+[ 8269.786027] RSP: 002b:00007ffc1a8cb4e8 EFLAGS: 00000202
+[ 8269.786160] Code: 73 01 c3 48 8b 0d 39 80 0c 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 29 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 09 80 0c 00 f7 d8 64 89 01 48
+[ 8269.786161]  ORIG_RAX: 00000000000000e8
+[ 8269.787149] RSP: 002b:00007fffe92eb0d8 EFLAGS: 00000246 ORIG_RAX: 0000000000000029
+[ 8269.787388] RAX: 0000000000000001 RBX: 0000559f4378cf00 RCX: 00007f430adf2ef3
+[ 8269.787668] RAX: 000000000000000a RBX: 0000000000000000 RCX: 00007fd4fa728dc7
+[ 8269.787670] RDX: 0000000000000000 RSI: 0000000000080002 RDI: 0000000000000001
+[ 8269.788055] RDX: 0000000000000010 RSI: 0000559f437b5260 RDI: 0000000000000009
+[ 8269.788286] RBP: 00007fffe92eb210 R08: 0000000000000000 R09: 0000000000000000
+[ 8269.788287] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[ 8269.788287] R13: 00007fd4faabf348 R14: 0000000000000000 R15: 0000000000000016
+[ 8269.788290] FS:  00007fd4fa2b5580 GS:  0000000000000000
+[ 8269.788679] RBP: 0000559f4378d090 R08: 0000000000000004 R09: 00007f430af8c080
+[ 8269.791062] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 8269.791520] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[ 8269.791926] FS:  00007f430ab608c0 GS:  0000000000000000
+[ 8279.088894] random: crng reseeded due to virtual machine fork
+[ 8734.029783] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[ 8734.030153] CPU: 6 UID: 0 PID: 74152 Comm: systemd-logind Not tainted 6.12.94+ #1
+[ 8734.030428] RIP: 0033:0x7f5223b26ef3
+[ 8734.030644] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[ 8734.031380] RSP: 002b:00007ffc06c69e28 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[ 8734.031654] RAX: 0000000000000001 RBX: 000055f6f80bd090 RCX: 00007f5223b26ef3
+[ 8734.031926] RDX: 000000000000001a RSI: 000055f6f80cac30 RDI: 0000000000000004
+[ 8734.032185] RBP: 000055f6f80bcf00 R08: 000000000000001a R09: 0000000000000000
+[ 8734.032447] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[ 8734.032696] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[ 8734.032945] FS:  00007f522369f580 GS:  0000000000000000
+[ 8734.036067] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[ 8734.036418] CPU: 7 UID: 997 PID: 11226 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[ 8734.036722] RIP: 0033:0x7f175bb26f36
+[ 8734.036894] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[ 8734.037685] RSP: 002b:00007ffdada5c440 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[ 8734.038040] RAX: 0000000000000002 RBX: 000055d0876c90a0 RCX: 00007f175bb26f36
+[ 8734.038400] RDX: 0000000000000010 RSI: 000055d0876cf250 RDI: 0000000000000004
+[ 8734.038761] RBP: 000055d0876c8f10 R08: 0000000000000000 R09: 000055d0876cec1c
+[ 8734.039284] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[ 8734.039677] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[ 8734.039973] FS:  00007f175b69c480 GS:  0000000000000000
+[ 8741.669740] random: crng reseeded due to virtual machine fork
+[ 9491.401175] random: crng reseeded due to virtual machine fork
+[10050.416753] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[10050.417101] CPU: 7 UID: 0 PID: 74143 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[10050.417416] RIP: 0033:0x7fe8d2c9cef3
+[10050.417596] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[10050.418441] RSP: 002b:00007ffe63596548 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[10050.418760] RAX: 0000000000000001 RBX: 0000558d68942070 RCX: 00007fe8d2c9cef3
+[10050.419044] RDX: 0000000000000010 RSI: 0000558d6896a250 RDI: 0000000000000009
+[10050.419321] RBP: 0000558d68942200 R08: 0000000000000004 R09: 00007fe8d2e36080
+[10050.419582] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[10050.419863] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[10050.420140] FS:  00007fe8d2aa48c0 GS:  0000000000000000
+[10050.421417] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[10050.421755] CPU: 7 UID: 0 PID: 56556 Comm: systemd-journal Not tainted 6.12.94+ #1
+[10050.422102] RIP: 0033:0x7f3bf4926ef3
+[10050.422267] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[10050.423075] RSP: 002b:00007ffe6072de08 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[10050.423404] RAX: 0000000000000003 RBX: 000055af76cf5490 RCX: 00007f3bf4926ef3
+[10050.423722] RDX: 0000000000000030 RSI: 000055af76cfa530 RDI: 0000000000000010
+[10050.424057] RBP: 000055af76cf5300 R08: 0000000000000030 R09: 00007f3bf4ddc080
+[10050.424395] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[10050.424717] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[10050.425026] FS:  00007f3bf449d5c0 GS:  0000000000000000
+[10050.437837] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[10050.438408] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[10050.440516] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[10050.441153] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[10050.442024] systemd[1]: systemd-journald.service: Consumed 1.493s CPU time.
+[10050.443404] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 6.
+[10050.443966] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 4.
+[10050.444474] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[10050.444826] systemd[1]: systemd-journald.service: Consumed 1.493s CPU time.
+[10050.481004] systemd[1]: Starting systemd-journald.service - Journal Service...
+[10050.481517] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[10050.484578] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[10050.494476] systemd-journald[85738]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[10050.497853] systemd[1]: Started systemd-journald.service - Journal Service.
+[10057.953627] random: crng reseeded due to virtual machine fork
+[10771.195729] systemd[1]: systemd-udevd.service: Watchdog timeout (limit 3min)!
+[10771.196143] systemd[1]: systemd-udevd.service: Killing process 85744 (systemd-udevd) with signal SIGABRT.
+[10771.197112] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[10771.197443] CPU: 3 UID: 0 PID: 85744 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[10771.197786] RIP: 0033:0x7fa0c9956ef3
+[10771.198005] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[10771.198802] RSP: 002b:00007ffe61383d68 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[10771.199122] RAX: 0000000000000001 RBX: 000055a372f03f00 RCX: 00007fa0c9956ef3
+[10771.199413] RDX: 0000000000000010 RSI: 000055a372f2c260 RDI: 0000000000000009
+[10771.199711] RBP: 000055a372f04090 R08: 0000000000000004 R09: 00007fa0c9af0080
+[10771.200048] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[10771.200339] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[10771.200644] FS:  00007fa0c96c48c0 GS:  0000000000000000
+[10771.203884] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[10771.204185] CPU: 3 UID: 0 PID: 85738 Comm: systemd-journal Not tainted 6.12.94+ #1
+[10771.204500] RIP: 0033:0x7fb261726ef3
+[10771.204651] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[10771.205440] RSP: 002b:00007ffd7ce42778 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[10771.205795] RAX: 0000000000000003 RBX: 000055638f8ba490 RCX: 00007fb261726ef3
+[10771.206101] RDX: 000000000000002e RSI: 000055638f8bf5e0 RDI: 000000000000000f
+[10771.206417] RBP: 000055638f8ba300 R08: 000000000000002e R09: 00007fb261bfc080
+[10771.206724] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[10771.206992] R13: 000000000000002e R14: 0000000000000018 R15: 00000000000000f0
+[10771.207299] FS:  00007fb261b365c0 GS:  0000000000000000
+[10771.211678] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[10771.212205] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[10771.216390] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 5.
+[10771.217258] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[10771.218098] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[10771.219909] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 7.
+[10771.220411] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[10771.251775] systemd[1]: Starting systemd-journald.service - Journal Service...
+[10771.252252] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[10771.255895] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[10771.266239] systemd-journald[88527]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[10771.269964] systemd[1]: Started systemd-journald.service - Journal Service.
+[10779.633420] random: crng reseeded due to virtual machine fork
+[11431.946741] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[11431.947103] CPU: 5 UID: 0 PID: 88532 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[11431.947431] RIP: 0033:0x7fcc990f6ef3
+[11431.947643] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[11431.948320] RSP: 002b:00007ffe71e85ac8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[11431.948384] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[11431.948615] RAX: 0000000000000001 RBX: 00005607e4c15070 RCX: 00007fcc990f6ef3
+[11431.948616] RDX: 0000000000000010 RSI: 00005607e4c3d250 RDI: 0000000000000009
+[11431.948942] CPU: 0 UID: 997 PID: 77192 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[11431.949257] RBP: 00005607e4c15200 R08: 0000000000000004 R09: 00007fcc99290080
+[11431.949564] RIP: 0033:0x7f310ae46f36
+[11431.949916] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[11431.950228] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[11431.950378] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[11431.950656] RSP: 002b:00007ffdf7a2e800 EFLAGS: 00000293
+[11431.951455] FS:  00007fcc98efe8c0 GS:  0000000000000000
+[11431.952147]  ORIG_RAX: 00000000000000e8
+[11431.952303] RAX: 0000000000000002 RBX: 0000559b733d40a0 RCX: 00007f310ae46f36
+[11431.952570] RDX: 0000000000000010 RSI: 0000559b733da250 RDI: 0000000000000004
+[11431.952849] RBP: 0000559b733d3f10 R08: 0000000000000000 R09: 0000559b733d9c1c
+[11431.953141] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[11431.953454] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[11431.953743] FS:  00007f310aa99480 GS:  0000000000000000
+[11440.989898] random: crng reseeded due to virtual machine fork
+[11443.333637] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[11444.706743] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[11444.995264] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[11445.427977] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[11445.942586] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[11826.856466] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[11826.856827] CPU: 2 UID: 0 PID: 77198 Comm: systemd-logind Not tainted 6.12.94+ #1
+[11826.857136] RIP: 0033:0x7fb3a3528dc7
+[11826.857339] Code: 73 01 c3 48 8b 0d 39 80 0c 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 29 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 09 80 0c 00 f7 d8 64 89 01 48
+[11826.858279] RSP: 002b:00007fffc85e9fd8 EFLAGS: 00000246 ORIG_RAX: 0000000000000029
+[11826.858626] RAX: 000000000000000a RBX: 0000000000000000 RCX: 00007fb3a3528dc7
+[11826.858920] RDX: 0000000000000000 RSI: 0000000000080002 RDI: 0000000000000001
+[11826.859221] RBP: 00007fffc85ea110 R08: 0000000000000000 R09: 0000000000000000
+[11826.859533] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[11826.859865] R13: 00007fb3a38bf348 R14: 0000000000000000 R15: 0000000000000016
+[11826.860182] FS:  00007fb3a3934580 GS:  0000000000000000
+[11834.916230] random: crng reseeded due to virtual machine fork
+[12430.319435] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[12430.319919] CPU: 5 UID: 0 PID: 95580 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[12430.320308] RIP: 0033:0x7f5f61366ef3
+[12430.320513] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[12430.321524] RSP: 002b:00007ffdc4fce898 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[12430.321963] RAX: fffffffffffffffc RBX: 000055b8c4435f00 RCX: 00007f5f61366ef3
+[12430.322357] RDX: 0000000000000010 RSI: 000055b8c445e260 RDI: 0000000000000009
+[12430.322768] RBP: 000055b8c4436090 R08: 0000000000000004 R09: 00007f5f61500080
+[12430.323167] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[12430.323579] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[12430.323990] FS:  00007f5f610d48c0 GS:  0000000000000000
+[12438.070293] random: crng reseeded due to virtual machine fork
+[13172.236208] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[13172.236501] CPU: 0 UID: 0 PID: 101251 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[13172.236815] RIP: 0033:0x7fe7e7b0fef3
+[13172.237021] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[13172.237798] RSP: 002b:00007ffc46d6f148 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[13172.238087] RAX: 0000000000000001 RBX: 00005607121b90a0 RCX: 00007fe7e7b0fef3
+[13172.238382] RDX: 0000000000000010 RSI: 00005607121e1250 RDI: 0000000000000009
+[13172.238689] RBP: 00005607121b9230 R08: 0000000000000004 R09: 00007fe7e7ca9080
+[13172.238988] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[13172.239307] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[13172.239687] FS:  00007fe7e79178c0 GS:  0000000000000000
+[13180.653728] random: crng reseeded due to virtual machine fork
+[15882.630177] random: crng reseeded due to virtual machine fork
+[16391.053307] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[16391.053764] CPU: 1 UID: 997 PID: 95596 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[16391.054091] RIP: 0033:0x7f774fd79620
+[16391.054286] Code: 00 ba bc 00 00 00 48 8d 35 a2 75 11 00 48 8d 3d 40 63 11 00 e8 81 45 ef ff bd f4 ff ff ff eb 8f e8 65 79 ef ff 0f 1f 44 00 00 <41> 57 41 56 41 55 41 54 55 53 48 83 ec 48 64 48 8b 04 25 28 00 00
+[16391.055147] RSP: 002b:00007fff2c5af758 EFLAGS: 00000246
+[16391.055399] RAX: 00007f774fe3ec58 RBX: 000055e48ad61aa0 RCX: 00000000ffffffff
+[16391.055748] RDX: ffffffffffffffff RSI: 0000000000000000 RDI: 000055e45d4080a8
+[16391.056072] RBP: 000055e48ad61f10 R08: 00000000ffffffff R09: 00000000ffffffff
+[16391.056388] R10: 0000000000000000 R11: 0000000000000246 R12: 00007fff2c5af7b0
+[16391.056718] R13: 00007fff2c5af7a8 R14: 000055e48ad61f10 R15: 0000000000000002
+[16391.056859] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[16391.057041] FS:  00007f774f69c480 GS:  0000000000000000
+[16391.057718] CPU: 4 UID: 0 PID: 104104 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[16391.058100] RIP: 0033:0x7f114de4bef3
+[16391.058289] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[16391.059127] RSP: 002b:00007fff6022f3a8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[16391.059512] RAX: fffffffffffffffc RBX: 000055dd3a059f30 RCX: 00007f114de4bef3
+[16391.059929] RDX: 0000000000000010 RSI: 000055dd3a082280 RDI: 0000000000000009
+[16391.060279] RBP: 000055dd3a05a0c0 R08: 0000000000000004 R09: 00007f114dfe5080
+[16391.060595] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[16391.060958] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[16391.061293] FS:  00007f114dbb98c0 GS:  0000000000000000
+[16397.941407] random: crng reseeded due to virtual machine fork
+[17165.861712] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[17165.862106] CPU: 5 UID: 997 PID: 160482 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[17165.862419] RIP: 0033:0x7f0f4040d420
+[17165.862584] Code: 08 5b 5d c3 66 0f 1f 44 00 00 48 89 ee 89 df b8 e5 00 00 00 0f 05 48 3d 00 f0 ff ff 76 df 48 89 c2 eb c9 0f 1f 80 00 00 00 00 <48> 8b 05 71 3a 10 00 48 8b 80 e0 02 00 00 48 85 c0 74 15 48 83 ec
+[17165.863354] RSP: 002b:00007ffe2f8506b8 EFLAGS: 00000293
+[17165.863586] RAX: 0000000000000007 RBX: 00007ffe2f8506c0 RCX: 0000000000000000
+[17165.863893] RDX: 0000000000000000 RSI: 00007ffe2f8506c0 RDI: 0000000000000000
+[17165.863935] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[17165.864217] RBP: 000055d4aa06ef10 R08: 0000000000000000 R09: 000055d4aa074c1c
+[17165.864218] R10: 00000000ffffffff R11: 0000000000000293 R12: 0000000000000002
+[17165.864219] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[17165.864220] FS:  00007f0f40937480 GS:  0000000000000000
+[17165.865835] CPU: 1 UID: 0 PID: 160486 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[17165.866181] RIP: 0033:0x7fea5af06ef3
+[17165.866375] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[17165.867318] RSP: 002b:00007ffe2c90eae8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[17165.867700] RAX: 0000000000000001 RBX: 000055d2dadeb0a0 RCX: 00007fea5af06ef3
+[17165.868073] RDX: 0000000000000010 RSI: 000055d2dae13250 RDI: 0000000000000009
+[17165.868385] RBP: 000055d2dadeb230 R08: 0000000000000004 R09: 00007fea5b0a0080
+[17165.868697] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[17165.869022] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[17165.869383] FS:  00007fea5ad0e8c0 GS:  0000000000000000
+[17176.519739] random: crng reseeded due to virtual machine fork
+[18913.027726] random: crng reseeded due to virtual machine fork
+[18914.565659] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18914.913463] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18915.224207] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18915.483672] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18915.713130] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18915.950564] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18916.390237] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18916.622470] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18916.860006] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[18917.096193] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[19854.724284] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[19854.724726] CPU: 0 UID: 0 PID: 98472 Comm: systemd-logind Not tainted 6.12.94+ #1
+[19854.725126] RIP: 0033:0x7fa3ff126ef3
+[19854.725352] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[19854.725476] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[19854.725886] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[19854.725913] CPU: 4 UID: 0 PID: 163412 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[19854.725915] RIP: 0033:0x7f7773389ef3
+[19854.725928] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[19854.725930] RSP: 002b:00007ffdc982aaa8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[19854.725935] RAX: 0000000000000001 RBX: 000055f320270f30 RCX: 00007f7773389ef3
+[19854.725936] RDX: 0000000000000010 RSI: 000055f320299280 RDI: 0000000000000009
+[19854.725937] RBP: 000055f3202710c0 R08: 0000000000000004 R09: 00007f7773523080
+[19854.725938] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[19854.725946] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[19854.725947] FS:  00007f77730f78c0 GS:  0000000000000000
+[19854.726289] RSP: 002b:00007ffc43722db8 EFLAGS: 00000202
+[19854.726569] CPU: 7 UID: 997 PID: 163387 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[19854.726831]  ORIG_RAX: 00000000000000e8
+[19854.727139] RIP: 0033:0x7fedd8e46f36
+[19854.727317] RAX: 0000000000000001 RBX: 0000564d27a2c090 RCX: 00007fa3ff126ef3
+[19854.728091] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[19854.728535] RDX: 000000000000001a RSI: 0000564d27a39c30 RDI: 0000000000000004
+[19854.728836] RSP: 002b:00007ffe949cb8f0 EFLAGS: 00000293
+[19854.729189] RBP: 0000564d27a2bf00 R08: 000000000000001a R09: 0000000000000000
+[19854.729506]  ORIG_RAX: 00000000000000e8
+[19854.729848] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[19854.730148] RAX: 0000000000000002 RBX: 000056090e5230a0 RCX: 00007fedd8e46f36
+[19854.730363] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[19854.730584] RDX: 0000000000000010 RSI: 000056090e529250 RDI: 0000000000000004
+[19854.730948] FS:  00007fa3fecc7580 GS:  0000000000000000
+[19854.731112] RBP: 000056090e522f10 R08: 0000000000000000 R09: 000056090e528c1c
+[19854.735048] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[19854.735331] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[19854.735618] FS:  00007fedd8aa2480 GS:  0000000000000000
+[19862.956617] random: crng reseeded due to virtual machine fork
+[20233.302400] random: crng reseeded due to virtual machine fork
+[20672.785641] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[20672.785974] CPU: 7 UID: 0 PID: 177527 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[20672.786335] RIP: 0033:0x7fe91ced1ef3
+[20672.786696] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[20672.787565] RSP: 002b:00007ffd3342b768 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[20672.787835] RAX: 0000000000000001 RBX: 000055a0e874f0a0 RCX: 00007fe91ced1ef3
+[20672.788142] RDX: 0000000000000010 RSI: 000055a0e8777250 RDI: 0000000000000009
+[20672.788427] RBP: 000055a0e874f230 R08: 0000000000000004 R09: 00007fe91d06b080
+[20672.788700] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[20672.788972] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[20672.789261] FS:  00007fe91ccd98c0 GS:  0000000000000000
+[20686.110880] random: crng reseeded due to virtual machine fork
+[21419.362421] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[21419.362790] CPU: 5 UID: 997 PID: 177534 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[21419.363121] RIP: 0033:0x7fa66eb26f36
+[21419.363329] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[21419.364006] RSP: 002b:00007ffd819a8b30 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[21419.364313] RAX: 0000000000000002 RBX: 000055d2107160a0 RCX: 00007fa66eb26f36
+[21419.364684] RDX: 0000000000000010 RSI: 000055d21071c250 RDI: 0000000000000004
+[21419.365048] RBP: 000055d210715f10 R08: 0000000000000000 R09: 000055d21071bc1c
+[21419.365359] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[21419.365678] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[21419.366046] FS:  00007fa66e6a1480 GS:  0000000000000000
+[21419.369098] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[21419.369470] CPU: 5 UID: 0 PID: 177539 Comm: systemd-logind Not tainted 6.12.94+ #1
+[21419.369819] RIP: 0033:0x7f6a6bb26ef3
+[21419.369994] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[21419.370726] RSP: 002b:00007fff45e708c8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[21419.371016] RAX: 0000000000000001 RBX: 0000562fb691c0a0 RCX: 00007f6a6bb26ef3
+[21419.371287] RDX: 000000000000001a RSI: 0000562fb6929c40 RDI: 0000000000000004
+[21419.371557] RBP: 0000562fb691bf10 R08: 000000000000001a R09: 0000000000000000
+[21419.371828] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[21419.372108] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[21419.372405] FS:  00007f6a6bf34580 GS:  0000000000000000
+[21428.044202] random: crng reseeded due to virtual machine fork
+[22106.582137] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[22106.582542] CPU: 1 UID: 997 PID: 186311 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[22106.582931] RIP: 0033:0x7f022bf26f36
+[22106.583165] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[22106.583473] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[22106.584010] RSP: 002b:00007ffc79569230 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[22106.584358] CPU: 5 UID: 0 PID: 183387 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[22106.584466] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[22106.584487] CPU: 3 UID: 0 PID: 186368 Comm: systemd-logind Not tainted 6.12.94+ #1
+[22106.584489] RIP: 0033:0x7f45a5726ef3
+[22106.584502] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[22106.584503] RSP: 002b:00007ffd189c2528 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[22106.584505] RAX: 0000000000000002 RBX: 00005637c4bd70a0 RCX: 00007f45a5726ef3
+[22106.584507] RDX: 000000000000001a RSI: 00005637c4be4c40 RDI: 0000000000000004
+[22106.584509] RBP: 00005637c4bd6f10 R08: 000000000000001a R09: 0000000000000000
+[22106.584517] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[22106.584518] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[22106.584519] FS:  00007f45a5b43580 GS:  0000000000000000
+[22106.584687] RAX: 0000000000000002 RBX: 00005612424970a0 RCX: 00007f022bf26f36
+[22106.585002] RIP: 0033:0x7f85281d4ef3
+[22106.585342] RDX: 0000000000000010 RSI: 000056124249d250 RDI: 0000000000000004
+[22106.585666] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[22106.585837] RBP: 0000561242496f10 R08: 0000000000000000 R09: 000056124249cc1c
+[22106.586580] RSP: 002b:00007ffda3d963f8 EFLAGS: 00000202
+[22106.586873] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[22106.587165]  ORIG_RAX: 00000000000000e8
+[22106.587480] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[22106.587805] RAX: fffffffffffffffc RBX: 00005648e2da8f30 RCX: 00007f85281d4ef3
+[22106.588138] FS:  00007f022ba8b480 GS:  0000000000000000
+[22106.588450] RDX: 0000000000000010 RSI: 00005648e2dd1280 RDI: 0000000000000009
+[22106.592742] RBP: 00005648e2da90c0 R08: 0000000000000004 R09: 00007f852836e080
+[22106.593126] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[22106.593537] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[22106.593919] FS:  00007f8527f428c0 GS:  0000000000000000
+[22116.148335] random: crng reseeded due to virtual machine fork
+[23252.214867] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[23252.230131] CPU: 3 UID: 997 PID: 189178 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[23252.230545] RIP: 0033:0x7f1651985ad8
+[23252.230808] Code: e1 ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 00 89 f8 62 a1 fd 00 ef c0 25 ff 0f 00 00 3d e0 0f 00 00 0f 87 38 01 00 00 <62> f3 7d 20 3f 07 00 c5 fb 93 c0 85 c0 74 59 f3 0f bc c0 c3 0f 1f
+[23252.231802] RSP: 002b:00007ffd68cc6fa8 EFLAGS: 00010287
+[23252.232107] RAX: 00000000000002d3 RBX: 0000000000000000 RCX: 00007f1651928d6a
+[23252.232527] RDX: 0000000000000000 RSI: 0000000000000001 RDI: 000055c18052c2d3
+[23252.232930] RBP: 00007ffd68cc70e0 R08: 0000000000000004 R09: 0000000000000000
+[23252.233335] R10: 00007ffd68cc6f64 R11: 0000000000000246 R12: 0000000000000000
+[23252.233722] R13: 000055c18052c2d3 R14: 000000000000000f R15: 0000000000000016
+[23252.234151] FS:  00007f1651d37480 GS:  0000000000000000
+[23283.515058] random: crng reseeded due to virtual machine fork
+[23285.975105] fill_balloon: 3 callbacks suppressed
+[23285.975137] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23286.209171] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23286.421564] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23286.638213] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23286.863560] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23287.185576] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23287.416712] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23287.635416] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[23287.850820] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[24250.839679] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[24250.840175] CPU: 1 UID: 0 PID: 189181 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[24250.840632] RIP: 0033:0x7f4c13e2cef3
+[24250.841005] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[24250.841567] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[24250.842039] RSP: 002b:00007ffd03dae978 EFLAGS: 00000202
+[24250.842426] CPU: 2 UID: 0 PID: 88527 Comm: systemd-journal Not tainted 6.12.94+ #1
+[24250.842425]  ORIG_RAX: 00000000000000e8
+[24250.842660] RIP: 0033:0x7f0e20526ef3
+[24250.843098] RAX: 0000000000000001 RBX: 00005617c3e840a0 RCX: 00007f4c13e2cef3
+[24250.843325] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[24250.843517] RDX: 0000000000000010 RSI: 00005617c3eac250 RDI: 0000000000000009
+[24250.843829] RSP: 002b:00007ffe08cbded8 EFLAGS: 00000202
+[24250.844976] RBP: 00005617c3e84230 R08: 0000000000000004 R09: 00007f4c13fc6080
+[24250.844979] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[24250.844983] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[24250.845315]  ORIG_RAX: 00000000000000e8
+[24250.845659] FS:  00007f4c13b9a8c0 GS:  0000000000000000
+[24250.845967] RAX: 0000000000000003 RBX: 0000563ea17b34a0 RCX: 00007f0e20526ef3
+[24250.847422] RDX: 000000000000002e RSI: 0000563ea17b8640 RDI: 000000000000000f
+[24250.847733] RBP: 0000563ea17b3310 R08: 000000000000002e R09: 00007f0e209a2080
+[24250.848086] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[24250.848443] R13: 000000000000002e R14: 0000000000000018 R15: 00000000000000f0
+[24250.848758] FS:  00007f0e1fa2c5c0 GS:  0000000000000000
+[24250.853748] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[24250.863734] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[24250.866542] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 16.
+[24250.867070] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[24250.901520] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[24250.902930] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[24250.906121] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[24250.907884] systemd[1]: systemd-journald.service: Consumed 8.542s CPU time.
+[24250.910046] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 6.
+[24250.911029] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[24250.911558] systemd[1]: systemd-journald.service: Consumed 8.542s CPU time.
+[24250.916144] systemd[1]: Starting systemd-journald.service - Journal Service...
+[24250.936715] systemd-journald[197770]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[24250.941780] systemd[1]: Started systemd-journald.service - Journal Service.
+[24263.175806] random: crng reseeded due to virtual machine fork
+[24565.072487] random: crng reseeded due to virtual machine fork
+[24885.361277] random: crng reseeded due to virtual machine fork
+[25941.360825] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[25941.388665] CPU: 5 UID: 0 PID: 197737 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[25941.388992] RIP: 0033:0x7f7a8fb5aef3
+[25941.399301] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[25941.400018] RSP: 002b:00007ffd6bc479f8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[25941.400331] RAX: fffffffffffffffc RBX: 00005577866ecf30 RCX: 00007f7a8fb5aef3
+[25941.400639] RDX: 0000000000000010 RSI: 0000557786715280 RDI: 0000000000000009
+[25941.400950] RBP: 00005577866ed0c0 R08: 0000000000000004 R09: 00007f7a8fcf4080
+[25941.401258] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[25941.401562] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[25941.401871] FS:  00007f7a8f8c88c0 GS:  0000000000000000
+[26954.336566] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[26954.337400] CPU: 0 UID: 0 PID: 213196 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[26954.337733] RIP: 0033:0x7f22bb41cef3
+[26954.338342] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[26954.339151] RSP: 002b:00007ffeb1144d38 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[26954.339490] RAX: fffffffffffffffc RBX: 000055da3d3b00a0 RCX: 00007f22bb41cef3
+[26954.339809] RDX: 0000000000000010 RSI: 000055da3d3d8250 RDI: 0000000000000009
+[26954.340121] RBP: 000055da3d3b0230 R08: 0000000000000004 R09: 00007f22bb5b6080
+[26954.340429] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[26954.340734] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[26954.341047] FS:  00007f22bb18a8c0 GS:  0000000000000000
+[26956.883781] chrome: ThreadPoolSingl: potentially unexpected fatal signal 5.
+[26956.884150] CPU: 2 UID: 1000 PID: 191207 Comm: ThreadPoolSingl Not tainted 6.12.94+ #1
+[26956.884508] RIP: 0033:0x556dafd9f27b
+[26956.884699] Code: c1 c9 03 48 81 f9 95 71 00 00 77 20 ff d0 e9 30 ff ff ff e8 e7 72 3a 05 48 8d 3d 81 9d d9 f5 e8 cb 1d 05 fa 67 0f b9 40 01 cc <0f> 0b 67 0f b9 40 02 cc cc cc cc cc cc cc cc cc cc cc cc cc cc 55
+[26956.885734] RSP: 002b:00007fec513f74f0 EFLAGS: 00000246
+[26956.886055] RAX: 0000000000000000 RBX: 00007fec513f79d0 RCX: 00007fec589be4f9
+[26956.886431] RDX: 1f70665d64f30b02 RSI: 0000000000000068 RDI: 0000556db5ec27e8
+[26956.886930] RBP: 00007fec513f7950 R08: 000000006e697472 R09: 0000000000000000
+[26956.887357] R10: 000000000000000a R11: 0000000000000246 R12: 00007fec513f7520
+[26956.887680] R13: 0000000000000000 R14: 0000000000000066 R15: 00007fec513f7a48
+[26956.888006] FS:  00007fec513f96c0 GS:  0000000000000000
+[27712.428542] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[27712.429420] CPU: 0 UID: 0 PID: 189182 Comm: systemd-logind Not tainted 6.12.94+ #1
+[27712.444249] RIP: 0033:0x7fa5d8f26ef3
+[27712.458269] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[27712.459287] RSP: 002b:00007fff82f73ec8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[27712.459697] RAX: fffffffffffffffc RBX: 00005625fc9890a0 RCX: 00007fa5d8f26ef3
+[27712.460083] RDX: 000000000000001a RSI: 00005625fc996c40 RDI: 0000000000000004
+[27712.460486] RBP: 00005625fc988f10 R08: 000000000000001a R09: 0000000000000000
+[27712.460861] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[27712.461252] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[27712.461622] FS:  00007fa5d9336580 GS:  0000000000000000
+[31292.364797] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[31292.365738] CPU: 1 UID: 0 PID: 216143 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[31292.366033] RIP: 0033:0x7f061859fef3
+[31292.366464] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[31292.367113] RSP: 002b:00007ffcc0805418 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[31292.367386] RAX: fffffffffffffffc RBX: 00005642f308bf30 RCX: 00007f061859fef3
+[31292.367650] RDX: 0000000000000010 RSI: 00005642f30b4280 RDI: 0000000000000009
+[31292.367918] RBP: 00005642f308c0c0 R08: 0000000000000004 R09: 00007f0618739080
+[31292.368196] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[31292.368470] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[31292.368744] FS:  00007f061830d8c0 GS:  0000000000000000
+[31311.113662] random: crng reseeded due to virtual machine fork
+[31314.139913] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[31314.408957] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[31314.682076] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[31315.052439] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[35104.121695] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[35104.122642] CPU: 5 UID: 0 PID: 239493 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[35104.122978] RIP: 0033:0x7fceae1a3ef3
+[35104.123183] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[35104.123991] RSP: 002b:00007ffdeb2ba628 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[35104.124318] RAX: fffffffffffffffc RBX: 0000560d7c0250a0 RCX: 00007fceae1a3ef3
+[35104.124629] RDX: 0000000000000010 RSI: 0000560d7c04d250 RDI: 0000000000000009
+[35104.124936] RBP: 0000560d7c025230 R08: 0000000000000004 R09: 00007fceae33d080
+[35104.125269] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[35104.125605] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[35104.125937] FS:  00007fceadf118c0 GS:  0000000000000000
+[37351.323061] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[37351.324192] CPU: 0 UID: 997 PID: 194574 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[37351.324498] RIP: 0033:0x7f554cd9cd00
+[37351.324846] Code: 66 2e 0f 1f 84 00 00 00 00 00 83 ff 02 77 13 48 63 ff 48 8d 05 81 58 18 00 48 8b 04 f8 c3 0f 1f 40 00 31 c0 c3 0f 1f 44 00 00 <41> 57 41 56 41 55 41 54 55 53 48 83 ec 38 64 48 8b 04 25 28 00 00
+[37351.325580] RSP: 002b:00007ffeda4467a8 EFLAGS: 00010206
+[37351.325789] RAX: 000000000000000f RBX: 0000000000000000 RCX: 00007f554cb28dc7
+[37351.326069] RDX: 0000000000000001 RSI: 0000000000800000 RDI: 000000000000000f
+[37351.326350] RBP: 00007ffeda4468e0 R08: 0000000000000000 R09: 0000000000000000
+[37351.326634] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[37351.326944] R13: 00007f554cebf348 R14: 000000000000000f R15: 0000000000000016
+[37351.327252] FS:  00007f554c6a4480 GS:  0000000000000000
+[37354.489800] chrome: ThreadPoolSingl: potentially unexpected fatal signal 5.
+[37354.490092] CPU: 5 UID: 1000 PID: 272192 Comm: ThreadPoolSingl Not tainted 6.12.94+ #1
+[37354.490404] RIP: 0033:0x55fc42cd627b
+[37354.490567] Code: c1 c9 03 48 81 f9 95 71 00 00 77 20 ff d0 e9 30 ff ff ff e8 e7 72 3a 05 48 8d 3d 81 9d d9 f5 e8 cb 1d 05 fa 67 0f b9 40 01 cc <0f> 0b 67 0f b9 40 02 cc cc cc cc cc cc cc cc cc cc cc cc cc cc 55
+[37354.491258] RSP: 002b:00007fd58abf74f0 EFLAGS: 00000246
+[37354.491456] RAX: 0000000000000000 RBX: 00007fd58abf79d0 RCX: 00007fd5922774f9
+[37354.491761] RDX: 0d972c0b93e90a02 RSI: 0000000000000068 RDI: 000055fc48df97e8
+[37354.492091] RBP: 00007fd58abf7950 R08: 000000006e697472 R09: 0000000000000000
+[37354.492398] R10: 000000000000000a R11: 0000000000000246 R12: 00007fd58abf7520
+[37354.492700] R13: 0000000000000000 R14: 0000000000000066 R15: 00007fd58abf7a48
+[37354.493117] FS:  00007fd58abf96c0 GS:  0000000000000000
+[37370.117350] random: crng reseeded due to virtual machine fork
+[38822.769615] random: crng reseeded due to virtual machine fork
+[39550.116684] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[39550.117039] CPU: 3 UID: 0 PID: 270595 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[39550.117342] RIP: 0033:0x7f887b150ef3
+[39550.117525] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[39550.118224] RSP: 002b:00007ffe807a4698 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[39550.118551] RAX: fffffffffffffffc RBX: 0000559326821f30 RCX: 00007f887b150ef3
+[39550.118886] RDX: 0000000000000010 RSI: 000055932684a280 RDI: 0000000000000009
+[39550.119067] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[39550.119183] RBP: 00005593268220c0 R08: 0000000000000004 R09: 00007f887b2ea080
+[39550.119184] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[39550.119531] CPU: 4 UID: 0 PID: 224759 Comm: systemd-logind Not tainted 6.12.94+ #1
+[39550.119803] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[39550.120098] RIP: 0033:0x7f0954526ef3
+[39550.120399] FS:  00007f887aebe8c0 GS:  0000000000000000
+[39550.120708] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[39550.121719] RSP: 002b:00007ffcc79f08f8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[39550.122183] RAX: 0000000000000002 RBX: 000055a1019c00a0 RCX: 00007f0954526ef3
+[39550.122462] RDX: 000000000000001a RSI: 000055a1019cdc40 RDI: 0000000000000004
+[39550.122779] RBP: 000055a1019bff10 R08: 000000000000001a R09: 000055a1019d4880
+[39550.123178] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[39550.123560] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[39550.123876] FS:  00007f09540b3580 GS:  0000000000000000
+[39560.689503] random: crng reseeded due to virtual machine fork
+[42486.232876] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[42486.233241] CPU: 2 UID: 997 PID: 278189 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[42486.233567] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[42486.233569] RIP: 0033:0x7f98d7726f36
+[42486.234008] CPU: 3 UID: 0 PID: 285329 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[42486.234156] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[42486.234607] RIP: 0033:0x7f02f8a19ef3
+[42486.234883] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[42486.234908] CPU: 1 UID: 0 PID: 285338 Comm: systemd-logind Not tainted 6.12.94+ #1
+[42486.234911] RIP: 0033:0x7f08d0326ef3
+[42486.234919] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[42486.234921] RSP: 002b:00007fffc8c59dd8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[42486.234925] RAX: 0000000000000002 RBX: 000055ba989510a0 RCX: 00007f08d0326ef3
+[42486.234927] RDX: 000000000000001a RSI: 000055ba9895ec40 RDI: 0000000000000004
+[42486.234928] RBP: 000055ba98950f10 R08: 000000000000001a R09: 0000000000000000
+[42486.234929] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[42486.234930] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[42486.234931] FS:  00007f08d0735580 GS:  0000000000000000
+[42486.235482] RSP: 002b:00007ffd7fa31450 EFLAGS: 00000293
+[42486.235740] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[42486.236071]  ORIG_RAX: 00000000000000e8
+[42486.236642] RSP: 002b:00007fff0e17af88 EFLAGS: 00000202
+[42486.236809] RAX: 0000000000000002 RBX: 0000563216df00a0 RCX: 00007f98d7726f36
+[42486.237889]  ORIG_RAX: 00000000000000e8
+[42486.238207] RDX: 0000000000000010 RSI: 0000563216df6250 RDI: 0000000000000004
+[42486.238208] RBP: 0000563216deff10 R08: 0000000000000000 R09: 0000563216df5c1c
+[42486.238209] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[42486.238210] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[42486.238680] RAX: 0000000000000001 RBX: 000055c2eb3210a0 RCX: 00007f02f8a19ef3
+[42486.238951] FS:  00007f98d6ca7480 GS:  0000000000000000
+[42486.246636] RDX: 0000000000000010 RSI: 000055c2eb349250 RDI: 0000000000000009
+[42486.247081] RBP: 000055c2eb321230 R08: 0000000000000004 R09: 00007f02f8bb3080
+[42486.247545] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[42486.248018] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[42486.248441] FS:  00007f02f87878c0 GS:  0000000000000000
+[43179.824003] systemd[1]: systemd-udevd.service: Watchdog timeout (limit 3min)!
+[43179.824303] systemd[1]: systemd-udevd.service: Killing process 312005 (systemd-udevd) with signal SIGABRT.
+[43179.825485] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[43179.825790] CPU: 1 UID: 0 PID: 312005 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[43179.826135] RIP: 0033:0x7fecdf97eef3
+[43179.826352] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[43179.827285] RSP: 002b:00007ffc6445e208 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[43179.827654] RAX: 0000000000000001 RBX: 0000560ca93b4f30 RCX: 00007fecdf97eef3
+[43179.827721] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[43179.827954] RDX: 0000000000000010 RSI: 0000560ca93dd280 RDI: 0000000000000009
+[43179.828273] CPU: 2 UID: 0 PID: 197770 Comm: systemd-journal Not tainted 6.12.94+ #1
+[43179.828616] RBP: 0000560ca93b50c0 R08: 0000000000000004 R09: 00007fecdfb18080
+[43179.828904] RIP: 0033:0x7fd7a1b26ef3
+[43179.829244] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[43179.829396] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[43179.829731] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[43179.830433] RSP: 002b:00007ffdf4f1eb38 EFLAGS: 00000202
+[43179.830793] FS:  00007fecdf6ec8c0 GS:  0000000000000000
+[43179.830794]  ORIG_RAX: 00000000000000e8
+[43179.830795] RAX: 0000000000000003 RBX: 000056497a4754a0 RCX: 00007fd7a1b26ef3
+[43179.831711] RDX: 000000000000002e RSI: 000056497a47a6f0 RDI: 000000000000000f
+[43179.831989] RBP: 000056497a475310 R08: 000000000000002e R09: 00007fd7a210c080
+[43179.832272] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[43179.832540] R13: 000000000000002e R14: 0000000000000018 R15: 00000000000000f0
+[43179.832815] FS:  00007fd7a1f3c5c0 GS:  0000000000000000
+[43179.837426] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[43179.837854] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[43179.838634] systemd[1]: systemd-journald.service: Consumed 18.909s CPU time.
+[43179.839479] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 7.
+[43179.839908] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[43179.840201] systemd[1]: systemd-journald.service: Consumed 18.909s CPU time.
+[43179.868153] systemd[1]: Starting systemd-journald.service - Journal Service...
+[43179.868650] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[43179.869089] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[43179.869930] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 23.
+[43179.870317] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[43179.871953] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[43179.878875] systemd-journald[315220]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[43179.882418] systemd[1]: Started systemd-journald.service - Journal Service.
+[43190.252639] random: crng reseeded due to virtual machine fork
+[44844.879406] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[44844.879908] CPU: 0 UID: 0 PID: 312012 Comm: systemd-logind Not tainted 6.12.94+ #1
+[44844.880343] RIP: 0033:0x7fed5e926ef3
+[44844.880439] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[44844.880606] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[44844.880976] CPU: 4 UID: 0 PID: 315220 Comm: systemd-journal Not tainted 6.12.94+ #1
+[44844.882008] RSP: 002b:00007ffd78209748 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[44844.882364] RIP: 0033:0x7f8deb526ef3
+[44844.882781] RAX: 0000000000000001 RBX: 000055ce058e30a0 RCX: 00007fed5e926ef3
+[44844.882961] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[44844.883365] RDX: 000000000000001a RSI: 000055ce058f0c40 RDI: 0000000000000004
+[44844.884169] RSP: 002b:00007ffef622b4c8 EFLAGS: 00000202
+[44844.884563] RBP: 000055ce058e2f10 R08: 000000000000001a R09: 0000000000000000
+[44844.884563]  ORIG_RAX: 00000000000000e8
+[44844.884566] RAX: 0000000000000002 RBX: 000055dcf9c654a0 RCX: 00007f8deb526ef3
+[44844.884861] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[44844.885175] RDX: 0000000000000030 RSI: 000055dcf9c6aa50 RDI: 0000000000000010
+[44844.885397] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[44844.885699] RBP: 000055dcf9c65310 R08: 0000000000000030 R09: 00007f8deb9d3080
+[44844.886100] FS:  00007fed5e4e1580 GS:  0000000000000000
+[44844.886413] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[44844.887722] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[44844.888078] FS:  00007f8deb9355c0 GS:  0000000000000000
+[44844.894884] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[44844.895459] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[44844.898115] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 8.
+[44844.898721] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[44844.924046] systemd[1]: Starting systemd-journald.service - Journal Service...
+[44844.924768] systemd[1]: systemd-logind.service: Main process exited, code=killed, status=6/ABRT
+[44844.925232] systemd[1]: systemd-logind.service: Failed with result 'watchdog'.
+[44844.927272] systemd[1]: systemd-logind.service: Scheduled restart job, restart counter is at 14.
+[44844.927948] systemd[1]: Stopped systemd-logind.service - User Login Management.
+[44844.929820] systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+[44844.935334] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[44844.935745] systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+[44844.938875] systemd-journald[328363]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[44844.939681] systemd[1]: Starting systemd-logind.service - User Login Management...
+[44844.943660] systemd[1]: Started systemd-journald.service - Journal Service.
+[44855.790702] random: crng reseeded due to virtual machine fork
+[45845.907644] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[45845.908039] CPU: 1 UID: 0 PID: 328363 Comm: systemd-journal Not tainted 6.12.94+ #1
+[45845.908366] RIP: 0033:0x7f83ec926ef3
+[45845.908573] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[45845.909485] RSP: 002b:00007ffd03eb0938 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[45845.909884] RAX: 0000000000000002 RBX: 000055acaefa54a0 RCX: 00007f83ec926ef3
+[45845.910253] RDX: 0000000000000030 RSI: 000055acaefaab00 RDI: 0000000000000010
+[45845.910589] RBP: 000055acaefa5310 R08: 0000000000000030 R09: 00007f83ecede080
+[45845.910923] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[45845.911254] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[45845.911545] FS:  00007f83ecd365c0 GS:  0000000000000000
+[45845.919638] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[45845.920354] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[45845.931674] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 9.
+[45845.932245] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[45845.960373] systemd[1]: Starting systemd-journald.service - Journal Service...
+[45845.981567] systemd-journald[335493]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[45845.986995] systemd[1]: Started systemd-journald.service - Journal Service.
+[45857.842502] random: crng reseeded due to virtual machine fork
+[50025.267079] random: crng reseeded due to virtual machine fork
+[52164.361249] random: crng reseeded due to virtual machine fork
+[55383.350904] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[55383.351202] CPU: 0 UID: 0 PID: 328377 Comm: systemd-logind Not tainted 6.12.94+ #1
+[55383.351484] RIP: 0033:0x7f7583f26ef3
+[55383.351650] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[55383.352330] RSP: 002b:00007ffec3e9a208 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[55383.352608] RAX: 0000000000000002 RBX: 00005568ceb180a0 RCX: 00007f7583f26ef3
+[55383.352871] RDX: 000000000000001a RSI: 00005568ceb25c40 RDI: 0000000000000004
+[55383.353143] RBP: 00005568ceb17f10 R08: 000000000000001a R09: 0000000000000000
+[55383.353410] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[55383.353711] R13: 000000000000001a R14: 000000000000000d R15: 0000000000000082
+[55383.354051] FS:  00007f7584337580 GS:  0000000000000000
+[55393.160131] random: crng reseeded due to virtual machine fork
+[55919.943883] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[55919.944301] CPU: 5 UID: 0 PID: 335493 Comm: systemd-journal Not tainted 6.12.94+ #1
+[55919.944582] systemd[1]: systemd-timesyncd.service: Watchdog timeout (limit 3min)!
+[55919.944617] RIP: 0033:0x7f587f926ef3
+[55919.944949] systemd[1]: systemd-timesyncd.service: Killing process 312002 (systemd-timesyn) with signal SIGABRT.
+[55919.945073] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[55919.946048] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[55919.946294] RSP: 002b:00007fff907f41b8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[55919.946736] CPU: 2 UID: 997 PID: 312002 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[55919.947051] RAX: 0000000000000002 RBX: 00005590557674a0 RCX: 00007f587f926ef3
+[55919.947377] RIP: 0033:0x7f61dd448dc7
+[55919.947639] RDX: 0000000000000030 RSI: 000055905576cb40 RDI: 0000000000000010
+[55919.947811] Code: 73 01 c3 48 8b 0d 39 80 0c 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 29 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 09 80 0c 00 f7 d8 64 89 01 48
+[55919.948089] RBP: 0000559055767310 R08: 0000000000000030 R09: 00007f587fd8d080
+[55919.948090] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[55919.948784] RSP: 002b:00007fff9635cb28 EFLAGS: 00000246
+[55919.949083] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[55919.949371]  ORIG_RAX: 0000000000000029
+[55919.949593] FS:  00007f587f4a55c0 GS:  0000000000000000
+[55919.949907] RAX: 000000000000000f RBX: 0000000000000000 RCX: 00007f61dd448dc7
+[55919.950591] RDX: 0000000000000000 RSI: 0000000000080002 RDI: 0000000000000001
+[55919.950935] RBP: 00007fff9635cc60 R08: 0000000000000000 R09: 0000000000000000
+[55919.951270] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[55919.951605] R13: 00007f61dd8bf348 R14: 0000000000000000 R15: 0000000000000016
+[55919.951944] FS:  00007f61dc9cb480 GS:  0000000000000000
+[55919.961308] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[55919.961829] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[55919.962998] systemd[1]: systemd-journald.service: Consumed 1.611s CPU time.
+[55919.964215] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 10.
+[55919.964624] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[55919.964901] systemd[1]: systemd-journald.service: Consumed 1.611s CPU time.
+[55919.997329] systemd[1]: Starting systemd-journald.service - Journal Service...
+[55919.997987] systemd[1]: systemd-timesyncd.service: Main process exited, code=killed, status=6/ABRT
+[55919.998392] systemd[1]: systemd-timesyncd.service: Failed with result 'watchdog'.
+[55919.999751] systemd[1]: systemd-timesyncd.service: Scheduled restart job, restart counter is at 12.
+[55920.000591] systemd[1]: Stopped systemd-timesyncd.service - Network Time Synchronization.
+[55920.003556] systemd[1]: Starting systemd-timesyncd.service - Network Time Synchronization...
+[55920.020968] systemd-journald[445547]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[55920.027012] systemd[1]: Started systemd-journald.service - Journal Service.
+[57111.790121] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[57111.797807] CPU: 3 UID: 997 PID: 445554 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[57111.800164] RIP: 0033:0x7f8d7cd26f36
+[57111.800453] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[57111.801225] RSP: 002b:00007ffea00b6470 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[57111.801556] RAX: fffffffffffffffc RBX: 00005596e91a40a0 RCX: 00007f8d7cd26f36
+[57111.801877] RDX: 0000000000000010 RSI: 00005596e91aa250 RDI: 0000000000000004
+[57111.802174] RBP: 00005596e91a3f10 R08: 0000000000000000 R09: 00005596e91ac7c0
+[57111.802484] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[57111.802803] R13: 0000000000000010 R14: 000000000000000c R15: 0000000000000078
+[57111.803105] FS:  00007f8d7d137480 GS:  0000000000000000
+[58408.000756] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[58408.001436] CPU: 2 UID: 0 PID: 445547 Comm: systemd-journal Not tainted 6.12.94+ #1
+[58408.002043] RIP: 0033:0x7f7d40e75400
+[58408.002450] Code: 68 3a 0a 00 00 e9 40 5c ff ff ff 25 da ac 2b 00 68 3b 0a 00 00 e9 30 5c ff ff ff 25 d2 ac 2b 00 68 3c 0a 00 00 e9 20 5c ff ff <ff> 25 ca ac 2b 00 68 3d 0a 00 00 e9 10 5c ff ff ff 25 c2 ac 2b 00
+[58408.003927] RSP: 002b:00007ffd39bf89d8 EFLAGS: 00010246
+[58408.004421] RAX: 0000000000000000 RBX: 00007ffd39bf89e0 RCX: 000000006ae0ad0d
+[58408.004995] RDX: 0000000000f54ada RSI: 00007ffd39bf89e0 RDI: 00007ffd39bf89e0
+[58408.005653] RBP: 000055d352ded310 R08: 0000000000f54ada R09: 00007f7d41324080
+[58408.006124] R10: 0000000000000000 R11: 00139be4fa151dce R12: 0000000000000001
+[58408.006688] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[58408.007231] FS:  00007f7d411345c0 GS:  0000000000000000
+[58408.008555] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[58408.008893] CPU: 5 UID: 0 PID: 315274 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[58408.009264] RIP: 0033:0x55bfcc8cf8f0
+[58408.009453] Code: 68 89 00 00 00 e9 50 f7 ff ff ff 25 62 01 13 00 68 8a 00 00 00 e9 40 f7 ff ff ff 25 5a 01 13 00 68 8b 00 00 00 e9 30 f7 ff ff <ff> 25 52 01 13 00 68 8c 00 00 00 e9 20 f7 ff ff ff 25 4a 01 13 00
+[58408.010300] RSP: 002b:00007ffd2400b738 EFLAGS: 00010246
+[58408.010546] RAX: 0000000000000000 RBX: 000055bffd8830a0 RCX: 00007fedb9e83ef3
+[58408.010875] RDX: 0000000000000010 RSI: 00007ffd2400b740 RDI: 0000000000000000
+[58408.011202] RBP: 000055bffd883230 R08: 0000000000000004 R09: 00007fedba01d080
+[58408.011511] R10: 00000000ffffffff R11: 0000000000000202 R12: 0000000000000001
+[58408.011856] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[58408.012178] FS:  00007fedb9c8b8c0 GS:  0000000000000000
+[58408.016540] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[58408.017140] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[58408.020352] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 11.
+[58408.020771] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[58408.092445] systemd[1]: Starting systemd-journald.service - Journal Service...
+[58408.093324] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[58408.099808] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[58408.102935] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 24.
+[58408.103513] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[58408.123930] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[58408.189532] systemd-journald[456129]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[58408.274867] systemd[1]: Started systemd-journald.service - Journal Service.
+[58419.635142] random: crng reseeded due to virtual machine fork
+[58424.076350] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58424.439474] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58424.874418] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58425.252919] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58425.577205] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58425.800672] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[58426.020529] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[59162.227639] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[59162.228111] CPU: 5 UID: 0 PID: 456135 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[59162.228544] RIP: 0033:0x7fe5a062cef3
+[59162.228792] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[59162.229753] RSP: 002b:00007ffc0525c158 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[59162.230150] RAX: fffffffffffffffc RBX: 000055a46950bf30 RCX: 00007fe5a062cef3
+[59162.230560] RDX: 0000000000000010 RSI: 000055a469534280 RDI: 0000000000000009
+[59162.230958] RBP: 000055a46950c0c0 R08: 0000000000000004 R09: 00007fe5a07c6080
+[59162.231296] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[59162.231633] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[59162.231978] FS:  00007fe5a039a8c0 GS:  0000000000000000
+[62508.359657] systemd-logind: systemd-logind: potentially unexpected fatal signal 6.
+[62508.360654] CPU: 7 UID: 0 PID: 436436 Comm: systemd-logind Not tainted 6.12.94+ #1
+[62508.360938] RIP: 0033:0x7f1121728dc7
+[62508.361190] Code: 73 01 c3 48 8b 0d 39 80 0c 00 f7 d8 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 b8 29 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 09 80 0c 00 f7 d8 64 89 01 48
+[62508.361918] RSP: 002b:00007ffc708ff878 EFLAGS: 00000246 ORIG_RAX: 0000000000000029
+[62508.362231] RAX: 000000000000000a RBX: 0000000000000000 RCX: 00007f1121728dc7
+[62508.362516] RDX: 0000000000000000 RSI: 0000000000080002 RDI: 0000000000000001
+[62508.362815] RBP: 00007ffc708ff9b0 R08: 0000000000000000 R09: 0000000000000000
+[62508.363104] R10: 0000000000000007 R11: 0000000000000246 R12: 0000000000000000
+[62508.363390] R13: 00007f1121abf348 R14: 0000000000000000 R15: 0000000000000016
+[62508.363678] FS:  00007f1121b3c580 GS:  0000000000000000
+[65580.778827] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[65580.780385] CPU: 1 UID: 0 PID: 462707 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[65580.780705] RIP: 0033:0x7fc4957f7ef3
+[65580.781145] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[65580.781892] RSP: 002b:00007fff9d1e0708 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[65580.782205] RAX: fffffffffffffffc RBX: 00005626b4bf50a0 RCX: 00007fc4957f7ef3
+[65580.782505] RDX: 0000000000000010 RSI: 00005626b4c1d250 RDI: 0000000000000009
+[65580.782800] RBP: 00005626b4bf5230 R08: 0000000000000004 R09: 00007fc495991080
+[65580.783098] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[65580.783375] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[65580.783660] FS:  00007fc4955658c0 GS:  0000000000000000
+[69728.286769] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[69728.287326] CPU: 7 UID: 0 PID: 488463 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[69728.287600] RIP: 0033:0x7f8d86708ef3
+[69728.287896] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[69728.288628] RSP: 002b:00007ffe9e69d8f8 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[69728.288872] RAX: fffffffffffffffc RBX: 000055c8fa354f30 RCX: 00007f8d86708ef3
+[69728.289119] RDX: 0000000000000010 RSI: 000055c8fa37d280 RDI: 0000000000000009
+[69728.289409] RBP: 000055c8fa3550c0 R08: 0000000000000004 R09: 00007f8d868a2080
+[69728.289628] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[69728.289847] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[69728.290113] FS:  00007f8d865108c0 GS:  0000000000000000
+[71472.902071] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[71472.906806] CPU: 4 UID: 997 PID: 451907 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[71472.909842] RIP: 0033:0x7f198fa46f36
+[71472.911123] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[71472.911876] RSP: 002b:00007ffc1038e0b0 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[71472.912185] RAX: fffffffffffffffc RBX: 000055b42abd20a0 RCX: 00007f198fa46f36
+[71472.912479] RDX: 0000000000000010 RSI: 000055b42abd8250 RDI: 0000000000000004
+[71472.912801] RBP: 000055b42abd1f10 R08: 0000000000000000 R09: 000055b42abd7c1c
+[71472.913130] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[71472.913490] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[71472.913819] FS:  00007f198ff34480 GS:  0000000000000000
+[76986.982084] random: crng reseeded due to virtual machine fork
+[76990.930660] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[76991.229618] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[76991.454054] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[76991.769205] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[76991.971492] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[76992.266662] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[78348.889384] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[78348.889781] CPU: 3 UID: 0 PID: 491534 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[78348.890111] RIP: 0033:0x7f0812f9aef3
+[78348.890352] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[78348.891262] RSP: 002b:00007ffc59916308 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[78348.891673] RAX: 0000000000000001 RBX: 00005653cf3850a0 RCX: 00007f0812f9aef3
+[78348.892044] RDX: 0000000000000010 RSI: 00005653cf3ad250 RDI: 0000000000000009
+[78348.892381] RBP: 00005653cf385230 R08: 0000000000000004 R09: 00007f0813134080
+[78348.892762] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[78348.893132] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[78348.893516] FS:  00007f0812d088c0 GS:  0000000000000000
+[78359.454161] random: crng reseeded due to virtual machine fork
+[81179.959133] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[81179.959516] CPU: 6 UID: 0 PID: 456129 Comm: systemd-journal Not tainted 6.12.94+ #1
+[81179.959861] RIP: 0033:0x7f78247b8ce0
+[81179.960033] Code: 72 fb 0d 00 e8 d1 4e eb ff 48 8b 1c 24 bd ea ff ff ff e9 1e ff ff ff e8 ae 82 eb ff bd f4 ff ff ff e9 0f ff ff ff 0f 1f 40 00 <55> 53 48 83 ec 18 64 48 8b 04 25 28 00 00 00 48 89 44 24 08 31 c0
+[81179.960811] RSP: 002b:00007ffe0c95dbc8 EFLAGS: 00010206
+[81179.961045] RAX: 000000000000000a RBX: 000000000000000a RCX: 000000000000001c
+[81179.961388] RDX: 000000055f46b90d RSI: 00007ffe0c95dc0c RDI: 000055f46b915120
+[81179.961705] RBP: 00007ffe0c95dc30 R08: 0000000000000007 R09: 000055f46b90d2f0
+[81179.962010] R10: 83f001c1b1bdf5a9 R11: 0000000000000293 R12: 000055f46b913514
+[81179.962299] R13: 0000000000000007 R14: 000055f46b914620 R15: 0000000000000000
+[81179.962558] FS:  00007f78240ad5c0 GS:  0000000000000000
+[81179.984876] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[81179.985462] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[81180.018753] systemd[1]: systemd-journald.service: Consumed 5.861s CPU time.
+[81180.038193] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 12.
+[81180.038837] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[81180.039243] systemd[1]: systemd-journald.service: Consumed 5.861s CPU time.
+[81180.073912] systemd[1]: Starting systemd-journald.service - Journal Service...
+[81180.139004] systemd-journald[564878]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[81180.143461] systemd[1]: Started systemd-journald.service - Journal Service.
+[81191.014190] random: crng reseeded due to virtual machine fork
+[81950.069271] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[81950.069855] CPU: 0 UID: 0 PID: 545773 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[81950.069983] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[81950.070356] RIP: 0033:0x7f1eeea35ef3
+[81950.070742] CPU: 6 UID: 997 PID: 515737 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[81950.070947] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[81950.071282] RIP: 0033:0x7fa2ad846f36
+[81950.072328] RSP: 002b:00007ffe93750428 EFLAGS: 00000202
+[81950.072479] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[81950.072478]  ORIG_RAX: 00000000000000e8
+[81950.072686] RSP: 002b:00007ffc07d144f0 EFLAGS: 00000293
+[81950.073642] RAX: 0000000000000001 RBX: 000056242f508f30 RCX: 00007f1eeea35ef3
+[81950.073801]  ORIG_RAX: 00000000000000e8
+[81950.074069] RDX: 0000000000000010 RSI: 000056242f531280 RDI: 0000000000000009
+[81950.074359] RAX: 0000000000000002 RBX: 0000555a96d190a0 RCX: 00007fa2ad846f36
+[81950.074580] RBP: 000056242f5090c0 R08: 0000000000000004 R09: 00007f1eeebcf080
+[81950.074582] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[81950.074583] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[81950.074901] RDX: 0000000000000010 RSI: 0000555a96d1f250 RDI: 0000000000000004
+[81950.075342] FS:  00007f1eee7a38c0 GS:  0000000000000000
+[81950.075647] RBP: 0000555a96d18f10 R08: 0000000000000000 R09: 0000555a96d1ec1c
+[81950.077211] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[81950.077518] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[81950.077823] FS:  00007fa2add35480 GS:  0000000000000000
+[81961.493635] random: crng reseeded due to virtual machine fork
+[82612.272853] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[82612.273462] CPU: 0 UID: 0 PID: 564878 Comm: systemd-journal Not tainted 6.12.94+ #1
+[82612.273970] RIP: 0033:0x7f931dd28b59
+[82612.274245] Code: ff 64 89 02 eb bd 66 2e 0f 1f 84 00 00 00 00 00 90 80 3d 91 0a 0d 00 00 41 89 ca 74 1c 45 31 c9 45 31 c0 b8 2c 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 67 c3 66 0f 1f 44 00 00 55 48 83 ec 20 48 89
+[82612.275212] RSP: 002b:00007fff0a2c39a8 EFLAGS: 00000246 ORIG_RAX: 000000000000002c
+[82612.275651] RAX: 000000000000000a RBX: 00007fff0a2c3ac0 RCX: 00007f931dd28b59
+[82612.276122] RDX: 000000000000000a RSI: 000055f9cf0ef9c8 RDI: 0000000000000017
+[82612.276537] RBP: 000055f9fd32be00 R08: 0000000000000000 R09: 0000000000000000
+[82612.276939] R10: 0000000000000040 R11: 0000000000000246 R12: 00007fff0a2c39f0
+[82612.277304] R13: 00007fff0a2c39e8 R14: 000055f9fd32a310 R15: 0000000000000000
+[82612.277704] FS:  00007f931d8a35c0 GS:  0000000000000000
+[82612.280333] systemd[1]: systemd-udevd.service: Watchdog timeout (limit 3min)!
+[82612.280713] systemd[1]: systemd-udevd.service: Killing process 567825 (systemd-udevd) with signal SIGABRT.
+[82612.285316] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[82612.285736] CPU: 0 UID: 0 PID: 567825 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[82612.286160] RIP: 0033:0x7fd94e5cfef3
+[82612.286377] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[82612.287415] RSP: 002b:00007fff636f0a98 EFLAGS: 00000202 ORIG_RAX: 00000000000000e8
+[82612.287860] RAX: 0000000000000001 RBX: 00005590a82520a0 RCX: 00007fd94e5cfef3
+[82612.288275] RDX: 0000000000000010 RSI: 00005590a827a250 RDI: 0000000000000009
+[82612.288714] RBP: 00005590a8252230 R08: 0000000000000004 R09: 00007fd94e769080
+[82612.289147] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[82612.289552] R13: 0000000000000009 R14: 000000000000005a R15: 0000000000000010
+[82612.289999] FS:  00007fd94e33d8c0 GS:  0000000000000000
+[82612.309264] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[82612.309779] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[82612.318500] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 13.
+[82612.319113] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[82612.324068] systemd[1]: Starting systemd-journald.service - Journal Service...
+[82612.332333] systemd[1]: systemd-udevd.service: Main process exited, code=killed, status=6/ABRT
+[82612.332858] systemd[1]: systemd-udevd.service: Failed with result 'watchdog'.
+[82612.334310] systemd[1]: systemd-udevd.service: Scheduled restart job, restart counter is at 30.
+[82612.334742] systemd[1]: Stopped systemd-udevd.service - Rule-based Manager for Device Events and Files.
+[82612.337376] systemd[1]: Starting systemd-udevd.service - Rule-based Manager for Device Events and Files...
+[82612.345039] systemd-journald[571474]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[82612.352975] systemd[1]: Started systemd-journald.service - Journal Service.
+[82625.032818] random: crng reseeded due to virtual machine fork
+[83375.696058] udevadm: systemd-udevd: potentially unexpected fatal signal 6.
+[83375.696349] CPU: 7 UID: 0 PID: 571491 Comm: systemd-udevd Not tainted 6.12.94+ #1
+[83375.696605] RIP: 0033:0x55cdf7823ee0
+[83375.696761] Code: 68 e8 00 00 00 e9 60 f1 ff ff ff 25 6a fe 12 00 68 e9 00 00 00 e9 50 f1 ff ff ff 25 62 fe 12 00 68 ea 00 00 00 e9 40 f1 ff ff <ff> 25 5a fe 12 00 68 eb 00 00 00 e9 30 f1 ff ff ff 25 52 fe 12 00
+[83375.697432] RSP: 002b:00007ffcd3e50e58 EFLAGS: 00000246
+[83375.697641] RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000000
+[83375.697907] RDX: 0000000000000008 RSI: 00007ffcd3e50e60 RDI: 000000000000000b
+[83375.698191] RBP: 000055ce312e00c0 R08: 000000000000000b R09: 00007f7a842c5080
+[83375.698473] R10: 0000000000000007 R11: 000f27158fb90812 R12: 0000000000000001
+[83375.698734] R13: 7fffffffffffffff R14: 0000000000000000 R15: 0000000000000000
+[83375.698943] FS:  00007f7a83e998c0 GS:  0000000000000000
+[83375.702193] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[83375.702675] CPU: 2 UID: 997 PID: 567854 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[83375.703096] RIP: 0033:0x7f886ed26f36
+[83375.703314] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[83375.704324] RSP: 002b:00007ffdcb433e80 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[83375.704749] RAX: 0000000000000002 RBX: 000055aafc87a0a0 RCX: 00007f886ed26f36
+[83375.705127] RDX: 0000000000000010 RSI: 000055aafc880250 RDI: 0000000000000004
+[83375.705521] RBP: 000055aafc879f10 R08: 0000000000000000 R09: 000055aafc8828f0
+[83375.705906] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[83375.706342] R13: 0000000000000010 R14: 000000000000000c R15: 0000000000000078
+[83375.706750] FS:  00007f886e332480 GS:  0000000000000000
+[83389.252676] random: crng reseeded due to virtual machine fork
+[84299.708345] random: crng reseeded due to virtual machine fork
+[84806.544163] systemd-timesyncd: systemd-timesyn: potentially unexpected fatal signal 6.
+[84806.544521] CPU: 6 UID: 997 PID: 575600 Comm: systemd-timesyn Not tainted 6.12.94+ #1
+[84806.544846] RIP: 0033:0x7f8519726f36
+[84806.545052] Code: 10 89 7c 24 0c 89 4c 24 1c e8 06 c9 f7 ff 44 8b 54 24 1c 8b 54 24 18 41 89 c0 48 8b 74 24 10 8b 7c 24 0c b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 32 44 89 c7 89 44 24 0c e8 56 c9 f7 ff 8b 44
+[84806.545757] systemd-journald: systemd-journal: potentially unexpected fatal signal 6.
+[84806.545855] RSP: 002b:00007ffe0a43a060 EFLAGS: 00000293 ORIG_RAX: 00000000000000e8
+[84806.546188] CPU: 2 UID: 0 PID: 571474 Comm: systemd-journal Not tainted 6.12.94+ #1
+[84806.546467] RAX: 0000000000000002 RBX: 000056014c3b20a0 RCX: 00007f8519726f36
+[84806.546774] RIP: 0033:0x7ff122926ef3
+[84806.547040] RDX: 0000000000000010 RSI: 000056014c3b8250 RDI: 0000000000000004
+[84806.547192] Code: 64 89 01 48 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 80 3d f1 26 0d 00 00 41 89 ca 74 14 b8 e8 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 5d c3 0f 1f 40 00 48 83 ec 28 89 54 24 18 48
+[84806.547464] RBP: 000056014c3b1f10 R08: 0000000000000000 R09: 000056014c3ba020
+[84806.548179] RSP: 002b:00007ffc0388d1d8 EFLAGS: 00000202
+[84806.548470] R10: 00000000ffffffff R11: 0000000000000293 R12: ffffffffffffffff
+[84806.548471]  ORIG_RAX: 00000000000000e8
+[84806.548472] RAX: 0000000000000002 RBX: 0000560ffc5d14a0 RCX: 00007ff122926ef3
+[84806.548688] R13: 0000000000000010 R14: 0000000000000009 R15: 000000000000005a
+[84806.548969] RDX: 0000000000000030 RSI: 0000560ffc5d6c40 RDI: 0000000000000010
+[84806.549124] FS:  00007f85192df480 GS:  0000000000000000
+[84806.549390] RBP: 0000560ffc5d1310 R08: 0000000000000030 R09: 00007ff122e94080
+[84806.550572] R10: 00000000ffffffff R11: 0000000000000202 R12: ffffffffffffffff
+[84806.550908] R13: 0000000000000030 R14: 0000000000000018 R15: 00000000000000f0
+[84806.551259] FS:  00007ff12249c5c0 GS:  0000000000000000
+[84806.553811] systemd[1]: systemd-journald.service: Main process exited, code=killed, status=6/ABRT
+[84806.554301] systemd[1]: systemd-journald.service: Failed with result 'watchdog'.
+[84806.556643] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 14.
+[84806.557118] systemd[1]: Stopped systemd-journald.service - Journal Service.
+[84806.590283] systemd[1]: Starting systemd-journald.service - Journal Service...
+[84806.590912] systemd[1]: systemd-timesyncd.service: Main process exited, code=killed, status=6/ABRT
+[84806.591467] systemd[1]: systemd-timesyncd.service: Failed with result 'watchdog'.
+[84806.592903] systemd[1]: systemd-timesyncd.service: Scheduled restart job, restart counter is at 17.
+[84806.593574] systemd[1]: Stopped systemd-timesyncd.service - Network Time Synchronization.
+[84806.596484] systemd[1]: Starting systemd-timesyncd.service - Network Time Synchronization...
+[84806.601966] systemd-journald[598951]: File /run/log/journal/eb120235dedf406b8f91be251fcc6224/system.journal corrupted or uncleanly shut down, renaming and replacing.
+[84806.606825] systemd[1]: Started systemd-journald.service - Journal Service.
+[84816.387955] random: crng reseeded due to virtual machine fork
+[87142.735001] random: crng reseeded due to virtual machine fork
+[87144.572049] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87144.863107] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87145.125898] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87145.380431] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87145.610749] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87145.823493] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87146.038869] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87146.256875] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87146.520033] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87146.762520] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[87456.389053] random: crng reseeded due to virtual machine fork
+[88144.509484] random: crng reseeded due to virtual machine fork
+[91153.673959] random: crng reseeded due to virtual machine fork
+[91156.979101] fill_balloon: 3 callbacks suppressed
+[91156.979123] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[91157.293353] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[91157.540662] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[91157.797166] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[91467.093807] random: crng reseeded due to virtual machine fork
+[92450.939167] random: crng reseeded due to virtual machine fork
+[93479.990190] random: crng reseeded due to virtual machine fork
+[97572.382558] random: crng reseeded due to virtual machine fork
+[97875.298222] random: crng reseeded due to virtual machine fork
+[99125.179940] random: crng reseeded due to virtual machine fork
+[99732.481799] random: crng reseeded due to virtual machine fork
+[101296.005451] random: crng reseeded due to virtual machine fork
+[103518.894025] random: crng reseeded due to virtual machine fork
+[104839.162520] random: crng reseeded due to virtual machine fork
+[105164.536410] random: crng reseeded due to virtual machine fork
+[107089.656835] random: crng reseeded due to virtual machine fork
+[108928.943518] random: crng reseeded due to virtual machine fork
+[110182.762223] random: crng reseeded due to virtual machine fork
+[112439.867787] random: crng reseeded due to virtual machine fork
+[112750.417155] random: crng reseeded due to virtual machine fork
+[113094.892072] random: crng reseeded due to virtual machine fork
+[113399.830689] random: crng reseeded due to virtual machine fork
+[113726.047665] random: crng reseeded due to virtual machine fork
+[114045.065437] random: crng reseeded due to virtual machine fork
+[115353.740682] random: crng reseeded due to virtual machine fork
+[115657.529485] random: crng reseeded due to virtual machine fork
+[116599.228717] random: crng reseeded due to virtual machine fork
+[116924.190450] random: crng reseeded due to virtual machine fork
+[117873.910326] random: crng reseeded due to virtual machine fork
+[119108.088700] random: crng reseeded due to virtual machine fork
+[119419.820575] random: crng reseeded due to virtual machine fork
+[119728.516206] random: crng reseeded due to virtual machine fork
+[120029.033178] random: crng reseeded due to virtual machine fork
+[120807.734987] random: crng reseeded due to virtual machine fork
+[123834.350122] random: crng reseeded due to virtual machine fork
+[124468.308329] random: crng reseeded due to virtual machine fork
+[127069.280924] random: crng reseeded due to virtual machine fork
+[130647.554912] random: crng reseeded due to virtual machine fork
+[132012.129385] random: crng reseeded due to virtual machine fork
+[132014.438883] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132014.829288] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132015.166321] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132015.563387] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132015.806436] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132016.078871] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132016.303075] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132016.516578] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132016.736699] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132016.959554] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132019.654937] fill_balloon: 11 callbacks suppressed
+[132019.654949] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132019.868375] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132020.079918] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132020.290034] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132020.495608] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132020.711780] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132020.925569] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132021.137818] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132021.347904] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132021.556119] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[132325.302543] random: crng reseeded due to virtual machine fork
+[132641.707952] random: crng reseeded due to virtual machine fork
+[134472.178223] random: crng reseeded due to virtual machine fork
+[136111.816923] random: crng reseeded due to virtual machine fork
+[136441.497011] random: crng reseeded due to virtual machine fork
+[137691.526375] random: crng reseeded due to virtual machine fork
+[137995.324173] random: crng reseeded due to virtual machine fork
+[138320.810573] random: crng reseeded due to virtual machine fork
+[138633.878561] random: crng reseeded due to virtual machine fork
+[138954.335565] random: crng reseeded due to virtual machine fork
+[139306.355125] random: crng reseeded due to virtual machine fork
+[139308.454075] fill_balloon: 9 callbacks suppressed
+[139308.454095] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139308.671122] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139308.891309] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139309.386382] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139309.631484] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139310.155899] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139310.446800] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139310.842826] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139311.282721] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139623.106579] random: crng reseeded due to virtual machine fork
+[139624.899850] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[139951.487705] random: crng reseeded due to virtual machine fork
+[140283.210405] random: crng reseeded due to virtual machine fork
+[140285.754094] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140286.053826] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140286.616690] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140286.980276] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140287.293191] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140287.559945] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140287.775553] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140287.997715] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140288.377509] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140288.641656] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[140602.695375] random: crng reseeded due to virtual machine fork
+[140922.417121] random: crng reseeded due to virtual machine fork
+[141227.406224] random: crng reseeded due to virtual machine fork
+[141556.382335] random: crng reseeded due to virtual machine fork
+[142503.209019] random: crng reseeded due to virtual machine fork
+[142837.617133] random: crng reseeded due to virtual machine fork
+[143475.240944] random: crng reseeded due to virtual machine fork
+[143790.708881] random: crng reseeded due to virtual machine fork
+[144135.252273] random: crng reseeded due to virtual machine fork
+[144530.562022] traps: antigravity[1214646] trap int3 ip:55cf57bf7521 sp:7fff3ea5dc90 error:0 in antigravity[937e521,55cf51c74000+9eee000]
+[144530.562486] antigravity: antigravity: potentially unexpected fatal signal 5.
+[144530.562770] CPU: 4 UID: 1000 PID: 1214646 Comm: antigravity Not tainted 6.12.94+ #1
+[144530.563089] RIP: 0033:0x55cf57bf7521
+[144530.563260] Code: fb ff ff 0f 11 04 24 48 8d bd c8 fb ff ff e8 26 00 00 00 e9 5b ff ff ff e8 dc 99 f6 03 48 8d 3d 00 bb d7 f7 e8 f0 c5 e8 fb cc <0f> 0b cc cc cc cc cc cc cc cc cc cc cc cc cc 55 48 89 e5 53 48 83
+[144530.563983] RSP: 002b:00007fff3ea5dc90 EFLAGS: 00000246
+[144530.564184] RAX: 0000000000000000 RBX: 000000000000007e RCX: 00007fd67e22a4f9
+[144530.564459] RDX: bfbfddfe3792d902 RSI: 0000000000000080 RDI: 000000000000007f
+[144530.564720] RBP: 00007fff3ea5e0f0 R08: 000000007962646f R09: 0000000000000000
+[144530.565015] R10: 000000000000000a R11: 0000000000000246 R12: 00007fff3ea5dcc0
+[144530.565312] R13: 00007fff3ea5e171 R14: 00007fff3ea5e1e8 R15: 00007fff3ea5e170
+[144530.565590] FS:  00007fd67cd47400 GS:  0000000000000000
+[144900.905629] random: crng reseeded due to virtual machine fork
+[144904.820549] fill_balloon: 2 callbacks suppressed
+[144904.820584] virtio_balloon virtio0: Out of puff! Can't get 1 pages
+[144906.268512] virtio_balloon virtio0: Out of puff! Can't get 1 pages

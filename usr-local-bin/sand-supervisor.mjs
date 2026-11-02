@@ -8,6 +8,7 @@ import {
   createWriteStream,
   existsSync,
   fstatSync,
+  lstatSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -140,6 +141,24 @@ export {
   ownsBoxWideDuties,
   ownsDesktopDuties,
 } from "./sand-supervisor-contract.mjs";
+import {
+  BOX_RUNTIME_APPLIED_MARKER_PATH,
+  BOX_RUNTIME_PROCESS_RESTART_PATH,
+  BOX_RUNTIME_RETRY_BACKOFF_MS,
+  BOX_RUNTIME_ROLLOUT_MARKER_PATH,
+  boxRuntimeRolloutEnabled,
+  processRestartRequestText,
+  readProcCmdlines,
+  readProcessRestartRequest,
+  revokeInstalledBoxRuntimeAuthorization,
+  rolloutAuthorizationPresent,
+  runInstalledBoxRuntime,
+  processAlreadyExited,
+  signalRuntimeProcesses,
+  trustedProcessRestartRequest,
+  trustedRolloutMarker,
+  writeMarkerNoFollow,
+} from "./sand-supervisor-box-runtime.mjs";
 export {
   HOST_BUSY_STATES,
   HOST_CRASH_EXIT_SIGNALS,
@@ -267,6 +286,8 @@ const FORK_RFB_WEBSOCKET_PORT = 6081;
 // <<< box port table <<<
 export const POST_SWAP_CRASH_LOOP_ERROR_CLASS = "post-swap-crash-loop";
 export const POST_SWAP_ROLLBACK_FAILED_ERROR_CLASS = "rollback-failed";
+// oom_score_adj discounts that many thousandths of the box's memory from a task's OOM score, so a normal host stays behind every score-0 workload and a runaway host still dies before the desktop: https://man7.org/linux/man-pages/man5/proc_pid_oom_score_adj.5.html
+export const HOST_OOM_SCORE_ADJ = -200;
 const PREPARE_UPGRADE_PATH = "/prepare-upgrade";
 
 export function probeRfbTcp(port, timeoutMs = FORK_RFB_PROBE_TIMEOUT_MS) {
@@ -358,6 +379,17 @@ export class Supervisor extends DesktopSupervisor {
     this.commandPath = opts.commandPath ?? COMMAND_PATH;
     this.acksDir = opts.acksDir ?? ACKS_DIR;
     this.gatewayRecordPath = opts.gatewayRecordPath ?? join(AGENT_DATA_ROOT, "gateway.json");
+    this.boxRuntimeRolloutMarkerPath =
+      opts.boxRuntimeRolloutMarkerPath ?? BOX_RUNTIME_ROLLOUT_MARKER_PATH;
+    this.boxRuntimeProcessRestartPath =
+      opts.boxRuntimeProcessRestartPath ?? BOX_RUNTIME_PROCESS_RESTART_PATH;
+    this.revokeBoxRuntimeAuthorization =
+      opts.revokeBoxRuntimeAuthorization ?? (() => revokeInstalledBoxRuntimeAuthorization());
+    this.rolloutAuthorizationPresent =
+      opts.rolloutAuthorizationPresent ?? rolloutAuthorizationPresent;
+    this.boxRuntimeAsRoot =
+      opts.boxRuntimeAsRoot ?? (typeof process.getuid === "function" && process.getuid() === 0);
+    this.boxRuntimeInstallerSpawn = opts.boxRuntimeInstallerSpawn;
     this.appliedCommandIds = new Set();
     this.stuckCommand = null;
     this.bootFetchBudgetMs =
@@ -465,6 +497,11 @@ export class Supervisor extends DesktopSupervisor {
           this.syncBoxScripts();
         } catch (error) {
           log(`box-script sync tick error: ${String(error)}`);
+        }
+        try {
+          await this.syncBoxRuntime();
+        } catch (error) {
+          log(`box-runtime rollout tick error: ${String(error)}`);
         }
       }
       this.writeStatus();
@@ -757,6 +794,176 @@ export class Supervisor extends DesktopSupervisor {
 
   readHostVersion() {
     return readVersionMarker(HOST_VERSION_PATH);
+  }
+
+  rolloutMarkerTrusted() {
+    let stat;
+    try {
+      stat = lstatSync(this.boxRuntimeRolloutMarkerPath);
+    } catch (error) {
+      if (error != null && (error.code === "ENOENT" || error.code === "EACCES")) return false;
+      throw error;
+    }
+    const euid = typeof process.geteuid === "function" ? process.geteuid() : undefined;
+    return trustedRolloutMarker(stat, euid);
+  }
+
+  async syncBoxRuntime() {
+    const enabled = boxRuntimeRolloutEnabled({
+      env: process.env,
+      markerExists: this.rolloutMarkerTrusted(),
+    });
+    if (!enabled) {
+      this.boxRuntimeRetryAtMs = null;
+      this.retireBoxRuntimeAuthorization();
+      return;
+    }
+    this.boxRuntimeAuthorizationArmed = true;
+    const retryAt = this.boxRuntimeRetryAtMs;
+    const bundleVersion = this.readHostVersion();
+    if (
+      (retryAt == null || Date.now() >= retryAt) &&
+      bundleVersion !== this.boxRuntimeHandledVersion &&
+      !this.runtimeMarkerMatchesBundle()
+    ) {
+      const outcome = this.runBoxRuntimeInstall();
+      if (outcome.status === "failed") {
+        if (
+          !boxRuntimeRolloutEnabled({
+            env: process.env,
+            markerExists: this.rolloutMarkerTrusted(),
+          })
+        ) {
+          this.boxRuntimeRetryAtMs = null;
+        } else {
+          this.boxRuntimeRetryAtMs = Date.now() + BOX_RUNTIME_RETRY_BACKOFF_MS;
+          log(`box-runtime rollout failed (${outcome.reason}); retrying after backoff`);
+        }
+      } else {
+        this.boxRuntimeRetryAtMs = null;
+        this.boxRuntimeHandledVersion = bundleVersion;
+        if (outcome.status === "synced") {
+          const processes = outcome.restart.length > 0 ? outcome.restart.join(",") : "none";
+          log(`box-runtime rollout applied ${outcome.version ?? "unknown"} (restart ${processes})`);
+        } else if (outcome.reason !== "marker current") {
+          log(`box-runtime rollout skipped ${bundleVersion ?? "unknown"} (${outcome.reason})`);
+        }
+        this.noteRuntimeRestarts(outcome);
+      }
+    }
+    await this.flushRuntimeRestarts();
+  }
+
+  retireBoxRuntimeAuthorization() {
+    if (this.boxRuntimeAuthorizationArmed !== true) return;
+    if (!this.rolloutAuthorizationPresent()) {
+      this.boxRuntimeAuthorizationArmed = false;
+      this.boxRuntimeRevokeRetryAtMs = null;
+      return;
+    }
+    const retryAt = this.boxRuntimeRevokeRetryAtMs;
+    if (retryAt != null && Date.now() < retryAt) return;
+    if (this.revokeBoxRuntimeAuthorization() === true) {
+      this.boxRuntimeAuthorizationArmed = false;
+      this.boxRuntimeRevokeRetryAtMs = null;
+      log("box-runtime authorization revoked");
+      return;
+    }
+    this.boxRuntimeRevokeRetryAtMs = Date.now() + BOX_RUNTIME_RETRY_BACKOFF_MS;
+    log("box-runtime authorization revoke failed; retrying after backoff");
+  }
+
+  runBoxRuntimeInstall() {
+    return runInstalledBoxRuntime({
+      enabled: true,
+      asRoot: this.boxRuntimeAsRoot,
+      authorizationPresent: () => this.rolloutAuthorizationPresent(),
+      spawnImpl: this.boxRuntimeInstallerSpawn,
+    });
+  }
+
+  runtimeMarkerMatchesBundle() {
+    try {
+      const applied = readFileSync(BOX_RUNTIME_APPLIED_MARKER_PATH, "utf8").trim();
+      const version = readFileSync(HOST_VERSION_PATH, "utf8").trim();
+      return applied.length > 0 && applied === version;
+    } catch (error) {
+      if (error != null && error.code !== "ENOENT") {
+        log(`box-runtime applied marker unreadable: ${String(error)}`);
+      }
+      return false;
+    }
+  }
+
+  noteRuntimeRestarts(outcome) {
+    if (outcome.restart.length === 0) return;
+    this.pendingRuntimeRestartPids = null;
+    this.unclearableRuntimeRestartRequest = null;
+  }
+
+  readRuntimeRestartGroups() {
+    const path = this.boxRuntimeProcessRestartPath;
+    try {
+      const euid = typeof process.geteuid === "function" ? process.geteuid() : undefined;
+      if (!trustedProcessRestartRequest(lstatSync(path), euid)) return [];
+      return readProcessRestartRequest(path);
+    } catch (error) {
+      if (error != null && error.code === "ENOENT") return [];
+      log(`box-runtime restart request unreadable: ${String(error)}`);
+      return [];
+    }
+  }
+
+  writeRuntimeRestartGroups(groups) {
+    const path = this.boxRuntimeProcessRestartPath;
+    try {
+      if (groups.length === 0) rmSync(path, { force: true });
+      else writeMarkerNoFollow(path, processRestartRequestText(groups));
+      return true;
+    } catch (error) {
+      log(`box-runtime restart request not updated: ${String(error)}`);
+      return false;
+    }
+  }
+
+  signalRuntimeRestarts(groups) {
+    return signalRuntimeProcesses({
+      groups,
+      onlyPids: this.pendingRuntimeRestartPids ?? null,
+      processes: readProcCmdlines("/proc"),
+      signal: (pid) => {
+        try {
+          process.kill(pid, "SIGTERM");
+          return true;
+        } catch (error) {
+          if (processAlreadyExited(error)) return true;
+          log(`box-runtime signal ${pid} failed: ${String(error)}`);
+          return false;
+        }
+      },
+    });
+  }
+
+  async flushRuntimeRestarts() {
+    const groups = this.readRuntimeRestartGroups();
+    if (groups.length === 0) return;
+    const request = processRestartRequestText(groups);
+    if (request === this.unclearableRuntimeRestartRequest) return;
+    const busy = await this.probeBusyState();
+    if (busy !== "idle" && busy !== "no-host") return;
+    const { signaled, failed } = this.signalRuntimeRestarts(groups);
+    if (signaled.length > 0) {
+      log(
+        `box-runtime restart signaled ${signaled
+          .map((entry) => `${entry.group}:${entry.pid}`)
+          .join(" ")}`,
+      );
+    }
+    this.pendingRuntimeRestartPids = failed.length > 0 ? failed.map((entry) => entry.pid) : null;
+    const remaining = [...new Set(failed.map((entry) => entry.group))];
+    this.unclearableRuntimeRestartRequest = this.writeRuntimeRestartGroups(remaining)
+      ? null
+      : request;
   }
 
   syncBoxScripts() {
@@ -1412,9 +1619,8 @@ export class Supervisor extends DesktopSupervisor {
     for (const pid of this.stoppedHostPids) {
       if (!isLiveSandHostPid(pid)) this.stoppedHostPids.delete(pid);
     }
-    // oom_score_adj -1000 disables OOM killing for the task entirely, so the host takes -998 and stays killable when it is the process holding the memory: https://man7.org/linux/man-pages/man5/proc_pid_oom_score_adj.5.html
     try {
-      writeFileSync(`/proc/${child.pid}/oom_score_adj`, "-998");
+      writeFileSync(`/proc/${child.pid}/oom_score_adj`, String(HOST_OOM_SCORE_ADJ));
     } catch {}
     this.hostPauseRequested = false;
     this.restartAttempts += 1;

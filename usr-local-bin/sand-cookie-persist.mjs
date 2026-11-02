@@ -15,6 +15,7 @@ import {
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { TAILNET_HOST_SUFFIXES_PATH } from "./box-contract.generated.mjs";
 import {
   CDP_PORT_BASE,
   connectBrowser,
@@ -89,6 +90,13 @@ export const PERSIST_LINES = Object.freeze({
   "restore-empty": "no seed cookies to restore",
   "restore-incomplete": "proceeding to capture with seed cookies still absent from the live jar",
   "restore-seed-unusable": "seed corrupt or its version is not supported; nothing restored",
+  "restore-port-invalid": "--restore-port needs a TCP port; nothing restored",
+  "save-port-invalid": "--save-port needs a TCP port; nothing saved",
+  "save-no-seed": "no seed to refresh; nothing saved",
+  "save-saved": "seed refreshed from the live jar",
+  "save-unchanged": "seed already holds the live jar",
+  "save-paused": "seed unreadable, corrupt, or of an unsupported version; nothing saved",
+  "save-failed": "saving the live jar failed",
 });
 
 const PERSIST_COUNT_NAMES = new Set(["refused", "total", "cookies", "seed"]);
@@ -352,6 +360,42 @@ export function readSeed(fs, seedPath) {
   return Array.isArray(cookies) ? { kind: "ok", cookies } : { kind: "corrupt" };
 }
 
+const DNS_NAME = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+
+function bareDomain(text) {
+  return text.trim().toLowerCase().replace(/^\.+/, "").replace(/\.+$/, "");
+}
+
+export function readTailnetSuffixes(readFile = readFileSync, path = TAILNET_HOST_SUFFIXES_PATH) {
+  let text;
+  try {
+    text = readFile(path, "utf8");
+  } catch {
+    return [];
+  }
+  const suffixes = new Set();
+  for (const raw of String(text).split(/[\s,]+/)) {
+    const suffix = bareDomain(raw);
+    if (suffix.length <= 253 && DNS_NAME.test(suffix)) suffixes.add(suffix);
+  }
+  return [...suffixes];
+}
+
+export function isTailnetCookie(cookie, suffixes) {
+  if (typeof cookie?.domain !== "string") return false;
+  const host = bareDomain(cookie.domain);
+  return suffixes.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+
+export function withoutTailnetCookies(cookies, suffixes) {
+  if (suffixes.length === 0) return cookies;
+  return cookies.filter((c) => !isTailnetCookie(c, suffixes));
+}
+
+function tailnetSuffixes(deps) {
+  return deps.tailnetSuffixes?.() ?? [];
+}
+
 export function cookiesDigest(cookies) {
   const parts = cookies.map((c) =>
     [cookieKey(c), c.value, c.secure ? 1 : 0, c.httpOnly ? 1 : 0, c.sameSite ?? ""].join("\u0001"),
@@ -574,8 +618,14 @@ function mergeIntoSeed(deps, state, live, fromPrimary) {
       line: "capture-paused-version",
     };
   }
-  const saved = new Map((seed.kind === "ok" ? seed.cookies : []).map((c) => [cookieKey(c), c]));
-  const cookies = mergeJars(live, saved, state.seen, { keepUnseen: !fromPrimary });
+  const suffixes = tailnetSuffixes(deps);
+  const seedCookies = seed.kind === "ok" ? seed.cookies : [];
+  const keptSeed = withoutTailnetCookies(seedCookies, suffixes);
+  const saved = new Map(keptSeed.map((c) => [cookieKey(c), c]));
+  const cookies = withoutTailnetCookies(
+    mergeJars(live, saved, state.seen, { keepUnseen: !fromPrimary }),
+    suffixes,
+  );
   const seen = observeJars(live);
   if (fromPrimary && state.phase === "guarding" && dropsMostOfSeed(cookies, saved)) {
     logLine(deps, "guard-refused", null, { cookies: cookies.length, seed: saved.size });
@@ -584,7 +634,12 @@ function mergeIntoSeed(deps, state, live, fromPrimary) {
   const digest = cookiesDigest(cookies);
   const phase = fromPrimary ? "capturing" : state.phase;
   const result = { outcome: "captured", digest, seedCookies: cookies.length, seen, phase };
-  if (seed.kind === "ok" && capture.outcome === "captured" && digest === capture.digest) {
+  if (
+    seed.kind === "ok" &&
+    keptSeed.length === seedCookies.length &&
+    capture.outcome === "captured" &&
+    digest === capture.digest
+  ) {
     return result;
   }
   const copy = seed.kind === "corrupt" ? seedStep("copy", () => copyCorruptSeed(deps)) : null;
@@ -732,7 +787,7 @@ function writeSeedFile(deps, text) {
   seedStep("rename", () => deps.fs.renameSync(tmp, path));
 }
 
-export async function restoreFromSeed(deps, onlyPort, seen = new Map()) {
+export async function restoreFromSeed(deps, onlyPort, seen = new Map(), ports = undefined) {
   const seed = readSeed(deps.fs, deps.seedPath);
   if (seed.kind === "unreadable") {
     return { injected: 0, missingAfter: 0, seedCount: 0, unreadable: seed.code };
@@ -740,7 +795,10 @@ export async function restoreFromSeed(deps, onlyPort, seen = new Map()) {
   if (seed.kind === "corrupt" || seed.kind === "unsupported-version") {
     return { injected: 0, missingAfter: 0, seedCount: 0, corrupt: true };
   }
-  const seedCookies = seed.kind === "ok" ? seed.cookies : [];
+  const seedCookies = withoutTailnetCookies(
+    seed.kind === "ok" ? seed.cookies : [],
+    tailnetSuffixes(deps),
+  );
   if (seedCookies.length === 0) return { injected: 0, missingAfter: 0, seedCount: 0 };
 
   const saved = new Map(seedCookies.map((c) => [cookieKey(c), c]));
@@ -751,7 +809,7 @@ export async function restoreFromSeed(deps, onlyPort, seen = new Map()) {
     faults.refusal = { refused, total };
     reportRefused(browser, refused, total, error);
   };
-  const open = await openJars(deps, monitorPorts(deps), faults);
+  const open = await openJars(deps, ports ?? monitorPorts(deps), faults);
   let injected = 0;
   let missingAfter = seedCookies.length;
   try {
@@ -783,6 +841,80 @@ function logRestoreOutcome(deps, outcome, { injected, seedCount, code, refusal }
   else if (outcome === "empty") logLine(deps, "restore-empty");
   else if (seedCount === 0) logLine(deps, "restore-seed-unusable");
   else logLine(deps, "restore-incomplete", code ?? null, refusal ?? null);
+}
+
+export async function restoreLaunchedChrome(deps, port) {
+  const attempt = await restoreFromSeed(deps, port, new Map(), [port]);
+  if (attempt.unreadable != null) {
+    logLine(deps, "restore-waiting", attempt.unreadable);
+    return "waiting";
+  }
+  const outcome = classifyRestoreOutcome(attempt.seedCount, attempt.missingAfter, attempt.corrupt);
+  logRestoreOutcome(deps, outcome, attempt);
+  return outcome;
+}
+
+function parsePortFlag(argv, flag) {
+  const at = argv.indexOf(flag);
+  if (at === -1) return undefined;
+  const text = argv[at + 1] ?? "";
+  const port = /^\d{1,5}$/.test(text) ? Number.parseInt(text, 10) : 0;
+  return port >= 1 && port <= 65535 ? port : null;
+}
+
+export function parseRestorePort(argv) {
+  return parsePortFlag(argv, "--restore-port");
+}
+
+export function parseSavePort(argv) {
+  return parsePortFlag(argv, "--save-port");
+}
+
+export async function saveSeedFromPort(deps, port) {
+  if (readSeed(deps.fs, deps.seedPath).kind === "absent") {
+    logLine(deps, "save-no-seed");
+    return "no-seed";
+  }
+  try {
+    return await withSeedLock(
+      deps.seedPath,
+      async () => {
+        const browser = await deps.connect(port);
+        let jar;
+        try {
+          jar = await readCookies(browser);
+        } finally {
+          browser.close();
+        }
+        const seed = readSeed(deps.fs, deps.seedPath);
+        if (seed.kind !== "ok") {
+          logLine(deps, "save-paused");
+          return "paused";
+        }
+        const suffixes = tailnetSuffixes(deps);
+        const keptSeed = withoutTailnetCookies(seed.cookies, suffixes);
+        const saved = new Map(keptSeed.map((c) => [cookieKey(c), c]));
+        const cookies = withoutTailnetCookies(
+          mergeJars([{ port, jar }], saved, new Map(), { keepUnseen: true }),
+          suffixes,
+        );
+        if (
+          keptSeed.length === seed.cookies.length &&
+          cookiesDigest(cookies) === cookiesDigest(keptSeed)
+        ) {
+          logLine(deps, "save-unchanged");
+          return "unchanged";
+        }
+        writeSeedFile(deps, serializeSeed(cookies, deps.now?.() ?? Date.now()));
+        logLine(deps, "save-saved", null, { cookies: cookies.length });
+        return "saved";
+      },
+      seedLockOptions(deps),
+    );
+  } catch (error) {
+    logLine(deps, "save-failed", faultCode(error));
+    return "failed";
+  }
 }
 
 async function isAnyChromeUp(deps) {
@@ -897,15 +1029,69 @@ function settleWaiting(deps, state, code) {
 async function main() {
   const log = createPersistLog();
   exitOnUncaught(log);
-  if (!dropToBoxUser(log)) return;
+  const savePort = parseSavePort(process.argv.slice(2));
+  if (savePort === null) {
+    log("save-port-invalid");
+    process.exitCode = 2;
+    return;
+  }
+  const restorePort = parseRestorePort(process.argv.slice(2));
+  if (restorePort === null) {
+    log("restore-port-invalid");
+    return;
+  }
+  if (!dropToBoxUser(log)) {
+    if (savePort !== undefined) process.exitCode = 1;
+    return;
+  }
+  const report = persistCdpReporters(log);
+  const connect = (port) => connectBrowser(port, report.onDroppedFrame);
+  if (savePort !== undefined) {
+    const outcome = await saveSeedFromPort(
+      {
+        connect,
+        seedPath: SEED_PATH,
+        fs: {
+          copyFileSync,
+          mkdirSync,
+          readdirSync,
+          readFileSync,
+          renameSync,
+          rmdirSync,
+          rmSync,
+          statSync,
+          unlinkSync,
+          writeFileSync,
+        },
+        tailnetSuffixes: () => readTailnetSuffixes(),
+        log,
+      },
+      savePort,
+    );
+    if (outcome === "failed" || outcome === "paused") process.exitCode = 1;
+    return;
+  }
+  if (restorePort !== undefined) {
+    await restoreLaunchedChrome(
+      {
+        connect,
+        discoverPorts: () => [],
+        seedPath: SEED_PATH,
+        fs: { readFileSync },
+        tailnetSuffixes: () => readTailnetSuffixes(),
+        log,
+      },
+      restorePort,
+    );
+    return;
+  }
   if (!isCookiePersistEnabled()) {
     log("store-off");
     return;
   }
   log("starting");
-  const report = persistCdpReporters(log);
   const deps = {
-    connect: (port) => connectBrowser(port, report.onDroppedFrame),
+    connect,
     discoverPorts: () => discoverMonitorPorts(undefined, report.onUnreadable),
     seedPath: SEED_PATH,
     fs: {
@@ -920,6 +1106,7 @@ async function main() {
       unlinkSync,
       writeFileSync,
     },
+    tailnetSuffixes: () => readTailnetSuffixes(),
     log,
     emitTelemetry: (event) => appendTelemetry(log, event),
   };

@@ -1,8 +1,16 @@
-import { appendFileSync, existsSync, renameSync, watch, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  readFileSync,
+  renameSync,
+  watch,
+  writeFileSync,
+} from "node:fs";
 import { basename, dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
+  SAND_BOX_TAILNET_CHROME_CDP_PORT,
   WEB_BOT_AUTH_SIGNATURE_SOURCES,
   WEB_BOT_AUTH_SIGNED_CACHE_PATH,
   WEB_BOT_AUTH_SIGNED_TTL_MS,
@@ -17,13 +25,8 @@ import {
 } from "./cdp-cookies.mjs";
 
 export const WEB_BOT_AUTH_MARKER = "/tmp/sand-web-bot-auth";
-export const WEB_BOT_AUTH_XHR_FETCH_MARKER = "/tmp/sand-web-bot-auth-xhr-fetch";
-export const WEB_BOT_AUTH_IFRAMES_MARKER = "/tmp/sand-web-bot-auth-iframes";
-export const WEB_BOT_AUTH_DEFAULT_SCOPE = Object.freeze({
-  xhrFetch: false,
-  iframes: false,
-});
 export const TUNNEL_CLIENT_MARKER = "/tmp/sand-egress-tunnel-client";
+export const SAND_TAILNET_SUFFIX_FILE = "/var/lib/sand/tailnet/host-suffixes";
 export const WEB_BOT_AUTH_SIGNED_MAX_ENTRIES = 64;
 export const WEB_BOT_AUTH_FAILURE_REPORT_INTERVAL_MS = 60_000;
 export const WEB_BOT_AUTH_FAILURE_COUNT_MAX = 10_000;
@@ -178,7 +181,10 @@ const RENEWAL_PATH = "/sand-box/inference-credential";
 const DEFAULT_BACKEND_URL = "https://api2.cursor.sh";
 const REQUEST_TIMEOUT_MS = 1_000;
 const OFF_HOT_PATH_RENEWAL_TIMEOUT_MS = 2_000;
-const RENEWAL_BACKOFF_MS = 5_000;
+const RENEWAL_BACKOFF = {
+  accessLapsed: { firstStepMs: 60_000, capMs: 30 * 60_000 },
+  otherFailure: { firstStepMs: 5_000, capMs: 5 * 60_000 },
+};
 const HOST_MATCHED_TOKEN_EXPIRY_LEEWAY_MS = 30_000;
 const TOKEN_FALLBACK_TTL_MS = 10 * 60_000;
 const FORBIDDEN_STREAK_LIMIT = 3;
@@ -193,55 +199,45 @@ const SIGNATURE_HEADER_NAMES_LOWER = new Set(
   SIGNATURE_HEADER_NAMES.map((name) => name.toLowerCase()),
 );
 
-export const WEB_BOT_AUTH_DOCUMENT_FETCH_ENABLE_PATTERNS = [
-  { resourceType: "Document", requestStage: "Request" },
-];
 export const WEB_BOT_AUTH_FETCH_ENABLE_PATTERNS = [
   { resourceType: "Document", requestStage: "Request" },
   { resourceType: "XHR", requestStage: "Request" },
   { resourceType: "Fetch", requestStage: "Request" },
 ];
 
-const ATTACH_IFRAME_TARGETS = {
-  autoAttach: true,
-  waitForDebuggerOnStart: true,
-  flatten: true,
-  filter: [{ type: "iframe", exclude: false }, { exclude: true }],
-};
-const DETACH_IFRAME_TARGETS = {
-  autoAttach: false,
-  waitForDebuggerOnStart: false,
-  flatten: true,
-};
-const SIGNED_SESSION_TARGET_TYPES = new Set(["page", "iframe"]);
-
-export function webBotAuthFetchEnablePatterns(scope) {
-  return scope.xhrFetch
-    ? WEB_BOT_AUTH_FETCH_ENABLE_PATTERNS
-    : WEB_BOT_AUTH_DOCUMENT_FETCH_ENABLE_PATTERNS;
-}
-
-function isSameWebBotAuthScope(a, b) {
-  return a.xhrFetch === b.xhrFetch && a.iframes === b.iframes;
-}
-
-export function isWebBotAuthSigningCandidate(
-  params,
-  topFrameId,
-  requestUrl,
-  scope = WEB_BOT_AUTH_DEFAULT_SCOPE,
-) {
+export function isWebBotAuthSigningCandidate(params, topFrameId, requestUrl) {
   if (requestUrl?.protocol !== "https:") return false;
   const resourceType = params?.resourceType;
   if (
-    !webBotAuthFetchEnablePatterns(scope).some((pattern) => pattern.resourceType === resourceType)
+    !WEB_BOT_AUTH_FETCH_ENABLE_PATTERNS.some((pattern) => pattern.resourceType === resourceType)
   ) {
     return false;
   }
-  if (resourceType === "Document") {
-    return scope.iframes || params.frameId === topFrameId;
-  }
+  if (resourceType === "Document") return params.frameId === topFrameId;
   return true;
+}
+
+export function readTailnetHostSuffixes({
+  file = SAND_TAILNET_SUFFIX_FILE,
+  env = process.env.SAND_TAILNET_HOST_SUFFIXES,
+} = {}) {
+  let listed = "";
+  try {
+    listed = readFileSync(file, "utf8");
+  } catch (error) {
+    if (error?.code !== "ENOENT") log(`tailnet host list unreadable: ${String(error)}`);
+  }
+  const suffixes = new Set();
+  for (const raw of `${listed}\n${env ?? ""}`.split(/[\s,]+/)) {
+    const suffix = raw.toLowerCase().replace(/^\./, "").replace(/\.$/, "");
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(suffix)) suffixes.add(suffix);
+  }
+  return [...suffixes];
+}
+
+export function isUnderTailnetSuffix(hostname, suffixes) {
+  const host = hostname.toLowerCase().replace(/\.+$/, "");
+  return suffixes.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
 }
 
 function parseSignatureHeaders(value) {
@@ -321,15 +317,16 @@ export class SessionTokenSource {
     renewalEndpoint,
     fetchImpl = fetch,
     now = Date.now,
+    random = Math.random,
     timeoutMs = OFF_HOT_PATH_RENEWAL_TIMEOUT_MS,
-    backoffMs = RENEWAL_BACKOFF_MS,
   }) {
     this.credential = credential;
     this.renewalEndpoint = renewalEndpoint;
     this.fetchImpl = fetchImpl;
     this.now = now;
+    this.random = random;
     this.timeoutMs = timeoutMs;
-    this.backoffMs = backoffMs;
+    this.consecutiveFailures = { accessLapsed: 0, otherFailure: 0 };
     this.cached = null;
     this.nextRenewalAtMs = 0;
     this.renewalInFlight = null;
@@ -359,6 +356,7 @@ export class SessionTokenSource {
   }
 
   async renew() {
+    let status = null;
     try {
       const { response, body } = await fetchWithTimeout(
         this.fetchImpl,
@@ -372,16 +370,22 @@ export class SessionTokenSource {
         this.timeoutMs,
         async (res) => (res.status === 200 ? await res.json() : null),
       );
+      status = response.status;
       const accessToken = typeof body?.accessToken === "string" ? body.accessToken : "";
-      if (response.status !== 200 || accessToken === "") throw new Error();
+      if (status !== 200 || accessToken === "") throw new Error();
       const expiresAtMs =
         typeof body.expiresAtMs === "number" && Number.isFinite(body.expiresAtMs)
           ? body.expiresAtMs
           : (parseJwtExpiryMs(accessToken) ?? this.now() + TOKEN_FALLBACK_TTL_MS);
       this.cached = { accessToken, expiresAtMs };
+      this.consecutiveFailures = { accessLapsed: 0, otherFailure: 0 };
       return accessToken;
     } catch {
-      this.nextRenewalAtMs = this.now() + this.backoffMs;
+      const kind = status === 401 ? "accessLapsed" : "otherFailure";
+      this.consecutiveFailures[kind] += 1;
+      const { firstStepMs, capMs } = RENEWAL_BACKOFF[kind];
+      const stepMs = Math.min(capMs, firstStepMs * 2 ** (this.consecutiveFailures[kind] - 1));
+      this.nextRenewalAtMs = this.now() + stepMs / 2 + (stepMs / 2) * this.random();
       return null;
     }
   }
@@ -567,8 +571,8 @@ export async function continueWebBotAuthRequest({
   topFrameId,
   signer,
   isEnabled = () => false,
-  getScope = () => WEB_BOT_AUTH_DEFAULT_SCOPE,
   signedOriginCache,
+  tailnetSuffixes = [],
 }) {
   let headers = null;
   let signatureSource = undefined;
@@ -577,7 +581,9 @@ export async function continueWebBotAuthRequest({
     const request = params?.request;
     const requestUrl = typeof request?.url === "string" ? new URL(request.url) : null;
     const isSigningCandidate = () =>
-      isEnabled() && isWebBotAuthSigningCandidate(params, topFrameId, requestUrl, getScope());
+      isEnabled() &&
+      isWebBotAuthSigningCandidate(params, topFrameId, requestUrl) &&
+      !isUnderTailnetSuffix(requestUrl.hostname, tailnetSuffixes);
     if (isSigningCandidate()) {
       consideredOrigin = requestUrl.origin;
       const signed = await signer.getHeaders({ origin: requestUrl.origin });
@@ -606,53 +612,19 @@ export async function continueWebBotAuthRequest({
 export async function configureWebBotAuthBrowser(
   browser,
   signer,
-  {
-    isEnabled = () => false,
-    getScope = () => WEB_BOT_AUTH_DEFAULT_SCOPE,
-    signedOriginCache,
-    failures,
-  } = {},
+  { isEnabled = () => false, signedOriginCache, failures, tailnetSuffixes = [] } = {},
 ) {
   const topFrameBySession = new Map();
   const enableFetch = async (sessionId) => {
     await browser
-      .send("Fetch.enable", { patterns: webBotAuthFetchEnablePatterns(getScope()) }, sessionId)
+      .send("Fetch.enable", { patterns: WEB_BOT_AUTH_FETCH_ENABLE_PATTERNS }, sessionId)
       .catch((error) => failures?.report("fetch_enable", error));
-  };
-  const autoAttachIframes = async (sessionId, iframes) => {
-    await browser
-      .send(
-        "Target.setAutoAttach",
-        iframes ? ATTACH_IFRAME_TARGETS : DETACH_IFRAME_TARGETS,
-        sessionId,
-      )
-      .catch(logUnlessTargetGone("Target.setAutoAttach"));
-  };
-  const enableFetchThenResume = async (sessionId, waitingForDebugger) => {
-    try {
-      await enableFetch(sessionId);
-      if (getScope().iframes) await autoAttachIframes(sessionId, true);
-    } finally {
-      if (waitingForDebugger) {
-        await browser
-          .send("Runtime.runIfWaitingForDebugger", {}, sessionId)
-          .catch(logUnlessTargetGone("Runtime.runIfWaitingForDebugger"));
-      }
-    }
-  };
-  const applyScope = async () => {
-    const { iframes } = getScope();
-    for (const sessionId of [...topFrameBySession.keys()]) {
-      if (!topFrameBySession.has(sessionId)) continue;
-      await enableFetch(sessionId);
-      await autoAttachIframes(sessionId, iframes);
-    }
   };
   browser.onEvent((message) => {
     const sessionId = message.sessionId;
     if (
       message.method === "Target.attachedToTarget" &&
-      SIGNED_SESSION_TARGET_TYPES.has(message.params?.targetInfo?.type) &&
+      message.params?.targetInfo?.type === "page" &&
       typeof message.params?.sessionId === "string"
     ) {
       const attachedSessionId = message.params.sessionId;
@@ -667,7 +639,7 @@ export async function configureWebBotAuthBrowser(
           }
         })
         .catch(logUnlessTargetGone("Page.getFrameTree"));
-      void enableFetchThenResume(attachedSessionId, message.params.waitingForDebugger === true);
+      void enableFetch(attachedSessionId);
       return;
     }
     if (
@@ -685,8 +657,8 @@ export async function configureWebBotAuthBrowser(
         topFrameId: topFrameBySession.get(sessionId),
         signer,
         isEnabled,
-        getScope,
         signedOriginCache,
+        tailnetSuffixes,
       });
     }
   });
@@ -696,7 +668,6 @@ export async function configureWebBotAuthBrowser(
     flatten: true,
     filter: [{ type: "page", exclude: false }, { exclude: true }],
   });
-  return { applyScope };
 }
 
 export function discoverSigningPorts({ x11Dir, procRoot } = {}) {
@@ -711,26 +682,25 @@ export class WebBotAuthDaemon {
     discoverPorts = discoverSigningPorts,
     connect = connectBrowser,
     isEnabled = () => false,
-    getScope = () => WEB_BOT_AUTH_DEFAULT_SCOPE,
     prefetchToken = async () => {},
     signedOriginCache,
     failures,
+    tailnetSuffixes = readTailnetHostSuffixes(),
   }) {
     this.signer = signer;
     this.discoverPorts = discoverPorts;
     this.connect = connect;
     this.isEnabled = isEnabled;
-    this.getScope = getScope;
     this.prefetchToken = prefetchToken;
     this.signedOriginCache = signedOriginCache;
     this.failures = failures;
+    this.tailnetSuffixes = tailnetSuffixes;
     this.browsers = new Map();
-    this.lastAppliedScope = null;
   }
 
   async detachAll() {
     const closing = [];
-    for (const [port, { browser }] of this.browsers) {
+    for (const [port, browser] of this.browsers) {
       this.browsers.delete(port);
       closing.push(
         (async () => {
@@ -739,7 +709,6 @@ export class WebBotAuthDaemon {
         })(),
       );
     }
-    this.lastAppliedScope = null;
     await Promise.all(closing);
   }
 
@@ -752,31 +721,25 @@ export class WebBotAuthDaemon {
       void (async () => this.prefetchToken())().catch((error) => {
         log(`token prefetch failed: ${String(error)}`);
       });
-      const scope = this.getScope();
-      if (this.lastAppliedScope !== null && !isSameWebBotAuthScope(scope, this.lastAppliedScope)) {
-        for (const { applyScope } of this.browsers.values()) {
-          await applyScope();
-        }
-      }
-      this.lastAppliedScope = scope;
       for (const port of this.discoverPorts()) {
+        if (port === SAND_BOX_TAILNET_CHROME_CDP_PORT) continue;
         const existing = this.browsers.get(port);
-        if (existing != null && !existing.browser.isClosed) continue;
+        if (existing != null && !existing.isClosed) continue;
         let browser = null;
         try {
           browser = await this.connect(port);
-          const { applyScope } = await configureWebBotAuthBrowser(browser, this.signer, {
+          await configureWebBotAuthBrowser(browser, this.signer, {
             isEnabled: () => this.isEnabled(),
-            getScope: () => this.getScope(),
             signedOriginCache: this.signedOriginCache,
             failures: this.failures,
+            tailnetSuffixes: this.tailnetSuffixes,
           });
-          this.browsers.set(port, { browser, applyScope });
+          this.browsers.set(port, browser);
         } catch {
           browser?.close();
         }
       }
-      for (const [port, { browser }] of this.browsers) {
+      for (const [port, browser] of this.browsers) {
         if (browser.isClosed) {
           this.browsers.delete(port);
         }
@@ -804,10 +767,6 @@ async function main() {
   const daemon = new WebBotAuthDaemon({
     signer,
     isEnabled: () => isWebBotAuthEnabled() && !isTunnelClientAttached(),
-    getScope: () => ({
-      xhrFetch: isWebBotAuthEnabled(WEB_BOT_AUTH_XHR_FETCH_MARKER),
-      iframes: isWebBotAuthEnabled(WEB_BOT_AUTH_IFRAMES_MARKER),
-    }),
     prefetchToken: () => tokenSource?.getToken(),
     signedOriginCache: new WebBotAuthSignedOriginCache(),
     failures: new WebBotAuthFailureReporter(),

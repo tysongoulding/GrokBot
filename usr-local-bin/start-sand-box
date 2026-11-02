@@ -91,6 +91,101 @@ sand_box_sudo_disabled() {
 	esac
 }
 
+# Backend-stamped pod env for sand_box_runtime_rollout; the box cannot rewrite it.
+sand_box_runtime_rollout_stamped() {
+	case "$(printf '%s' "${SAND_BOX_RUNTIME_ROLLOUT:-}" | tr '[:upper:]' '[:lower:]')" in
+	1 | true | yes) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+# Materializes one regular file. chmod follows a symlink, so a link is refused. https://man7.org/linux/man-pages/man1/chmod.1.html
+sand_box_runtime_seal_file() {
+	local src="$1" dest="$2"
+	[ ! -L "${src}" ] && [ -f "${src}" ] || return 1
+	rm -f "${dest}"
+	[ -e "${dest}" ] && return 1
+	cp "${src}" "${dest}" || return 1
+	[ ! -L "${dest}" ] && [ -f "${dest}" ] || return 1
+	chmod 444 "${dest}" || return 1
+	chown root:root "${dest}" 2>/dev/null || true
+}
+
+# True only when this directory is its own read-only mount. A parent mount does not count.
+# The installer's live gate applies the same rule. mountinfo lists mounts in the order they were
+# made, and a mount hides every earlier mount at its own path or beneath it, so the last row at
+# the path or any parent is the one the path resolves through.
+sand_box_runtime_allow_mounted_read_only() {
+	local target="${1%/}" line mountpoint top_point="" top_ro=0
+	local mountinfo="${2:-/proc/self/mountinfo}"
+	local -a fields
+	[ -r "${mountinfo}" ] || return 1
+	while IFS= read -r line; do
+		IFS=' ' read -r -a fields <<< "${line}"
+		[ "${#fields[@]}" -ge 6 ] || continue
+		mountpoint="${fields[4]//\\040/ }"
+		[ "${mountpoint}" = / ] || mountpoint="${mountpoint%/}"
+		case "${target}" in
+		"${mountpoint}" | "${mountpoint}"/*) ;;
+		*) [ "${mountpoint}" = / ] || continue ;;
+		esac
+		top_point="${mountpoint}"
+		case ",${fields[5]}," in
+		*,ro,*) top_ro=1 ;;
+		*) top_ro=0 ;;
+		esac
+	done < "${mountinfo}"
+	[ "${top_point}" = "${target}" ] && [ "${top_ro}" -eq 1 ]
+}
+
+# Each directory on the way to the authorization takes its mode here, never from the boot umask, so sand-host can always reach it.
+sand_box_runtime_allow_dirs() {
+	local allow="$1" dir
+	for dir in "${allow%/*}" "${allow}"; do
+		[ ! -L "${dir}" ] || return 1
+		mkdir -p "${dir}" || return 1
+		[ ! -L "${dir}" ] && [ -d "${dir}" ] || return 1
+		chmod 755 "${dir}" || return 1
+		chown root:root "${dir}" 2>/dev/null || true
+	done
+}
+
+sand_box_runtime_clear_authorization() {
+	local allow="/var/lib/sand-box-runtime/allow"
+	umount "${allow}" 2>/dev/null || true
+	rm -f "${allow}/authorized"
+}
+
+sand_box_runtime_seal_installer() {
+	local allow="/var/lib/sand-box-runtime/allow"
+	local installer="${allow}/sand-supervisor-box-runtime.mjs"
+	local contract="${allow}/sand-supervisor-contract.mjs"
+	local trusted=1
+	# An existing copy is trusted only while the previous seal is still read-only. Otherwise sand-host may have planted it.
+	sand_box_runtime_allow_mounted_read_only "${allow}" || trusted=0
+	umount "${allow}" 2>/dev/null || true
+	if [ "${trusted}" -eq 0 ]; then
+		rm -rf "${installer}" "${contract}" "${allow}/authorized"
+	fi
+	sand_box_runtime_allow_dirs "${allow}" || return 1
+	if [ -L "${installer}" ] || [ -L "${contract}" ] || [ ! -f "${installer}" ] || [ ! -f "${contract}" ]; then
+		rm -rf "${installer}" "${contract}"
+		sand_box_runtime_seal_file /usr/local/bin/sand-supervisor-box-runtime.mjs "${installer}" || return 1
+		sand_box_runtime_seal_file /usr/local/bin/sand-supervisor-contract.mjs "${contract}" || return 1
+	fi
+	rm -rf "${allow}/authorized"
+	: >"${allow}/authorized" || return 1
+	[ ! -L "${allow}/authorized" ] && [ -f "${allow}/authorized" ] || return 1
+	chmod 444 "${allow}/authorized" || return 1
+	chown root:root "${allow}/authorized" 2>/dev/null || true
+	if mount --bind "${allow}" "${allow}" && mount -o remount,bind,ro "${allow}"; then
+		return 0
+	fi
+	umount "${allow}" 2>/dev/null || true
+	rm -rf "${allow}/authorized" "${installer}" "${contract}"
+	return 1
+}
+
 # Host/agent uid split (SAND_HOST_UID_SPLIT=1, non-root boxes only): the in-box
 # host and its supervisor run as the image's `sand-host` account while the
 # agent's shell, exec-daemon, and the desktop stay `box`. The agent then cannot
@@ -151,6 +246,52 @@ sand_host_uid_split() {
 	[ "${SAND_HOST_UID_SPLIT_ACTIVE}" = "1" ]
 }
 
+# write_hibernate_hook_script must emit the same bytes as
+# buildHibernateHookScript in
+# sand/src/host/extensions/box-store-sync/hibernate-hook-service.ts;
+# hibernate-hook-service.test.ts asserts the parity.
+sand_box_hibernate_hook_requested() {
+	[ "${SAND_BOX_STORE_HIBERNATE_HOOK:-}" = "1" ]
+}
+write_hibernate_hook_script() {
+	local fifo_dir="$1"
+	printf '%s\n' \
+		'#!/bin/sh' \
+		"resp=\$(mktemp -u \"${fifo_dir}/response.\$\$.XXXXXXXX\") || exit 2" \
+		"trap 'rm -f \"\$resp\"' EXIT" \
+		'mkfifo -m 0622 "$resp" || exit 2' \
+		"printf 'flush %s\\n' \"\$resp\" > ${fifo_dir}/request || exit 2" \
+		'IFS= read -r status < "$resp" || exit 2' \
+		'[ "$status" = "ok" ]'
+}
+provision_hibernate_hook_channel() {
+	local hook_path="$1" fifo_dir="$2" owner="$3" group="$4"
+	rm -rf "${fifo_dir}" "${hook_path}.staged" 2>/dev/null || true
+	if ! sand_box_hibernate_hook_requested; then
+		rm -f "${hook_path}" 2>/dev/null || true
+		return 0
+	fi
+	install -d -m 1733 -o "${owner}" -g "${group}" "${fifo_dir}" || return 1
+	if ! mkfifo -m 0622 "${fifo_dir}/request" ||
+		! chown "${owner}:${group}" "${fifo_dir}/request" ||
+		! write_hibernate_hook_script "${fifo_dir}" >"${hook_path}.staged" ||
+		! chmod 0755 "${hook_path}.staged" ||
+		! mv -f "${hook_path}.staged" "${hook_path}"; then
+		rm -rf "${fifo_dir}" "${hook_path}.staged" 2>/dev/null || true
+		return 1
+	fi
+}
+
+repair_hook_parent_symlink() {
+	local link_path="$1" target_dir="$2"
+	[ -d "${target_dir}" ] || return 1
+	if [ -e "${link_path}" ]; then
+		return 0
+	fi
+	rm -f "${link_path}" 2>/dev/null || true
+	ln -s "${target_dir}" "${link_path}"
+}
+
 SAND_DATA_HOST_OWNED_FILES=(gateway.json webhook-keys.json teach-queue-key.json box-secrets.json)
 remove_host_owned_write_leftovers() {
 	box_no_follow remove-leftovers sand-data /home/box/sand-data "${SAND_DATA_HOST_OWNED_FILES[@]}" || true
@@ -177,11 +318,15 @@ chown_tree_to_box() {
 	parser.add_argument("box", type=ids)
 	parser.add_argument("--host", type=ids)
 	parser.add_argument("--host-file", action="append", default=[])
+	parser.add_argument("--box-group-tree", action="store_true")
 	parser.add_argument("--mode", type=lambda value: int(value, 8))
 	parser.add_argument("--shallow", action="store_true")
 	parser.add_argument("roots", nargs="+")
 	args = parser.parse_args()
 	host_files = set(args.host_file)
+	SETGID = stat.S_ISGID
+	SHARED = stat.S_ISGID | stat.S_IRWXG
+	WORLD_LISTABLE = stat.S_IROTH | stat.S_IXOTH
 
 
 	def is_host_file(name):
@@ -195,12 +340,33 @@ chown_tree_to_box() {
 	    return args.host is not None and info.st_uid == args.host[0]
 
 
+	def is_shareable_host_dir(info):
+	    return (
+	        args.box_group_tree
+	        and is_host_owned(info)
+	        and stat.S_ISDIR(info.st_mode)
+	        and info.st_mode & WORLD_LISTABLE == WORLD_LISTABLE
+	    )
+
+
 	def owner_for(info, name, top):
 	    if is_host_owned(info):
 	        return None
 	    if top and is_host_file(name):
 	        return args.host if name in host_files and stat.S_ISREG(info.st_mode) else None
 	    return args.box
+
+
+	def add_mode(fd, info, bits):
+	    mode = stat.S_IMODE(info.st_mode)
+	    if mode | bits != mode:
+	        os.fchmod(fd, mode | bits)
+
+
+	def share(fd, info):
+	    if info.st_gid != args.box[1]:
+	        os.fchown(fd, -1, args.box[1])
+	    add_mode(fd, info, SHARED)
 
 
 	def open_entry(name, dir_fd):
@@ -239,10 +405,22 @@ chown_tree_to_box() {
 	        os.close(parent)
 
 
-	def settle(fd, opened_dir, info, name, top):
+	HAND_OVER = "hand-over"
+	SHARE_ONLY = "share-only"
+
+
+	def settle(fd, opened_dir, info, name, top, walk_mode):
+	    if opened_dir and is_shareable_host_dir(info):
+	        try:
+	            share(fd, info)
+	        except OSError:
+	            return None
+	        return SHARE_ONLY
+	    if walk_mode == SHARE_ONLY:
+	        return None
 	    owner = owner_for(info, name, top)
 	    if owner is None:
-	        return False
+	        return None
 	    try:
 	        if (info.st_uid, info.st_gid) != owner:
 	            if opened_dir:
@@ -250,16 +428,25 @@ chown_tree_to_box() {
 	            else:
 	                os.chown("/proc/self/fd/%d" % fd, *owner)
 	    except OSError:
-	        return False
-	    return opened_dir and owner == args.box
+	        return None
+	    if not opened_dir or owner != args.box:
+	        return None
+	    if args.box_group_tree:
+	        try:
+	            add_mode(fd, info, SETGID)
+	        except OSError:
+	            pass
+	    return HAND_OVER
 
 
-	def already_settled(name, dir_fd, top):
+	def already_settled(name, dir_fd, top, walk_mode):
 	    try:
 	        info = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
 	    except OSError:
 	        return True
-	    if is_host_owned(info):
+	    if is_shareable_host_dir(info):
+	        return False
+	    if walk_mode == SHARE_ONLY or is_host_owned(info):
 	        return True
 	    if top and is_host_file(name):
 	        return False
@@ -272,32 +459,33 @@ chown_tree_to_box() {
 	    except OSError:
 	        return
 	    try:
-	        descend = settle(fd, opened_dir, info, os.path.basename(path), False)
-	        if descend and args.mode is not None:
+	        walk_mode = settle(fd, opened_dir, info, os.path.basename(path), False, HAND_OVER)
+	        if walk_mode == HAND_OVER and args.mode is not None:
 	            os.fchmod(fd, args.mode)
-	        names = os.listdir(fd) if descend and not args.shallow else None
+	        names = os.listdir(fd) if walk_mode is not None and not args.shallow else None
 	    except OSError:
 	        names = None
 	    if names is None:
 	        os.close(fd)
 	        return
-	    stack = [(fd, iter(names), True)]
+	    stack = [(fd, iter(names), walk_mode == HAND_OVER, walk_mode)]
 	    while stack:
-	        dir_fd, entries, top = stack[-1]
+	        dir_fd, entries, top, walk_mode = stack[-1]
 	        name = next(entries, None)
 	        if name is None:
 	            os.close(dir_fd)
 	            stack.pop()
 	            continue
-	        if already_settled(name, dir_fd, top):
+	        if already_settled(name, dir_fd, top, walk_mode):
 	            continue
 	        try:
 	            child, opened_dir, info = open_entry(name, dir_fd)
 	        except OSError:
 	            continue
 	        try:
-	            if settle(child, opened_dir, info, name, top):
-	                stack.append((child, iter(os.listdir(child)), False))
+	            child_mode = settle(child, opened_dir, info, name, top, walk_mode)
+	            if child_mode is not None:
+	                stack.append((child, iter(os.listdir(child)), False, child_mode))
 	                continue
 	        except OSError:
 	            pass
@@ -575,13 +763,14 @@ box_no_follow() {
 }
 chown_sand_data_to_box() {
 	remove_host_owned_write_leftovers
-	local name host_files=()
+	local name split_args=()
 	if sand_host_uid_split; then
+		split_args+=(--box-group-tree)
 		for name in "${SAND_DATA_HOST_OWNED_FILES[@]}"; do
-			host_files+=(--host-file "${name}")
+			split_args+=(--host-file "${name}")
 		done
 	fi
-	chown_tree_to_box "${host_files[@]}" /home/box/sand-data
+	chown_tree_to_box "${split_args[@]}" /home/box/sand-data
 }
 
 reassert_cli_config_owner() {
@@ -611,6 +800,9 @@ install_sudoers_rule() {
 if [ "$(id -u)" -eq 0 ]; then
 	if sand_user_non_root; then
 		if sand_box_sudo_disabled; then
+			# The root tailnet wipe and folder mount stay off box under the opt-out:
+			# a split host has its own wipe grant, and a host running as box
+			# reports the wipe failed.
 			SAND_BOX_SUDOERS_RULE='box ALL=(root:root) NOPASSWD: /usr/local/bin/sand-box-timezone apply *'
 		else
 			SAND_BOX_SUDOERS_RULE='box ALL=(ALL:ALL) NOPASSWD:ALL'
@@ -623,7 +815,11 @@ if [ "$(id -u)" -eq 0 ]; then
 			# nothing the agent runs does), dropped back to box (`--as-box`)
 			# when it did not, exactly as the converge always ran. The timezone
 			# helper is there for the case where it decides to sudo itself.
-			SAND_HOST_SUDOERS_RULE="${SAND_HOST_USER}"' ALL=(root:root) NOPASSWD: /usr/local/bin/sand-box-timezone apply *, /usr/local/bin/sand-team-converge-privileged "", /usr/local/bin/sand-team-converge-privileged --force, /usr/local/bin/sand-team-converge-privileged --as-box, /usr/local/bin/sand-team-converge-privileged --as-box --force'
+			SAND_HOST_SUDOERS_RULE="${SAND_HOST_USER}"' ALL=(root:root) NOPASSWD: /usr/local/bin/sand-box-timezone apply *, /usr/local/bin/sand-team-converge-privileged "", /usr/local/bin/sand-team-converge-privileged --force, /usr/local/bin/sand-team-converge-privileged --as-box, /usr/local/bin/sand-team-converge-privileged --as-box --force, /usr/local/bin/sand-tailnet-wipe "", /usr/local/bin/sand-tailnet-wipe --seal, /usr/local/bin/sand-tailnet-wipe --ensure'
+			# The boot stamp is the only thing that may grant sand-host the root installer.
+			if sand_box_runtime_rollout_stamped; then
+				SAND_HOST_SUDOERS_RULE="${SAND_HOST_SUDOERS_RULE}"', /exec-daemon/node /var/lib/sand-box-runtime/allow/sand-supervisor-box-runtime.mjs, /exec-daemon/node /var/lib/sand-box-runtime/allow/sand-supervisor-box-runtime.mjs revoke'
+			fi
 			if install_sudoers_rule sand-host "${SAND_HOST_SUDOERS_RULE}" &&
 				[ -x /usr/local/bin/sand-team-converge-privileged ]; then
 				if sand_box_sudo_disabled; then
@@ -646,7 +842,11 @@ if [ "$(id -u)" -eq 0 ]; then
 	else
 		rm -f /etc/sudoers.d/box /etc/sudoers.d/sand-host 2>/dev/null || true
 	fi
+	if rm -f /etc/opt/chrome/policies/managed/sand-webrtc-proxy-only.json 2>/dev/null; then
+		export SAND_BOOT_CLEARS_HOST_WEBRTC_POLICY=1
+	fi
 fi
+export SAND_HOST_UID_SPLIT_ACTIVE
 
 SAND_DAEMON_LAUNCHERS_DIR="/usr/local/libexec/sand"
 SAND_DAEMON_RELEASE_STORE_DIR="/var/lib/sand-daemon-supervisor"
@@ -777,13 +977,33 @@ fi
 # and .prev siblings) belongs to whichever account runs the host. Every
 # recursive chown over a tree the agent can write is -h: a symlink it planted
 # there must never hand its target to box.
+# Boot removes the rollout marker and does not recreate it. A stamped boot only seals the installer grant; the host writes the live marker. A box-owned bundle root is recorded so the installer will not publish it.
 if [ "$(id -u)" -eq 0 ]; then
-	if sand_host_uid_split; then
+	rm -f /opt/sand/box-runtime-rollout /opt/sand/box-runtime-process-restart 2>/dev/null || true
+	bundle_root_box_owned_unrecorded=0
+	if sand_host_uid_split && [ -n "$(find /opt/sand -uid "$(id -u box 2>/dev/null)" -print -quit 2>/dev/null)" ]; then
+		mkdir -p /var/lib/sand-box-runtime 2>/dev/null &&
+			chown root:root /var/lib/sand-box-runtime 2>/dev/null &&
+			chmod 755 /var/lib/sand-box-runtime 2>/dev/null &&
+			: >/var/lib/sand-box-runtime/bundle-root-inherited-from-box 2>/dev/null ||
+			bundle_root_box_owned_unrecorded=1
+	fi
+	if [ "${bundle_root_box_owned_unrecorded}" -eq 1 ]; then
+		echo "[start-sand-box] /opt/sand holds box-owned files and the inherited-bundle marker could not be written; leaving its ownership as is so the box runtime installer refuses them" >&2
+	elif sand_host_uid_split; then
 		chown -hR "${SAND_HOST_USER}:${SAND_HOST_USER}" /opt/sand 2>/dev/null || true
 	elif sand_user_non_root; then
 		chown_tree_to_box /opt/sand
 	else
 		chown -hR root:root /opt/sand 2>/dev/null || true
+	fi
+	if [ "${bundle_root_box_owned_unrecorded}" -eq 0 ] && sand_host_uid_split && sand_box_runtime_rollout_stamped; then
+		# Seal the authorization only. The host writes the live marker after boot, so a restart cannot publish before that check.
+		if ! sand_box_runtime_seal_installer; then
+			echo "[start-sand-box] could not seal the box runtime authorization; the installer stays closed" >&2
+		fi
+	elif sand_box_runtime_rollout_stamped; then
+		sand_box_runtime_clear_authorization
 	fi
 fi
 
@@ -800,18 +1020,34 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 if [ "$(id -u)" -eq 0 ]; then
+	hibernate_hook_channel_owner=root
+	if sand_host_uid_split; then
+		hibernate_hook_channel_owner="${SAND_HOST_USER}"
+	elif sand_user_non_root; then
+		hibernate_hook_channel_owner=box
+	fi
+	if ! repair_hook_parent_symlink /var/run /run; then
+		echo "[start-sand-box] /var/run does not resolve and could not be repaired; the hibernate hook has no installable path" >&2
+	fi
+	if ! provision_hibernate_hook_channel /var/run/anyrun-hibernate-hook /run/sand-box-store-flush \
+		"${hibernate_hook_channel_owner}" "${hibernate_hook_channel_owner}"; then
+		echo "[start-sand-box] could not provision the hibernate hook channel; the host will report it unavailable" >&2
+	fi
+fi
+
+if [ "$(id -u)" -eq 0 ]; then
 	rm -f /tmp/sand-managed-converge.log
 	if sand_host_uid_split; then
 		# The host publishes the assignment and manifests here, and a root
 		# converge reads them, so the tree must be one the agent cannot write:
 		# sand-host owns it (the wrapper hands only the receipts of an --as-box
-		# converge to box). The converge log is the host's too, so nothing else
-		# can squat its path in sticky /tmp.
+		# converge to box). The converge log is host-owned and agent-readable,
+		# so the agent can debug setup without being able to alter the output.
 		install -d -m 755 -o box -g box /run/sand 2>/dev/null || true
 		install -d -m 755 -o "${SAND_HOST_USER}" -g "${SAND_HOST_USER}" /opt/sand-managed 2>/dev/null || true
 		chown_tree_to_box /run/sand
 		chown -hR "${SAND_HOST_USER}:${SAND_HOST_USER}" /opt/sand-managed 2>/dev/null || true
-		install -m 600 -o "${SAND_HOST_USER}" -g "${SAND_HOST_USER}" /dev/null /tmp/sand-managed-converge.log 2>/dev/null || true
+		install -m 640 -o "${SAND_HOST_USER}" -g box /dev/null /tmp/sand-managed-converge.log 2>/dev/null || true
 	elif sand_user_non_root; then
 		install -d -m 755 -o box -g box /run/sand 2>/dev/null || true
 		install -d -m 700 -o box -g box /opt/sand-managed 2>/dev/null || true
@@ -1194,7 +1430,12 @@ ensure_real_dir() {
 }
 
 if ensure_real_dir /home/box/chrome-profile/Default; then
+	chown_tree_to_box --shallow /home/box/chrome-profile
 	chown_tree_to_box --shallow --mode 700 /home/box/chrome-profile/Default
+fi
+
+if [ -x /usr/local/bin/sand-tailnet-folder ]; then
+	echo "[start-sand-box] tailnet folder: $(/usr/local/bin/sand-tailnet-folder 2>&1 | tail -n 1)"
 fi
 
 start_in_box_supervisor() {
@@ -1207,6 +1448,7 @@ start_in_box_supervisor() {
 			# host learns the desktop role's health file from its env.
 			(
 				printf '%s\n' '-1000' >/proc/self/oom_score_adj 2>/dev/null || true
+				umask 0002
 				exec "${AS_HOST[@]}" /usr/bin/setsid /usr/bin/nohup /usr/bin/env \
 					SAND_SUPERVISOR_ROLE=host \
 					SAND_SUPERVISOR_DESKTOP_HEALTH_PATH=/tmp/sand-desktop-supervisor/desktop-health.json \

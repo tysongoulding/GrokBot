@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# >>> box-tailnet-chrome port table (from sand/src/shared/box/box-contract.ts; regenerate: pnpm --filter sand run gen:box-ports) >>>
+SAND_BOX_TAILNET_CHROME_CDP_PORT=9600
+# <<< box-tailnet-chrome port table <<<
+set -uo pipefail
+
+TAILNET_DIR="${SAND_TAILNET_DIR:-/home/box/tailnet}"
+MOUNTINFO="${SAND_TAILNET_MOUNTINFO:-/proc/self/mountinfo}"
+BOX_CHROME="${SAND_TAILNET_BOX_CHROME:-/usr/local/bin/box-chrome}"
+
+mount_type() {
+	awk -v target="$1" '
+		{
+			for (i = 7; i <= NF; i++) if ($i == "-") { sep = i; break }
+			if ($5 == target) type = $(sep + 1)
+		}
+		END { if (type == "") exit 1; print type }
+	' "${MOUNTINFO}" 2>/dev/null
+}
+
+if [ -e "${SAND_UNTRUSTED_CLONE_MARKER:-/var/lib/sand/untrusted-clone/marker}" ]; then
+	echo "box-tailnet-chrome: this box is an untrusted-turn clone, so the tailnet browser does not start" >&2
+	exit 75
+fi
+
+# The launcher never mounts the folder itself: the host remounts a sealed one
+# through its tailnet wipe, so the box user needs no root path to the mount.
+if [ "$(mount_type "${TAILNET_DIR}")" != tmpfs ]; then
+	echo "box-tailnet-chrome: ${TAILNET_DIR} is not a RAM-only folder on this box, so the tailnet browser does not start" >&2
+	exit 75
+fi
+
+PROFILE_DIR="${TAILNET_DIR}/chrome-profile"
+CHROME_HOME="${TAILNET_DIR}/home"
+FILES_DIR="${CHROME_HOME}/Downloads"
+AS_BOX=()
+if [ "$(id -u)" -eq 0 ]; then
+	AS_BOX=(runuser -u "${SAND_TAILNET_BOX_USER:-box}" --)
+fi
+
+# Chrome puts downloads, Save As, print-to-PDF, the file chooser's start folder
+# and its recent-files list under HOME and the XDG dirs, which on this box are
+# on disk and in the home snapshot, so the tailnet browser gets all of them
+# inside the RAM-only folder.
+if ! "${AS_BOX[@]}" mkdir -p -m 700 "${PROFILE_DIR}/Default" "${FILES_DIR}" \
+	"${CHROME_HOME}/.config" "${CHROME_HOME}/.cache" "${CHROME_HOME}/.local/share" \
+	"${CHROME_HOME}/.local/state" "${CHROME_HOME}/tmp"; then
+	echo "box-tailnet-chrome: cannot prepare ${CHROME_HOME}, so the tailnet browser does not start" >&2
+	exit 75
+fi
+for name in DESKTOP DOCUMENTS DOWNLOAD MUSIC PICTURES PUBLICSHARE TEMPLATES VIDEOS; do
+	printf 'XDG_%s_DIR="%s"\n' "${name}" "${FILES_DIR}"
+done | "${AS_BOX[@]}" tee "${CHROME_HOME}/.config/user-dirs.dirs" >/dev/null
+
+PREFS="${PROFILE_DIR}/Default/Preferences"
+if ! curl --max-time 1 -fsS "http://127.0.0.1:${SAND_BOX_TAILNET_CHROME_CDP_PORT}/json/version" >/dev/null 2>&1; then
+	if command -v python3 >/dev/null 2>&1; then
+		"${AS_BOX[@]}" python3 - "${PREFS}" "${FILES_DIR}" <<'SAND_TAILNET_PREFS_EOF' || exit 75
+import json, sys
+
+prefs, files = sys.argv[1], sys.argv[2]
+try:
+    with open(prefs, encoding="utf-8") as handle:
+        settings = json.load(handle)
+except (OSError, ValueError):
+    settings = {}
+if not isinstance(settings, dict):
+    settings = {}
+for section, values in (
+    ("download", {"default_directory": files, "directory_upgrade": True, "prompt_for_download": False}),
+    ("savefile", {"default_directory": files}),
+    ("selectfile", {"last_directory": files}),
+):
+    entry = settings.get(section)
+    if not isinstance(entry, dict):
+        entry = settings[section] = {}
+    entry.update(values)
+with open(prefs, "w", encoding="utf-8") as handle:
+    json.dump(settings, handle, separators=(",", ":"))
+SAND_TAILNET_PREFS_EOF
+	elif [ ! -e "${PREFS}" ]; then
+		printf '{"download":{"default_directory":"%s","directory_upgrade":true,"prompt_for_download":false},"savefile":{"default_directory":"%s"},"selectfile":{"last_directory":"%s"}}\n' \
+			"${FILES_DIR}" "${FILES_DIR}" "${FILES_DIR}" | "${AS_BOX[@]}" tee "${PREFS}" >/dev/null || exit 75
+	fi
+fi
+
+ulimit -c 0
+
+exec env \
+	SAND_BOX_TAILNET_PROFILE=1 \
+	SAND_CHROME_HOME="${CHROME_HOME}" \
+	CHROME_USER_DATA_DIR="${PROFILE_DIR}" \
+	SAND_CHROME_REMOTE_DEBUG_PORT="${SAND_BOX_TAILNET_CHROME_CDP_PORT}" \
+	SAND_COOKIE_SEED_PATH="${TAILNET_DIR}/.no-cookie-seed" \
+	"${BOX_CHROME}" "$@"

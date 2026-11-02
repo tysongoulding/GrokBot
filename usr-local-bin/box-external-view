@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+NODE_BIN="${SAND_EXTERNAL_VIEW_NODE:-/exec-daemon/node}"
+exec "${NODE_BIN}" "$(dirname "$(readlink -f "$0")")/box-external-view.mjs" "$@"

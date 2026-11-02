@@ -75,7 +75,7 @@ function webAuthnArmPaths() {
 }
 
 async function requestCeremony(message) {
-  if (!isWebAuthnArmed(Date.now(), webAuthnArmPaths())) {
+  if (message.recentInput !== true && !isWebAuthnArmed(Date.now(), webAuthnArmPaths())) {
     return failure("NotAllowedError", SAND_WEBAUTHN_STALE_TAB_MESSAGE);
   }
 

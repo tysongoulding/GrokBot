@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+TAILNET_DIR="${SAND_TAILNET_DIR:-/home/box/tailnet}"
+MOUNTINFO="${SAND_TAILNET_MOUNTINFO:-/proc/self/mountinfo}"
+PROC_ROOT="${SAND_TAILNET_PROC_ROOT:-/proc}"
+SETTLE_TRIES="${SAND_TAILNET_WIPE_SETTLE_TRIES:-20}"
+REQUIRE_ROOT="${SAND_TAILNET_REQUIRE_ROOT:-1}"
+MOUNT_HELPER="${SAND_TAILNET_MOUNT_HELPER:-/usr/local/bin/sand-tailnet-mount}"
+LOCK_FILE="${SAND_TAILNET_WIPE_LOCK:-/run/sand-tailnet-wipe.lock}"
+LOCK_WAIT_SECONDS="${SAND_TAILNET_WIPE_LOCK_WAIT_SECONDS:-10}"
+
+MODE=wipe
+case "$#:${1-}" in
+0:) ;;
+1:--seal) MODE=seal ;;
+1:--ensure) MODE=ensure ;;
+*)
+	echo "usage: sand-tailnet-wipe [--seal | --ensure]" >&2
+	exit 2
+	;;
+esac
+
+if [ "${REQUIRE_ROOT}" = "1" ] && [ "$(id -u)" -ne 0 ]; then
+	echo "sand-tailnet-wipe: needs root" >&2
+	exit 1
+fi
+
+cd / || exit 1
+
+fail() {
+	printf '{"tailnet":"failed","stage":"%s"}\n' "$1"
+	exit 1
+}
+
+# A held turn's wipe, a turn's ensure and a seal can reach one box at once;
+# each sees the folder as the one before left it.
+exec 9>"${LOCK_FILE}" 2>/dev/null || fail lock
+flock -w "${LOCK_WAIT_SECONDS}" 9 || fail lock
+
+mount_entry() {
+	awk -v target="$1" '
+		{
+			for (i = 7; i <= NF; i++) if ($i == "-") { sep = i; break }
+			if ($5 == target) entry = $(sep + 1) "\t" $6 "\t" $(sep + 3)
+		}
+		END { if (entry == "") exit 1; print entry }
+	' "${MOUNTINFO}" 2>/dev/null
+}
+
+holders() {
+	find "${PROC_ROOT}" -mindepth 2 -maxdepth 3 \
+		\( -lname "${TAILNET_DIR}" -o -lname "${TAILNET_DIR}/*" -o -lname "${TAILNET_DIR} (deleted)" \) \
+		-printf '%P\n' 2>/dev/null |
+		cut -d/ -f1 | grep -E '^[0-9]+$' | grep -vxF -e "$$" -e "${BASHPID}" -e 1 | sort -u
+}
+
+FOLDER_SETUP="${SAND_TAILNET_FOLDER_SETUP:-/usr/local/bin/sand-tailnet-folder}"
+
+# Prints $1 once a fresh folder is mounted from the boot-time host list; a box
+# with no tailnet hosts (or an untrusted-turn clone) stays off.
+mount_from_boot_list() {
+	folder="$("${FOLDER_SETUP}" --remount 2>/dev/null | tail -n 1)"
+	case "$(printf '%s' "${folder}" | grep -o '"tailnet":"[a-z_]*"' | cut -d'"' -f4)" in
+	off | untrusted_clone)
+		printf '{"tailnet":"off"}\n'
+		exit 0
+		;;
+	mounted | already_mounted)
+		[ "$(mount_entry "${TAILNET_DIR}" | cut -f1)" = tmpfs ] || fail remount
+		printf '%s\n' "$1"
+		exit 0
+		;;
+	on_disk) fail remount_on_disk ;;
+	*) fail remount ;;
+	esac
+}
+
+entry="$(mount_entry "${TAILNET_DIR}")"
+if [ -z "${entry}" ]; then
+	case "${MODE}" in
+	seal)
+		printf '{"tailnet":"off"}\n'
+		exit 0
+		;;
+	ensure) mount_from_boot_list '{"tailnet":"mounted"}' ;;
+	*) mount_from_boot_list '{"tailnet":"wiped","killed":0,"remounted":true}' ;;
+	esac
+fi
+IFS=$'\t' read -r fs_type mount_opts super_opts <<<"${entry}"
+[ "${fs_type}" = tmpfs ] || fail not_tmpfs
+
+if [ "${MODE}" = ensure ]; then
+	printf '{"tailnet":"mounted"}\n'
+	exit 0
+fi
+
+killed=0
+for _ in $(seq 1 "${SETTLE_TRIES}"); do
+	mapfile -t pids < <(holders)
+	[ "${#pids[@]}" -eq 0 ] && break
+	kill -KILL "${pids[@]}" 2>/dev/null
+	killed=$((killed + ${#pids[@]}))
+	sleep 0.1
+done
+mapfile -t pids < <(holders)
+[ "${#pids[@]}" -eq 0 ] || fail busy
+
+find "${TAILNET_DIR}" -xdev -mindepth 1 -delete 2>/dev/null || fail delete
+
+umount "${TAILNET_DIR}" 2>/dev/null || fail umount
+[ -z "$(mount_entry "${TAILNET_DIR}")" ] || fail still_mounted
+
+if [ "${MODE}" = seal ]; then
+	printf '{"tailnet":"sealed","killed":%d}\n' "${killed}"
+	exit 0
+fi
+
+python3 "${MOUNT_HELPER}" "${TAILNET_DIR}" "${mount_opts},${super_opts}" 0
+case $? in
+0) ;;
+5 | 6) fail remount_redirected ;;
+*) fail remount ;;
+esac
+
+printf '{"tailnet":"wiped","killed":%d,"remounted":true}\n' "${killed}"

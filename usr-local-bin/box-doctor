@@ -133,27 +133,27 @@ check_egress() {
 
 SKEW_THRESHOLD_S=60
 check_clock() {
-	local year
-	year="$(date -u +%Y 2>/dev/null)"
-	if [ -z "${year}" ]; then
+	local now_iso
+	now_iso="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null)"
+	if [ -z "${now_iso}" ]; then
 		fail clock "could not read the system clock"
 		return
 	fi
-	if [ "${year}" -lt 2024 ] || [ "${year}" -gt 2100 ]; then
-		fail clock "system clock year ${year} is implausible; TLS validation may fail"
-		return
-	fi
-
-	local now_iso
-	now_iso="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 	local trusted_source="https://www.google.com"
 	if ! command -v curl >/dev/null 2>&1; then
 		pass clock "system clock at ${now_iso} (skew check skipped: curl unavailable)"
 		return
 	fi
-	local http_date
-	http_date="$(curl -fsS --max-time 8 -D - -o /dev/null "${trusted_source}/generate_204" 2>/dev/null | tr -d '\r' | sed -n 's/^[Dd]ate:[[:space:]]*//p' | head -n1)"
+	local response http_date
+	response="$(curl -fsS --max-time 8 -D - -o /dev/null "${trusted_source}/generate_204" 2>&1)"
+	case "${response}" in
+	*"certificate is not yet valid"* | *"certificate has expired"*)
+		fail clock "TLS certificates from ${trusted_source} are not valid at the system clock (${now_iso})"
+		return
+		;;
+	esac
+	http_date="$(printf '%s\n' "${response}" | tr -d '\r' | sed -n 's/^[Dd]ate:[[:space:]]*//p' | head -n1)"
 	if [ -z "${http_date}" ]; then
 		pass clock "system clock at ${now_iso} (skew check skipped: no egress)"
 		return
@@ -194,7 +194,7 @@ check_dbus() {
 	fi
 }
 
-DESKTOP_DISPLAY="${SAND_DOCTOR_DISPLAY:-:1}"
+DESKTOP_DISPLAY="${SAND_DOCTOR_DISPLAY:-${DISPLAY:-:1}}"
 
 probe_display_ready() { xdpyinfo -display "$1" >/dev/null 2>&1; }
 
@@ -202,7 +202,11 @@ probe_tcp_listening() {
 	(exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1
 }
 
-probe_process_running() { pgrep -x "$1" >/dev/null 2>&1; }
+probe_client_on_display() {
+	local tree
+	tree="$(xwininfo -display "$2" -root -tree 2>/dev/null)" || return 1
+	[[ "${tree}" == *"(\"$1\" "* ]]
+}
 
 retry_probe() {
 	local attempts="${DESKTOP_PROBE_ATTEMPTS:-6}" delay="${DESKTOP_PROBE_DELAY_S:-0.5}"
@@ -247,10 +251,11 @@ check_novnc() {
 }
 
 check_compositor() {
-	if retry_probe probe_process_running xfwm4 && retry_probe probe_process_running picom; then
+	if retry_probe probe_client_on_display xfwm4 "${DESKTOP_DISPLAY}" &&
+		retry_probe probe_client_on_display picom "${DESKTOP_DISPLAY}"; then
 		pass compositor "window manager (xfwm4) + compositor (picom) running on ${DESKTOP_DISPLAY}"
 	else
-		fail compositor "compositor stack down (xfwm4/picom); windows lose decorations/compositing"
+		fail compositor "compositor stack down (xfwm4/picom) on ${DESKTOP_DISPLAY}; windows lose decorations/compositing"
 	fi
 }
 

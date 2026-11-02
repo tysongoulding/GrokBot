@@ -14,7 +14,7 @@ export const SAND_WEBAUTHN_HANDOFF_ARM_UNTIL_PATH = "/tmp/sand-webauthn-armed-un
 export const SAND_WEBAUTHN_BROWSER_ARM_MS = 20 * 60 * 1000;
 export const SAND_WEBAUTHN_HANDOFF_ARM_MS = 45 * 60 * 1000;
 export const SAND_WEBAUTHN_STALE_TAB_MESSAGE =
-  "Grok Bot ignored a security key request from a browser tab that isn't being used right now.";
+  "Grok Bot ignored a security key request because nobody has used this browser in the last minute. Click in the page, then try again.";
 
 function readArmUntil(armUntilPath) {
   if (!existsSync(armUntilPath)) {

@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+TAILNET_DIR="${SAND_TAILNET_DIR:-/home/box/tailnet}"
+SUFFIX_FILE="${SAND_TAILNET_SUFFIX_FILE:-/var/lib/sand/tailnet/host-suffixes}"
+MOUNTINFO="${SAND_TAILNET_MOUNTINFO:-/proc/self/mountinfo}"
+FOLDER_SIZE="${SAND_TAILNET_FOLDER_SIZE:-1g}"
+BOX_USER="${SAND_TAILNET_BOX_USER:-box}"
+REQUIRE_ROOT="${SAND_TAILNET_REQUIRE_ROOT:-1}"
+CLONE_MARKER="${SAND_UNTRUSTED_CLONE_MARKER:-/var/lib/sand/untrusted-clone/marker}"
+MOUNT_HELPER="${SAND_TAILNET_MOUNT_HELPER:-/usr/local/bin/sand-tailnet-mount}"
+DNS_NAME='^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'
+
+REMOUNT=0
+case "$#:${1-}" in
+0:) ;;
+1:--remount) REMOUNT=1 ;;
+*)
+	echo "usage: sand-tailnet-folder [--remount]" >&2
+	exit 2
+	;;
+esac
+
+if [ "${REQUIRE_ROOT}" = "1" ] && [ "$(id -u)" -ne 0 ]; then
+	echo "sand-tailnet-folder: needs root" >&2
+	exit 1
+fi
+
+report() {
+	printf '{"tailnet":"%s","suffixes":%d}\n' "$1" "${#SUFFIXES[@]}"
+}
+
+mount_type() {
+	awk -v target="$1" '
+		{
+			for (i = 7; i <= NF; i++) if ($i == "-") { sep = i; break }
+			if ($5 == target) type = $(sep + 1)
+		}
+		END { if (type == "") exit 1; print type }
+	' "${MOUNTINFO}" 2>/dev/null
+}
+
+SUFFIXES=()
+
+# A forked untrusted-turn clone keeps the parent's environment, host list file
+# and memory, but has no tailnet route: it gets no tailnet folder, and the
+# inherited host list stays so the everyday browser keeps blocking those hosts.
+if [ -e "${CLONE_MARKER}" ]; then
+	report untrusted_clone
+	exit 0
+fi
+
+RAW_SUFFIXES=()
+if [ "${REMOUNT}" = "1" ]; then
+	RAW_SUFFIX_SOURCE="$(cat "${SUFFIX_FILE}" 2>/dev/null)"
+else
+	RAW_SUFFIX_SOURCE="${SAND_TAILNET_HOST_SUFFIXES:-}"
+fi
+IFS=$', \t\n' read -r -d '' -a RAW_SUFFIXES <<<"${RAW_SUFFIX_SOURCE}" || true
+for raw in "${RAW_SUFFIXES[@]}"; do
+	suffix="$(printf '%s' "${raw}" | tr '[:upper:]' '[:lower:]')"
+	suffix="${suffix#.}"
+	suffix="${suffix%.}"
+	[ "${#suffix}" -le 253 ] || continue
+	printf '%s' "${suffix}" | grep -Eq "${DNS_NAME}" || continue
+	case " ${SUFFIXES[*]-} " in *" ${suffix} "*) continue ;; esac
+	SUFFIXES+=("${suffix}")
+done
+
+if [ "${#SUFFIXES[@]}" -eq 0 ]; then
+	[ "${REMOUNT}" = "1" ] || rm -f "${SUFFIX_FILE}" 2>/dev/null || true
+	report off
+	exit 0
+fi
+
+write_suffixes() {
+	local dir tmp
+	dir="$(dirname "${SUFFIX_FILE}")"
+	install -d -m 755 "${dir}" 2>/dev/null || return 1
+	[ -L "${dir}" ] && return 1
+	tmp="${SUFFIX_FILE}.tmp.$$"
+	printf '%s\n' "${SUFFIXES[@]}" >"${tmp}" 2>/dev/null || return 1
+	chmod 644 "${tmp}" 2>/dev/null || true
+	mv -f "${tmp}" "${SUFFIX_FILE}" 2>/dev/null || {
+		rm -f "${tmp}"
+		return 1
+	}
+}
+
+if [ "${REMOUNT}" = "0" ] && ! write_suffixes; then
+	report failed
+	exit 1
+fi
+
+existing_type="$(mount_type "${TAILNET_DIR}")"
+if [ -n "${existing_type}" ]; then
+	if [ "${existing_type}" = tmpfs ]; then
+		report already_mounted
+		exit 0
+	fi
+	report not_tmpfs
+	exit 1
+fi
+
+if [ -L "${TAILNET_DIR}" ] || { [ -e "${TAILNET_DIR}" ] && [ ! -d "${TAILNET_DIR}" ]; }; then
+	report failed
+	exit 1
+fi
+
+
+box_uid="$(id -u "${BOX_USER}" 2>/dev/null)" || {
+	report failed
+	exit 1
+}
+box_gid="$(id -g "${BOX_USER}" 2>/dev/null)" || {
+	report failed
+	exit 1
+}
+
+python3 "${MOUNT_HELPER}" "${TAILNET_DIR}" \
+	"size=${FOLDER_SIZE},mode=0700,uid=${box_uid},gid=${box_gid},nosuid,nodev,noexec" 1
+case $? in
+0) ;;
+4)
+	report on_disk
+	exit 1
+	;;
+*)
+	report failed
+	exit 1
+	;;
+esac
+
+report mounted

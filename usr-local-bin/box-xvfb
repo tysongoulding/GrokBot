@@ -34,8 +34,7 @@ reap_targets() {
 	candidates="$(
 		{
 			display_owner_pids "${n}"
-			for path in /proc/[0-9]*/cmdline; do
-				[ -r "${path}" ] || continue
+			for path in $(grep -slz -- 'Xvfb' /proc/[0-9]*/cmdline 2>/dev/null); do
 				pid="${path%/cmdline}"
 				printf '%s\n' "${pid##*/}"
 			done

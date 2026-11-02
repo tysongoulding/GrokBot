@@ -39,6 +39,7 @@ export const SUPERVISOR_ROLE_ENV = "SAND_SUPERVISOR_ROLE";
 export const SUPERVISOR_ROLES = ["host", "desktop"];
 
 export const BOX_SCRIPTS_SOURCE_DIR = `${HOST_DIR}/box-scripts`;
+export const BOX_LAUNCHERS_DIR = `${HOST_DIR}/box-launchers`;
 export const BOX_SCRIPTS_BIN_DIR = "/usr/local/bin";
 export const BOX_SCRIPTS_MARKER_PATH = "/usr/local/share/sand-box-scripts/version";
 export const BOX_SCRIPTS_SYNC_DISABLED_ENV = "SAND_BOX_SCRIPT_SYNC_DISABLED";

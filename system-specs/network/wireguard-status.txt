@@ -1,0 +1,11 @@
+interface: wg-ai
+  public key: sOis3gV6wENaYpTlI41bZqVuROFr7YRmi2F5VjlD71g=
+  private key: (hidden)
+  listening port: 48025
+
+peer: 24CeE4Nlk7TNdOpK70h5jXbtPxeA9Bn9JKqfc6vj5xs=
+  endpoint: 52.53.146.145:51820
+  allowed ips: 172.31.0.0/16, 10.50.0.0/16
+  latest handshake: 55 seconds ago
+  transfer: 1019.92 MiB received, 26.23 MiB sent
+  persistent keepalive: every 25 seconds
